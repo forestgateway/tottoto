@@ -1,0 +1,81 @@
+name: release-zip-signed
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $ver = $tag -replace '^v',''
+          dotnet restore ./src/TodoChart.csproj
+          dotnet publish ./src/TodoChart.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=false `
+            -p:Version=$ver -p:AssemblyVersion=$ver -p:FileVersion=$ver -p:InformationalVersion=$ver `
+            -o ./artifacts/publish
+
+      - name: Create zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path ./artifacts/release -Force | Out-Null
+          $tag = "${{ github.ref_name }}"
+          $zipName = "tottoto-$tag-win-x64.zip"
+          Compress-Archive -Path ./artifacts/publish/* -DestinationPath "./artifacts/release/$zipName" -Force
+          "ZIP_NAME=$zipName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Create SHA-256
+        shell: pwsh
+        run: |
+          $zipPath = "./artifacts/release/${{ env.ZIP_NAME }}"
+          $hash = (Get-FileHash -Algorithm SHA256 -Path $zipPath).Hash.ToLower()
+          $line = "$hash  ${{ env.ZIP_NAME }}"
+          $line | Out-File -FilePath "./artifacts/release/${{ env.ZIP_NAME }}.sha256" -Encoding ascii
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.1"
+
+      - name: Keyless sign hash file
+        shell: pwsh
+        run: |
+          cosign sign-blob --yes `
+            --output-signature "./artifacts/release/${{ env.ZIP_NAME }}.sha256.sig" `
+            --output-certificate "./artifacts/release/${{ env.ZIP_NAME }}.sha256.pem" `
+            --bundle "./artifacts/release/${{ env.ZIP_NAME }}.sha256.bundle" `
+            "./artifacts/release/${{ env.ZIP_NAME }}.sha256"
+
+      - name: Build provenance attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "./artifacts/release/${{ env.ZIP_NAME }}"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/release/${{ env.ZIP_NAME }}
+            ./artifacts/release/${{ env.ZIP_NAME }}.sha256
+            ./artifacts/release/${{ env.ZIP_NAME }}.sha256.sig
+            ./artifacts/release/${{ env.ZIP_NAME }}.sha256.pem
+            ./artifacts/release/${{ env.ZIP_NAME }}.sha256.bundle
+          generate_release_notes: true

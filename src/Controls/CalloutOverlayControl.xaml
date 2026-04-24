@@ -1,0 +1,131 @@
+﻿<UserControl x:Class="todochart.Controls.CalloutOverlayControl"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:vm="clr-namespace:todochart.ViewModels"
+xmlns:models="clr-namespace:todochart.Models"
+xmlns:local="clr-namespace:todochart.Controls"
+xmlns:conv="clr-namespace:todochart.Converters"
+ClipToBounds="False">
+
+<UserControl.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolVis"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolVis"/>
+
+        <!-- ── Bubble Line スタイル（UIparts BubbleTooltip 準拠） ─────── -->
+        <DataTemplate x:Key="BubbleLineTemplate" DataType="{x:Type vm:CalloutViewModel}">
+            <!-- Grid ルートで幅はテキストに追従（auto-width）。               -->
+            <!-- 1行目: 本体 / 2行目: 尻尾領域  ClipToBounds=False で下にはみ出す -->
+            <Grid ClipToBounds="False">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="{Binding DynBubbleH}"/>
+                    <RowDefinition Height="{Binding TailExtraH}"/>
+                </Grid.RowDefinitions>
+
+                <!-- 本体（透過度30% = 不透明度70% の白 + 下線のみ） -->
+                <Border Grid.Row="0"
+                        Background="#B3FFFFFF"
+                        BorderBrush="Gray"
+                        BorderThickness="0,0,0,1"
+                        CornerRadius="3"
+                        Padding="8,3,8,2">
+                    <Grid>
+                        <!-- 表示モード -->
+                        <TextBlock Text="{Binding Text}"
+                                   TextWrapping="Wrap"
+                                   FontSize="11"
+                                   Foreground="Black"
+                                   Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolVis}}"/>
+                        <!-- 編集モード：Enter or フォーカス外れで確定 -->
+                        <TextBox Text="{Binding EditingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 FontSize="11"
+                                 BorderThickness="0"
+                                 Padding="0"
+                                 Background="Transparent"
+                                 Foreground="Black"
+                                 Visibility="{Binding IsEditing, Converter={StaticResource BoolVis}}"
+                                 IsVisibleChanged="OnCalloutTextBoxVisibleChanged"
+                                 KeyDown="OnCalloutTextBoxKeyDown"
+                                 LostFocus="OnCalloutTextBoxLostFocus"/>
+                    </Grid>
+                </Border>
+
+                <!-- 尻尾（Canvas は両行にまたがり下にはみ出す）              -->
+                <!-- TailRootRelX=30, TipRelX=2 は定数のため直接記載          -->
+                <Canvas Grid.Row="0" Grid.RowSpan="2"
+                        IsHitTestVisible="False" ClipToBounds="False">
+                    <Line X1="{Binding TailRootRelX}" Y1="{Binding TailRootRelY}"
+                          X2="{Binding TipRelX}"       Y2="{Binding TipRelY}"
+                          Stroke="Gray" StrokeThickness="1.5"/>
+                    <Ellipse Canvas.Left="{Binding TipDotLeft}" Canvas.Top="{Binding TipDotTop}"
+                             Width="8" Height="8"
+                             Fill="Black"/>
+                </Canvas>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ── 吹き出しスタイルセレクター（コードビハインドで選択） ─── -->
+
+    </UserControl.Resources>
+
+    <!-- 吹き出し一覧：Canvas の親要素として Canvas を使い絶対配置 -->
+    <Canvas x:Name="OverlayCanvas" IsHitTestVisible="True" ClipToBounds="False">
+        <ItemsControl x:Name="CalloutsControl"
+                      ItemsSource="{Binding AllCallouts}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left"
+                            Value="{Binding AnchorColumnLeft}"/>
+                    <Setter Property="Canvas.Top"
+                            Value="{Binding AbsoluteTop}"/>
+                    <Setter Property="Visibility"
+                            Value="{Binding IsVisible,
+                                   Converter={StaticResource BoolVis}}"/>
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:CalloutViewModel}">
+                    <Grid MouseLeftButtonDown="OnCalloutMouseDown"
+                          MouseMove="OnCalloutMouseMove"
+                          MouseLeftButtonUp="OnCalloutMouseUp">
+                        <Grid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="テキスト編集(_E)"
+                                          Command="{Binding BeginEditCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="設置基準(_P)">
+                                    <MenuItem Header="日時固定(_A)"
+                                              Command="{Binding SetPositionModeAbsoluteCommand}"
+                                              IsChecked="{Binding IsPositionModeAbsolute, Mode=OneWay}"
+                                              IsCheckable="True"/>
+                                    <MenuItem Header="開始日(_S)"
+                                              Command="{Binding SetPositionModeStartCommand}"
+                                              IsChecked="{Binding IsPositionModeStart, Mode=OneWay}"
+                                              IsCheckable="True"/>
+                                    <MenuItem Header="終了日(_E)"
+                                              Command="{Binding SetPositionModeEndCommand}"
+                                              IsChecked="{Binding IsPositionModeEnd, Mode=OneWay}"
+                                              IsCheckable="True"/>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="{Binding VisibilityModeToggleHeader}"
+                                          Command="{Binding ToggleVisibilityModeCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="削除(_D)"
+                                          Command="{Binding DeleteCommand}"/>
+                            </ContextMenu>
+                        </Grid.ContextMenu>
+                        <ContentControl Content="{Binding}"
+                                        ContentTemplate="{StaticResource BubbleLineTemplate}"/>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Canvas>
+</UserControl>

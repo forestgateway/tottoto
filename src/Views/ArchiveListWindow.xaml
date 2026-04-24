@@ -1,0 +1,66 @@
+<Window x:Class="todochart.Views.ArchiveListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:todochart.ViewModels"
+        Title="&#12450;&#12540;&#12459;&#12452;&#12502;&#19968;&#35239;"
+        Width="620" Height="440" MinWidth="400" MinHeight="260"
+        Background="#FFFFFFFF"
+        Foreground="#FF000000"
+        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVis"/>
+    </Window.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+            <Button Content="&#12377;&#12409;&#12390;&#36984;&#25246;" Command="{Binding SelectAllCommand}"
+                    Padding="8,3" Margin="0,0,4,0"/>
+            <Button Content="&#12377;&#12409;&#12390;&#35299;&#38500;" Command="{Binding DeselectAllCommand}"
+                    Padding="8,3"/>
+        </StackPanel>
+
+        <ListView Grid.Row="1" ItemsSource="{Binding Items}"
+                  BorderBrush="#FFC8C8C8" BorderThickness="1"
+                  GridViewColumnHeader.Click="OnColumnHeaderClick"
+                  MouseLeftButtonUp="OnListViewMouseLeftButtonUp">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="36">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:ArchivedItemRow}">
+                                <CheckBox IsChecked="{Binding IsChecked}"
+                                          HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="&#12479;&#12473;&#12463;&#21517;" Width="180"
+                                    DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn Header="&#20803;&#12398;&#12497;&#12473;" Width="200"
+                                    DisplayMemberBinding="{Binding Path}"/>
+                    <GridViewColumn Header="&#12450;&#12540;&#12459;&#12452;&#12502;&#26085;" Width="130"
+                                    DisplayMemberBinding="{Binding ArchivedAt}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="&#24489;&#20803;" Command="{Binding RestoreCommand}"
+                    MinWidth="80" Padding="16,6" Margin="0,0,8,0"/>
+            <Button Content="&#21066;&#38500;" Command="{Binding DeleteCommand}"
+                    MinWidth="80" Padding="16,6" Margin="0,0,8,0"/>
+            <Button Content="&#38281;&#12376;&#12427;" IsCancel="True" Click="OnCloseClick"
+                    MinWidth="80" Padding="16,6"/>
+        </StackPanel>
+    </Grid>
+</Window>
