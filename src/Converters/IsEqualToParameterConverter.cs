@@ -1,10 +1,10 @@
 using System.Globalization;
-using System.Globalization;
+
 using System.Windows.Data;
 
 namespace todochart.Converters;
 
-/// <summary>value ‚Æ ConverterParameter ‚ª“™‚µ‚¯‚ê‚Î true ‚ğ•Ô‚· IValueConverterB</summary>
+/// <summary>value ã¨ ConverterParameter ãŒç­‰ã—ã‘ã‚Œã° true ã‚’è¿”ã™ IValueConverterã€‚</summary>
 public class IsEqualToParameterConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

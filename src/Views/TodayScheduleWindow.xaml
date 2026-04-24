@@ -103,10 +103,15 @@
                             <!-- マーク列 -->
                             <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Button Command="{Binding ToggleMarkCommand}"
-                                        Width="20" Height="20"
+                                        Width="24" Height="24"
+                                        Padding="0"
                                         Style="{StaticResource ToolBarButtonStyle}"
                                         ToolTip="マークを切り替え">
-                                    <TextBlock Text="★" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    <TextBlock x:Name="StarText"
+                                               Text="★"
+                                               FontSize="16"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
                                                Foreground="{Binding MarkBrush}"/>
                                 </Button>
                             </Grid>
@@ -127,11 +132,46 @@
                                         Style="{StaticResource ExpandToggleStyle}"
                                         Foreground="#FF666666"/>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                    <TextBlock Text="{Binding StatusIcon}"
-                                               Foreground="{Binding StatusBrush}"
-                                               FontSize="11" VerticalAlignment="Center"
-                                               Margin="2,0,4,0"/>
-                                    <TextBlock Text="{Binding Name}"
+                                    <Grid x:Name="StatusIconGrid"
+                                          Background="Transparent"
+                                          VerticalAlignment="Center" Margin="2,0,4,0"
+                                          Width="16" Height="16">
+                                        <TextBlock x:Name="IconText"
+                                                   Text="{Binding StatusIcon}"
+                                                   Foreground="{Binding StatusBrush}"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                        <!-- 完了タスク用：緑丸 + 白✔ -->
+                                        <Border x:Name="CheckBadge"
+                                                Background="#FF22AA44"
+                                                CornerRadius="8"
+                                                Width="16" Height="16"
+                                                Visibility="Collapsed">
+                                            <TextBlock Text="&#x2714;"
+                                                       Foreground="White"
+                                                       FontSize="8"
+                                                       FontFamily="Segoe UI, sans-serif"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <!-- 完了フォルダ用：緑四角背景 + 白フォルダ -->
+                                        <Border x:Name="FolderBadge"
+                                                Background="#FF22AA44"
+                                                CornerRadius="3"
+                                                Width="16" Height="16"
+                                                Visibility="Collapsed">
+                                            <TextBlock Text="&#xE8B7;"
+                                                       Foreground="White"
+                                                       FontSize="10"
+                                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock x:Name="NameLabel"
+                                               Text="{Binding Name}"
                                                Foreground="{StaticResource WindowFgBrush}"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis"
@@ -167,6 +207,26 @@
                         </Grid>
                         </Grid>
                     </Border>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Item.Completed}" Value="True">
+                            <Setter TargetName="IconText"   Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="CheckBadge" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsCompletedFolder}" Value="True">
+                            <Setter TargetName="FolderBadge" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <!-- 黄色★のとき黒縁取り -->
+                        <DataTrigger Binding="{Binding MarkLevel}" Value="1">
+                            <Setter TargetName="StarText" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="Black"
+                                                      ShadowDepth="0"
+                                                      BlurRadius="2"
+                                                      Opacity="1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

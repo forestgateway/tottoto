@@ -3,7 +3,7 @@ using System.Windows.Data;
 
 namespace todochart.Converters;
 
-/// <summary>2‚Â‚Ì’l‚ª“™‚µ‚¯‚ê‚Î true ‚ğ•Ô‚· MultiValueConverter</summary>
+/// <summary>2ã¤ã®å€¤ãŒç­‰ã—ã‘ã‚Œã° true ã‚’è¿”ã™ MultiValueConverter</summary>
 public class IsEqualConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)

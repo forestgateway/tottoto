@@ -13,7 +13,7 @@ public partial class TodayScheduleWindow : Window
     {
         InitializeComponent();
         DataContext = vm;
-        // XAML Title = "¡“ú‚Ì—\’è"; append today's date here
+        // XAML Title = "ä»Šæ—¥ã®äºˆå®š"; append today's date here
         Title = Title + " - " + DateTime.Today.ToString("yyyy/MM/dd");
     }
 

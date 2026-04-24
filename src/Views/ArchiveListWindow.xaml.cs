@@ -28,7 +28,7 @@ public partial class ArchiveListWindow : Window
         if (e.OriginalSource is not GridViewColumnHeader header) return;
         if (header.Column is null) return;
 
-        // DisplayMemberBinding ‚ÌƒpƒX‚©‚çƒ\[ƒg—ñ–¼‚ğæ“¾
+        // DisplayMemberBinding ã®ãƒ‘ã‚¹ã‹ã‚‰ã‚½ãƒ¼ãƒˆåˆ—åã‚’å–å¾—
         var binding = header.Column.DisplayMemberBinding as System.Windows.Data.Binding;
         var column = binding?.Path?.Path;
         if (!string.IsNullOrEmpty(column))
@@ -39,7 +39,7 @@ public partial class ArchiveListWindow : Window
     {
         if (e.OriginalSource is not DependencyObject source) return;
 
-        // ƒNƒŠƒbƒNˆÊ’u‚Ì ListViewItem ‚ğ’T‚·
+        // ã‚¯ãƒªãƒƒã‚¯ä½ç½®ã® ListViewItem ã‚’æ¢ã™
         var item = ItemsControl.ContainerFromElement((ListView)sender, source) as ListViewItem;
         if (item?.DataContext is ArchivedItemRow row)
             row.IsChecked = !row.IsChecked;

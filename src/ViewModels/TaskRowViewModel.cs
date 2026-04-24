@@ -102,6 +102,19 @@ public class TaskRowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>モデル／コールバックを介さず内部フラグだけ書き換える（ビルド時の初期化用）。</summary>
+    internal void SetIsExpandedDirect(bool value) => _isExpanded = value;
+
+    // null の場合はモデルに書き戻し MainViewModel.RefreshFlatList を呼ぶ（通常モード）。
+    // 非null の場合はモデルを変更せずコールバックだけ呼ぶ（今日の予定ウィンドウ用）。
+    private Action<bool>? _expandedCallback;
+
+    /// <summary>
+    /// 今日の予定ウィンドウ用の独立展開モードを設定する。
+    /// コールバックが設定されると IsExpanded の変更がモデルに伝播しなくなる。
+    /// </summary>
+    internal void SetExpandedCallback(Action<bool> callback) => _expandedCallback = callback;
+
     private bool _isExpanded = true;
     public bool IsExpanded
     {
@@ -110,9 +123,18 @@ public class TaskRowViewModel : ViewModelBase
         {
             if (_isExpanded == value) return;
             _isExpanded = value;
-            if (Item is ScheduleFolder sf) sf.IsExpanded = value;
-            OnPropertyChanged();
-            _main.RefreshFlatList();
+            if (_expandedCallback is not null)
+            {
+                // 独立モード：モデルに書き戻さず、コールバックで TodayScheduleViewModel を更新
+                OnPropertyChanged();
+                _expandedCallback(value);
+            }
+            else
+            {
+                if (Item is ScheduleFolder sf) sf.IsExpanded = value;
+                OnPropertyChanged();
+                _main.RefreshFlatList();
+            }
         }
     }
 
