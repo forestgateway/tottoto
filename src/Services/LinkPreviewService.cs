@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using todochart.Models;
@@ -25,6 +26,11 @@ public static class LinkPreviewService
     private static readonly Regex s_titleRegex = new(
         @"<title[^>]*>\s*(?<t>[^<]{1,300})\s*</title>",
         RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+
+    // <meta charset="..."> または <meta http-equiv="Content-Type" content="...; charset=...">
+    private static readonly Regex s_charsetRegex = new(
+        @"charset\s*=\s*[""']?\s*(?<cs>[A-Za-z0-9\-_]{2,32})",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     // GitLab issue URL: /-/issues/{iid} または /issues/{iid}
     private static readonly Regex s_gitlabIssueRegex = new(
@@ -187,13 +193,31 @@ public static class LinkPreviewService
             }
             catch { /* HEAD 非対応サーバー → GET にフォールバック */ }
 
-            // GET で先頭 8KB だけ取得
+            // GET でバイト列を取得してエンコーディングを正確に判定する
             using var getReq = new HttpRequestMessage(HttpMethod.Get, url);
             getReq.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 8191);
             var res = await s_client.SendAsync(
                 getReq, HttpCompletionOption.ResponseContentRead, ct);
 
-            var html = await res.Content.ReadAsStringAsync(ct);
+            var bytes = await res.Content.ReadAsByteArrayAsync(ct);
+
+            // エンコーディング解決: Content-Type ヘッダー → HTML meta → UTF-8 の順
+            Encoding encoding = Encoding.UTF8;
+            var contentTypeCharset = res.Content.Headers.ContentType?.CharSet;
+            if (!string.IsNullOrWhiteSpace(contentTypeCharset))
+            {
+                encoding = TryGetEncoding(contentTypeCharset) ?? encoding;
+            }
+            else
+            {
+                // まず ASCII/Latin-1 で仮デコードして meta charset を探す
+                var provisional = Encoding.Latin1.GetString(bytes);
+                var cm = s_charsetRegex.Match(provisional);
+                if (cm.Success)
+                    encoding = TryGetEncoding(cm.Groups["cs"].Value) ?? encoding;
+            }
+
+            var html = encoding.GetString(bytes);
             var m    = s_titleRegex.Match(html);
             if (!m.Success) return null;
 
@@ -204,5 +228,14 @@ public static class LinkPreviewService
         {
             return null;
         }
+    }
+    private static Encoding? TryGetEncoding(string name)
+    {
+        try
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            return Encoding.GetEncoding(name.Trim());
+        }
+        catch { return null; }
     }
 }

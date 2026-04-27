@@ -59,6 +59,9 @@ public class TodayScheduleViewModel : ViewModelBase
     public ICommand DeleteCommand         => _main.DeleteCommand;
     public ICommand EditCommand           => _main.EditCommand;
     public ICommand ArchiveCommand        => _main.ArchiveCommand;
+    public ICommand CopyItemCommand       => _main.CopyItemCommand;
+    public ICommand CutItemCommand        => _main.CutItemCommand;
+    public ICommand PasteItemCommand      => _main.PasteItemCommand;
 
     // -- Called by MainViewModel when its Selected changes -------------------
     public void NotifySelectedChanged()

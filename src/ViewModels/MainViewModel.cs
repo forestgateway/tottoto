@@ -278,6 +278,9 @@ public class MainViewModel : ViewModelBase
     public ICommand UpdateIssueTrackingCommand   { get; private set; } = null!;
     public ICommand EditIssueTrackingCommand     { get; private set; } = null!;
     public ICommand ChangeThemeCommand           { get; private set; } = null!;
+    public ICommand CopyItemCommand              { get; private set; } = null!;
+    public ICommand CutItemCommand               { get; private set; } = null!;
+    public ICommand PasteItemCommand             { get; private set; } = null!;
 
     // ── 現在のテーマ名 ────────────────────────────────────
     private string _currentTheme = "Light";
@@ -286,6 +289,10 @@ public class MainViewModel : ViewModelBase
         get => _currentTheme;
         private set => SetField(ref _currentTheme, value);
     }
+
+    // ── コピー/カット用の内部クリップボード ──────────────
+    private ScheduleItemBase? _clipboardItem;
+    private bool _clipboardIsCut;
 
     // 今日の予定ウィンドウ ViewModel（シングルトン管理）
     private TodayScheduleViewModel? _todayVm;
@@ -360,6 +367,10 @@ public class MainViewModel : ViewModelBase
             if (p is not string name) return;
             CurrentTheme = name;
         });
+
+        CopyItemCommand  = new RelayCommand(CopySelected,  () => Selected is not null);
+        CutItemCommand   = new RelayCommand(CutSelected,   () => Selected is not null);
+        PasteItemCommand = new RelayCommand(() => _ = PasteAsync());
     }
 
     // ──── 新規 / 開く / 保存 ───────────────────────────────────────────────
@@ -1190,6 +1201,146 @@ public class MainViewModel : ViewModelBase
         var win = new Views.TodayScheduleWindow(vm);
         win.Closed += (_, _) => RegisterTodayVm(null);
         win.Show();
+    }
+
+    // ──── コピー / カット / ペースト ──────────────────────────────────────
+    private void CopySelected()
+    {
+        if (Selected is null) return;
+        _clipboardItem  = Selected.Item.CloneShallow();
+        _clipboardIsCut = false;
+    }
+
+    private void CutSelected()
+    {
+        if (Selected is null) return;
+        _clipboardItem  = Selected.Item;
+        _clipboardIsCut = true;
+    }
+
+    private async Task PasteAsync()
+    {
+        // ① 内部クリップボードにタスクアイテムがある場合
+        if (_clipboardItem is ScheduleToDo clipTodo)
+        {
+            var clone = (ScheduleToDo)clipTodo.CloneShallow();
+            clone.Name = _clipboardIsCut ? clipTodo.Name : clipTodo.Name + " のコピー";
+
+            if (_clipboardIsCut)
+            {
+                // カットの場合は元の場所から削除（削除前にエントリを特定する）
+                var srcEntry = FindEntryForItem(clipTodo);
+                var srcParent = clipTodo.Parent ?? (ScheduleItemBase?)srcEntry?.Root;
+                srcParent?.Children.Remove(clipTodo);
+                if (srcEntry is not null) srcEntry.IsModified = true;
+                _clipboardItem  = clone; // 次貼り付けに備えてクローンに差し替え
+                _clipboardIsCut = false;
+            }
+
+            var nearItem = Selected?.Item;
+            ResolveInsertPosition(
+                (_activeEntry ?? Schedules.FirstOrDefault())?.Root ?? new Models.ScheduleFolder(),
+                nearItem, out var parent, out var insertBefore);
+            InsertItem(_activeEntry ?? Schedules.First(), parent, clone, insertBefore);
+            Selected = FlatItems.FirstOrDefault(r => r.Item == clone);
+            return;
+        }
+
+        // ② システムクリップボードを確認
+        IDataObject? data = null;
+        try { data = System.Windows.Clipboard.GetDataObject(); } catch { }
+        if (data is null) return;
+
+        var nearItem2 = Selected?.Item;
+
+        // ファイル/フォルダパス
+        if (data.GetDataPresent(DataFormats.FileDrop))
+        {
+            var files = data.GetData(DataFormats.FileDrop) as string[];
+            if (files is not null)
+            {
+                foreach (var file in files)
+                    AddToDoFromFile(file, nearItem2);
+                return;
+            }
+        }
+
+        // ブラウザでコピーした URL（UniformResourceLocator / UniformResourceLocatorW 形式）
+        string? urlFromBrowser = null;
+        try
+        {
+            if (data.GetDataPresent("UniformResourceLocatorW"))
+            {
+                using var stream = data.GetData("UniformResourceLocatorW") as System.IO.Stream;
+                if (stream is not null)
+                {
+                    var bytes = new byte[stream.Length];
+                    _ = stream.Read(bytes, 0, bytes.Length);
+                    urlFromBrowser = System.Text.Encoding.Unicode.GetString(bytes).TrimEnd('\0');
+                }
+            }
+            if (string.IsNullOrWhiteSpace(urlFromBrowser) && data.GetDataPresent("UniformResourceLocator"))
+            {
+                using var stream = data.GetData("UniformResourceLocator") as System.IO.Stream;
+                if (stream is not null)
+                {
+                    var bytes = new byte[stream.Length];
+                    _ = stream.Read(bytes, 0, bytes.Length);
+                    urlFromBrowser = System.Text.Encoding.Default.GetString(bytes).TrimEnd('\0');
+                }
+            }
+        }
+        catch { }
+
+        if (!string.IsNullOrWhiteSpace(urlFromBrowser))
+        {
+            await AddToDoFromUrl(urlFromBrowser.Trim(), nearItem2);
+            return;
+        }
+
+        // テキスト
+        string? text = null;
+        try
+        {
+            if (data.GetDataPresent(DataFormats.UnicodeText))
+                text = data.GetData(DataFormats.UnicodeText) as string;
+            else if (data.GetDataPresent(DataFormats.Text))
+                text = data.GetData(DataFormats.Text) as string;
+        }
+        catch { }
+
+        if (string.IsNullOrWhiteSpace(text)) return;
+        text = text.Trim();
+
+        // URL かどうか判定
+        if (Uri.TryCreate(text, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps
+                || uri.Scheme == Uri.UriSchemeFtp  || uri.Scheme == "file"))
+        {
+            if (uri.Scheme == "file")
+            {
+                // file:// → ローカルパスとして処理
+                AddToDoFromFile(uri.LocalPath, nearItem2);
+            }
+            else
+            {
+                await AddToDoFromUrl(text, nearItem2);
+            }
+            return;
+        }
+
+        // それ以外の文字列 → タスク名として登録
+        var entry = nearItem2 is not null ? FindEntryForItem(nearItem2) ?? _activeEntry : _activeEntry;
+        if (entry is null) return;
+        var todo = new Models.ScheduleToDo
+        {
+            Name      = text,
+            BeginDate = Today,
+            EndDate   = Today.AddDays(7),
+        };
+        ResolveInsertPosition(entry.Root, nearItem2, out var p2, out var ib2);
+        InsertItem(entry, p2, todo, ib2);
+        Selected = FlatItems.FirstOrDefault(r => r.Item == todo);
     }
 
     // ──── 設定保存 ─────────────────────────────────────────────────────────

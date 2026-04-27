@@ -283,6 +283,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             row.CommitEdit();
     }
 
+    // ListBox の PreviewKeyDown で Ctrl+C/X/V をコマンド経由に統一する。
+    // TextBox 編集中は TextBox のデフォルト動作を優先するため、インライン編集中はスキップ。
+    private void OnTaskListPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.C or Key.X or Key.V)) return;
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+        if (Keyboard.FocusedElement is TextBox) return;
+
+        switch (e.Key)
+        {
+            case Key.C: Vm.CopyItemCommand.Execute(null);  e.Handled = true; break;
+            case Key.X: Vm.CutItemCommand.Execute(null);   e.Handled = true; break;
+            case Key.V: Vm.PasteItemCommand.Execute(null); e.Handled = true; break;
+        }
+    }
+
     // ── タスクリスト ドラッグ＆ドロップ ──────────────────
     private Point?              _dragStartPoint;
     private TaskRowViewModel?   _dragSource;
