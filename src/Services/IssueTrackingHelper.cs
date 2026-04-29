@@ -93,6 +93,7 @@ public static class IssueTrackingHelper
             "gitlab"     => new GitLabIssueProvider(),
             "jira"       => new JiraIssueProvider(),
             "jiraonprem" => new JiraOnPremIssueProvider(),
+            "redmine"    => new RedmineIssueProvider(),
             _            => throw new NotSupportedException($"未対応のプロバイダー: {provider}"),
         };
 }

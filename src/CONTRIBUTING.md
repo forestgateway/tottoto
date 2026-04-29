@@ -96,6 +96,7 @@ src/
 | `GitLabIssueProvider` | `Services/GitLabIssueProvider.cs` | GitLab Issues API との連携実装 |
 | `JiraIssueProvider` | `Services/JiraIssueProvider.cs` | Jira Cloud API との連携実装 |
 | `JiraOnPremIssueProvider` | `Services/JiraOnPremIssueProvider.cs` | Jira オンプレミス API との連携実装 |
+| `RedmineIssueProvider` | `Services/RedmineIssueProvider.cs` | Redmine Issues API との連携実装 |
 | `IssueTrackingHelper` | `Services/IssueTrackingHelper.cs` | Issue 状態文字列 → `ItemStatus` マッピングなどのユーティリティ |
 | `LinkPreviewService` | `Services/LinkPreviewService.cs` | URL のタイトル取得などリンクプレビュー情報を取得するサービス |
 

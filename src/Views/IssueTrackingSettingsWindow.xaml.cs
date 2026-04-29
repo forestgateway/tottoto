@@ -156,6 +156,7 @@ public partial class IssueTrackingSettingsWindow : Window
         {
             "jira"       => $"{base_}/rest/api/3/project/{id}",
             "jiraonprem" => $"{base_}/rest/api/2/search",
+            "redmine"    => $"{base_}/projects/{id}.json",
             _            => $"{base_}/api/v4/projects/{id}",
         };
     }

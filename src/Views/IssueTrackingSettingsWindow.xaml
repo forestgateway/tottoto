@@ -114,7 +114,7 @@
             <TextBox Grid.Row="2" Grid.Column="1"
                      Text="{Binding BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,0,0,8"
-                     ToolTip="例: https://gitlab.example.com  /  https://yoursite.atlassian.net  /  https://jira.example.com"/>
+                     ToolTip="例: https://gitlab.example.com  /  https://yoursite.atlassian.net  /  https://jira.example.com  /  https://redmine.example.com"/>
 
             <!-- ProjectId (必須) -->
             <TextBlock Grid.Row="3" Grid.Column="0"
@@ -125,7 +125,7 @@
             <TextBox Grid.Row="3" Grid.Column="1"
                      Text="{Binding ProjectId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,0,0,8"
-                     ToolTip="GitLab: 数値 ID または namespace/project  /  Jira Cloud / JiraOnPrem: プロジェクトキー (例: DTOFSOFT70)"/>
+                     ToolTip="GitLab: 数値 ID または namespace/project  /  Jira Cloud / JiraOnPrem: プロジェクトキー (例: DTOFSOFT70)  /  Redmine: プロジェクト識別子 (例: myproject)"/>
 
             <!-- ApiToken (必須) ― ラベルをプロバイダーで切替 -->
             <TextBlock Grid.Row="4" Grid.Column="0"
@@ -154,6 +154,8 @@
                         <Run Text="Jira Cloud: API トークン"/>
                         <LineBreak/>
                         <Run Text="JiraOnPrem: パスワードまたは API トークン"/>
+                        <LineBreak/>
+                        <Run Text="Redmine: API Access Key"/>
                     </TextBlock>
                 </PasswordBox.ToolTip>
             </PasswordBox>
@@ -251,6 +253,8 @@
                         <Run Text="Jira Cloud: JQL (例: project = MYPROJ AND assignee = currentUser())"/>
                         <LineBreak/>
                         <Run Text="JiraOnPrem: 追加 JQL 条件 (例: assignee=currentUser() AND statusCategory!=Done)"/>
+                        <LineBreak/>
+                        <Run Text="Redmine: URL クエリ追加条件 (例: status_id=open&amp;assigned_to_id=me)"/>
                         <LineBreak/>
                         <Run Text="　　空欄の場合は project={projectKey} のみで検索します。"/>
                     </TextBlock>

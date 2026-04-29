@@ -8,7 +8,7 @@ namespace todochart.Models;
 /// </summary>
 public class IssueTrackingSettings
 {
-    /// <summary>プロバイダー種別: "GitLab" / "Jira" / "JiraOnPrem"</summary>
+    /// <summary>プロバイダー種別: "GitLab" / "Jira" / "JiraOnPrem" / "Redmine"</summary>
     [JsonPropertyName("provider")]
     public string Provider { get; set; } = string.Empty;
 
@@ -20,13 +20,13 @@ public class IssueTrackingSettings
     [JsonPropertyName("baseUrl")]
     public string BaseUrl { get; set; } = string.Empty;
 
-    /// <summary>GitLab: プロジェクト ID / Jira Cloud: プロジェクトキー / JiraOnPrem: プロジェクトキー</summary>
+    /// <summary>GitLab: プロジェクト ID / Jira Cloud: プロジェクトキー / JiraOnPrem: プロジェクトキー / Redmine: プロジェクト識別子</summary>
     [JsonPropertyName("projectId")]
     public string ProjectId { get; set; } = string.Empty;
 
     /// <summary>
     /// API トークン / パスワード (平文保存。将来的には暗号化を検討)
-    /// GitLab: Personal Access Token / Jira Cloud: API トークン / JiraOnPrem: パスワードまたは API トークン
+    /// GitLab: Personal Access Token / Jira Cloud: API トークン / JiraOnPrem: パスワードまたは API トークン / Redmine: API Access Key
     /// </summary>
     [JsonPropertyName("apiToken")]
     public string ApiToken { get; set; } = string.Empty;
@@ -46,7 +46,7 @@ public class IssueTrackingSettings
     [JsonPropertyName("maxResults")]
     public int MaxResults { get; set; } = 0;
 
-    /// <summary>追加クエリ条件 (GitLab: "assignee=me&amp;state=opened" / JiraOnPrem: JQL (任意))</summary>
+    /// <summary>追加クエリ条件 (GitLab: "assignee=me&amp;state=opened" / JiraOnPrem: JQL (任意) / Redmine: URLクエリ追加条件 例: status_id=open&amp;assigned_to_id=me)</summary>
     [JsonPropertyName("query")]
     public string Query { get; set; } = string.Empty;
 

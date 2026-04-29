@@ -11,7 +11,7 @@ public class IssueTrackingSettingsViewModel : ViewModelBase
         set => SetField(ref _provider, value);
     }
 
-    public IReadOnlyList<string> Providers { get; } = ["GitLab", "Jira", "JiraOnPrem"];
+    public IReadOnlyList<string> Providers { get; } = ["GitLab", "Jira", "JiraOnPrem", "Redmine"];
 
     private string _displayName = string.Empty;
     public string DisplayName
