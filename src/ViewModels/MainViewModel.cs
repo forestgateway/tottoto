@@ -1027,10 +1027,31 @@ public class MainViewModel : ViewModelBase
     private void ShiftDate(int deltaBegin, int deltaEnd)
     {
         if (Selected is null) return;
-        if (deltaBegin != 0 && Selected.Item.BeginDate.HasValue)
-            Selected.Item.BeginDate = Selected.Item.BeginDate.Value.AddDays(deltaBegin);
-        if (deltaEnd != 0 && Selected.Item.EndDate.HasValue)
-            Selected.Item.EndDate = Selected.Item.EndDate.Value.AddDays(deltaEnd);
+
+        var item = Selected.Item;
+        var beginDate = item.BeginDate;
+        var endDate = item.EndDate;
+
+        // 開始日の調整（終了日より後にならないように制限）
+        if (deltaBegin != 0 && beginDate.HasValue)
+        {
+            var newBeginDate = beginDate.Value.AddDays(deltaBegin);
+            if (endDate.HasValue && newBeginDate > endDate.Value)
+                newBeginDate = endDate.Value;
+            item.BeginDate = newBeginDate;
+        }
+
+        // 終了日の調整（開始日より前にならないように制限）
+        if (deltaEnd != 0 && endDate.HasValue)
+        {
+            var newEndDate = endDate.Value.AddDays(deltaEnd);
+            // 開始日の更新後の値を取得
+            var currentBeginDate = item.BeginDate;
+            if (currentBeginDate.HasValue && newEndDate < currentBeginDate.Value)
+                newEndDate = currentBeginDate.Value;
+            item.EndDate = newEndDate;
+        }
+
         UpdateAllStatuses();
         RefreshFlatList();
         MarkModifiedForItem(Selected.Item);
