@@ -393,8 +393,7 @@ public class TaskRowViewModel : ViewModelBase
 
     private static Brush CellBackground(int cellStatus, int hlv, DateTime date, Brush rowBase)
     {
-        bool isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
-        if (isWeekend || hlv >= 1) return s_bgWeekend;
+        if (hlv >= 1) return s_bgWeekend;
         return rowBase;
     }
 

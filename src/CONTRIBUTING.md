@@ -57,6 +57,8 @@ src/
 | `CalloutVisibilityMode` | `Models/CalloutVisibilityMode.cs` | 吹き出し表示条件を表す enum |
 | `IssueCacheItem` | `Models/IssueCacheItem.cs` | Issue Tracking から取得した Issue のキャッシュデータ |
 | `IssueTrackingSettings` | `Models/IssueTrackingSettings.cs` | Issue Tracking 連携の設定値（URL・トークン等） |
+| `HolidayData` | `Models/HolidayData.cs` | 休日設定で使用する個別休日データ（Date/Name/Level）の表示・編集用レコード |
+| `HolidayYearOption` | `Models/HolidayYearOption.cs` | 祝日反映対象の西暦とチェック状態を保持する選択オプション |
 
 ### ViewModels
 
@@ -72,6 +74,8 @@ src/
 | `TodayScheduleViewModel` | `ViewModels/TodayScheduleViewModel.cs` | 今日のスケジュール表示ウィンドウの ViewModel |
 | `IssueTrackingSettingsViewModel` | `ViewModels/IssueTrackingSettingsViewModel.cs` | Issue Tracking 設定ダイアログの ViewModel |
 | `ArchiveListViewModel` | `ViewModels/ArchiveListViewModel.cs` | アーカイブ一覧ウィンドウの ViewModel |
+| `HolidaySettingsViewModel` | `ViewModels/HolidaySettingsViewModel.cs` | 休日設定ダイアログの ViewModel（曜日レベル、祝日取得、任意休日追加・削除） |
+| `HolidayYearSelectionViewModel` | `ViewModels/HolidayYearSelectionViewModel.cs` | 祝日反映対象の年チェックリストを管理する ViewModel |
 | `CalloutViewModel` | `ViewModels/CalloutViewModel.cs` | 吹き出し注釈の表示状態・位置計算を扱う ViewModel |
 
 ### Views
@@ -82,6 +86,8 @@ src/
 | `Views/TaskPropertiesWindow.xaml` | タスク詳細編集ダイアログ |
 | `Views/TodayScheduleWindow.xaml` | 今日のスケジュール一覧表示 |
 | `Views/IssueTrackingSettingsWindow.xaml` | Issue Tracking 連携設定ダイアログ |
+| `Views/HolidaySettingsWindow.xaml` | 休日設定ダイアログ |
+| `Views/HolidayYearSelectionWindow.xaml` | 祝日反映対象の西暦をチェック選択するダイアログ |
 | `Views/ArchiveListWindow.xaml` | アーカイブ済みタスク一覧 |
 
 ### Services
@@ -118,6 +124,7 @@ src/
 | `IsEqualConverter` | `Converters/IsEqualConverter.cs` | 値の等値比較を行う汎用コンバーター |
 | `IsEqualToParameterConverter` | `Converters/IsEqualToParameterConverter.cs` | 値と `ConverterParameter` の等値比較を行うコンバーター |
 | `NullableBoolToTestColorConverter` | `Converters/NullableBoolToTestColorConverter.cs` | `bool?` 値をテスト結果色に変換 |
+| `DateOnlyToDateTimeConverter` | `Converters/DateOnlyToDateTimeConverter.cs` | `DateOnly` と `DateTime?` を相互変換するコンバーター |
 
 ### Themes
 

@@ -41,6 +41,8 @@ public class AppSettings
     public int[] WeekdayLevels { get; set; } = { 2, 0, 0, 0, 0, 0, 1 };
     public int   DateCountLevel { get; set; } = 0;
     public int   AlertCount     { get; set; } = 3;
+    // 個別休日データ（HolidayService.ExportSpecialHolidays 形式）
+    public List<string> SpecialHolidays { get; set; } = new();
 
     // ── 最後に開いたファイル ──────────────────────────────
     public string LastFile { get; set; } = string.Empty;

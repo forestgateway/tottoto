@@ -187,6 +187,11 @@ public class MainViewModel : ViewModelBase
         Holidays.SetWeekdayLevels(_settings.WeekdayLevels);
         Holidays.AlertCount     = _settings.AlertCount;
         Holidays.DateCountLevel = _settings.DateCountLevel;
+        // 個別休日データのロード（AppSettings.SpecialHolidays があれば）
+        if (_settings.SpecialHolidays is not null)
+        {
+            Holidays.ImportSpecialHolidays(_settings.SpecialHolidays);
+        }
 
         _chartStart    = DateTime.Today.AddDays(_settings.ChartOffsetFromToday);
         _hideCompleted = _settings.HideCompleted;
@@ -281,6 +286,7 @@ public class MainViewModel : ViewModelBase
     public ICommand CopyItemCommand              { get; private set; } = null!;
     public ICommand CutItemCommand               { get; private set; } = null!;
     public ICommand PasteItemCommand             { get; private set; } = null!;
+    public ICommand ShowHolidaySettingsCommand   { get; private set; } = null!;
 
     // ── 現在のテーマ名 ────────────────────────────────────
     private string _currentTheme = "Light";
@@ -371,6 +377,7 @@ public class MainViewModel : ViewModelBase
         CopyItemCommand  = new RelayCommand(CopySelected,  () => Selected is not null);
         CutItemCommand   = new RelayCommand(CutSelected,   () => Selected is not null);
         PasteItemCommand = new RelayCommand(() => _ = PasteAsync());
+        ShowHolidaySettingsCommand = new RelayCommand(ShowHolidaySettings);
     }
 
     // ──── 新規 / 開く / 保存 ───────────────────────────────────────────────
@@ -1580,6 +1587,26 @@ public class MainViewModel : ViewModelBase
 
         if (vm.Restored)
         {
+            UpdateAllStatuses();
+            RefreshFlatList();
+        }
+    }
+
+    // ──────── 休日設定ウィンドウ ──────────────────────────────────
+    private void ShowHolidaySettings()
+    {
+        var vm  = new HolidaySettingsViewModel(Holidays);
+        var win = new Views.HolidaySettingsWindow(vm) { Owner = Application.Current.MainWindow };
+        if (win.ShowDialog() == true)
+        {
+            // 設定変更後、AppSettings に保存
+            _settings.WeekdayLevels = Holidays.GetWeekdayLevels();
+            _settings.AlertCount    = Holidays.AlertCount;
+            _settings.DateCountLevel = Holidays.DateCountLevel;
+            _settings.SpecialHolidays = Holidays.ExportSpecialHolidays();
+            _settings.Save();
+
+            // ガントチャートを再描画
             UpdateAllStatuses();
             RefreshFlatList();
         }

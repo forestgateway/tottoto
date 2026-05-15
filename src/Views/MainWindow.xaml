@@ -101,6 +101,9 @@
                 <MenuItem Header="終了日を⊕1日" Command="{Binding ShiftEndPlusCommand}"    InputGestureText="Ctrl+→"/>
                 <MenuItem Header="終了日を⊖1日" Command="{Binding ShiftEndMinusCommand}"   InputGestureText="Ctrl+←"/>
             </MenuItem>
+            <MenuItem Header="オプション(_O)" Foreground="{StaticResource WindowFgBrush}">
+                <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
+            </MenuItem>
             <MenuItem Header="ヘルプ(_H)" Foreground="{StaticResource WindowFgBrush}">
                 <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
             </MenuItem>
