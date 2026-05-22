@@ -251,7 +251,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // TaskListBox が仮想化で ItemContainer を生成するまで Background 優先度で遅延
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
-            TaskListBox.ScrollIntoView(row);
+            // 既に表示中でコンテナが生成済みの行には不要なスクロールを行わない
+            if (TaskListBox.ItemContainerGenerator.ContainerFromItem(row) is null)
+                TaskListBox.ScrollIntoView(row);
+
             row.BeginEdit();
         });
     }
