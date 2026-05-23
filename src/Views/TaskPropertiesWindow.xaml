@@ -162,9 +162,9 @@
                         <Button Grid.Column="2" Content="🌐" Margin="4,0,0,0"
                                 Click="OnOpenLinkClick"   ToolTip="リンクを開く"/>
                     </Grid>
-                    <Button Content="リンクをクリア" Margin="0,8,0,0"
+                    <Button Content="デスクトップアプリで開く先頭文字を付与" Margin="0,8,0,0"
                             HorizontalAlignment="Left"
-                            Click="OnClearLinkClick"/>
+                            Click="OnApplyDesktopAppPrefixClick"/>
                 </StackPanel>
             </TabItem>
         </TabControl>

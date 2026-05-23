@@ -1031,6 +1031,34 @@ public class MainViewModel : ViewModelBase
     }
 
     // ──── 日付シフト ───────────────────────────────────────────────────────
+    public void ShiftSelectedKeepingDurationBy(int deltaDays)
+    {
+        if (deltaDays == 0 || Selected is null) return;
+
+        var item = Selected.Item;
+        var beginDate = item.BeginDate;
+        var endDate = item.EndDate;
+
+        // 期間平行移動では開始・終了を同じ日数だけ移動し、期間長を維持する
+        if (beginDate.HasValue && endDate.HasValue)
+        {
+            item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+        else
+        {
+            if (beginDate.HasValue)
+                item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            if (endDate.HasValue)
+                item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+
+        UpdateAllStatuses();
+        RefreshFlatList();
+        MarkModifiedForItem(item);
+        Selected?.Refresh();
+    }
+
     private void ShiftDate(int deltaBegin, int deltaEnd)
     {
         if (Selected is null) return;
