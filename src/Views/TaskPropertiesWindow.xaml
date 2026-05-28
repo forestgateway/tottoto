@@ -164,7 +164,8 @@
                     </Grid>
                     <Button Content="デスクトップアプリで開く先頭文字を付与" Margin="0,8,0,0"
                             HorizontalAlignment="Left"
-                            Click="OnApplyDesktopAppPrefixClick"/>
+                            Click="OnApplyDesktopAppPrefixClick"
+                            IsEnabled="{Binding CanApplyDesktopAppPrefix}"/>
                 </StackPanel>
             </TabItem>
         </TabControl>

@@ -72,6 +72,14 @@ public partial class TaskPropertiesWindow : Window
         var link = _vm.Link?.Trim();
         if (string.IsNullOrWhiteSpace(link)) return;
 
+        if (!Uri.TryCreate(link, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            MessageBox.Show("URL（http/https）のときのみ変換できます。",
+                            "未対応", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         if (link.StartsWith("ms-excel:", StringComparison.OrdinalIgnoreCase) ||
             link.StartsWith("ms-word:", StringComparison.OrdinalIgnoreCase) ||
             link.StartsWith("ms-powerpoint:", StringComparison.OrdinalIgnoreCase))

@@ -119,8 +119,14 @@ public class TaskPropertiesViewModel : ViewModelBase
     public string Link
     {
         get => _link;
-        set => SetField(ref _link, value);
+        set
+        {
+            if (SetField(ref _link, value))
+                OnPropertyChanged(nameof(CanApplyDesktopAppPrefix));
+        }
     }
+
+    public bool CanApplyDesktopAppPrefix => IsHttpUrl(Link);
 
     private int _dateCountLevel;
     public int DateCountLevel
@@ -149,6 +155,13 @@ public class TaskPropertiesViewModel : ViewModelBase
         int days  = _main.Holidays.CountWorkingDays(BeginDate, EndDate, DateCountLevel);
         int total = (int)(EndDate - BeginDate).TotalDays + 1;
         DaysLabel = $"期間: {total}日 (実働{days}日)";
+    }
+
+    private static bool IsHttpUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        if (!Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)) return false;
+        return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
     }
 
     // ── 確定 ─────────────────────────────────────────────
