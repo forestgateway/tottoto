@@ -80,7 +80,7 @@
             <TabItem x:Name="ScheduleTab" Header="日程">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="8">
-                        <!-- 完了チェック + WAIT -->
+                        <!-- 完了チェック + WAIT + 進捗率 -->
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,12"
                                     VerticalAlignment="Center">
                             <CheckBox IsChecked="{Binding Completed}"
@@ -90,6 +90,16 @@
                                       Content="WAIT"
                                       Margin="12,0,0,0"
                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="進捗率:"
+                                       Margin="16,0,4,0"
+                                       VerticalAlignment="Center"
+                                       Foreground="#FF3B3B3B"/>
+                            <ComboBox ItemsSource="{Binding ProgressOptions}"
+                                      SelectedItem="{Binding Progress}"
+                                      Width="76"
+                                      VerticalAlignment="Center"
+                                      ItemStringFormat="{}{0}%"
+                                      IsEnabled="{Binding IsNotFolder}"/>
                         </StackPanel>
 
                         <!-- 開始日 -->
