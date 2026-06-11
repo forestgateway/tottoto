@@ -65,6 +65,7 @@ public class ScheduleFileService
         {
             dto.Completed = todo.Completed ? true : null;       // false はデフォルトなので省略
             dto.IsWait    = todo.IsWait    ? true : null;       // false はデフォルトなので省略
+            dto.Progress  = todo.Progress  != 0  ? todo.Progress : (int?)null; // 0はデフォルトなので省略
             if (todo.Callouts.Count > 0)
                 dto.Callouts = todo.Callouts.Select(c => new CalloutDto
                 {
@@ -149,6 +150,7 @@ public class ScheduleFileService
                 {
                     Completed = dto.Completed ?? false,
                     IsWait    = dto.IsWait    ?? false,
+                    Progress  = dto.Progress  ?? 0,
                 };
             }
 
@@ -259,6 +261,9 @@ public class ScheduleFileService
 
         [JsonPropertyName("isWait")]
         public bool? IsWait { get; set; }
+
+        [JsonPropertyName("progress")]
+        public int? Progress { get; set; }
 
         [JsonPropertyName("children")]
         public List<ItemDto>? Children { get; set; }

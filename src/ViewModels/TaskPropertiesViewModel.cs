@@ -26,6 +26,7 @@ public class TaskPropertiesViewModel : ViewModelBase
         {
             Completed = todo.Completed;
             IsWait    = todo.IsWait;
+            Progress  = todo.Progress;
 
             HasBeginDate = todo.BeginDate.HasValue;
             BeginDate    = todo.BeginDate ?? DateTime.Today;
@@ -35,7 +36,8 @@ public class TaskPropertiesViewModel : ViewModelBase
     }
 
     // ── プロパティ ────────────────────────────────────────
-    public bool IsFolder { get; }
+    public bool IsFolder    { get; }
+    public bool IsNotFolder => !IsFolder;
 
     private string _name = string.Empty;
     public string Name
@@ -56,6 +58,18 @@ public class TaskPropertiesViewModel : ViewModelBase
     {
         get => _isWait;
         set => SetField(ref _isWait, value);
+    }
+
+    // ── 進捗率 ───────────────────────────────────────
+    /// <summary>進捗率プルダウンの選択肢ﾈ0, 10, 20, ... 100）。</summary>
+    public IReadOnlyList<int> ProgressOptions { get; } =
+        Enumerable.Range(0, 11).Select(i => i * 10).ToArray();
+
+    private int _progress;
+    public int Progress
+    {
+        get => _progress;
+        set => SetField(ref _progress, value);
     }
 
     private bool _hasBeginDate;
@@ -175,7 +189,8 @@ public class TaskPropertiesViewModel : ViewModelBase
         if (_item is ScheduleToDo todo)
         {
             todo.Completed = Completed;
-            todo.IsWait   = IsWait;
+            todo.IsWait    = IsWait;
+            todo.Progress  = Progress;
             todo.BeginDate = HasBeginDate ? BeginDate : null;
             todo.EndDate   = HasEndDate   ? EndDate   : null;
         }
