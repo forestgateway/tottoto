@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using todochart.Models;
@@ -6,7 +6,7 @@ using todochart.Models;
 namespace todochart.Services;
 
 /// <summary>
-/// GitLab REST API v4 ���� Issue ��擾����v���o�C�_�[�B
+/// GitLab REST API v4 を使用して Issue を取得するプロバイダー。
 /// </summary>
 public class GitLabIssueProvider : IIssueProvider
 {
@@ -16,7 +16,7 @@ public class GitLabIssueProvider : IIssueProvider
         var baseUrl = settings.BaseUrl.TrimEnd('/');
         var projectId = Uri.EscapeDataString(settings.ProjectId);
 
-        // �N�G���������\�z
+        // クエリパラメーターを構築
         var queryParts = new List<string> { "per_page=100" };
         if (!string.IsNullOrWhiteSpace(settings.Query))
             queryParts.Add(settings.Query.TrimStart('?', '&'));
@@ -42,7 +42,7 @@ public class GitLabIssueProvider : IIssueProvider
             foreach (var issue in issues)
                 result.Add(MapToCache(issue));
 
-            // GitLab �� X-Next-Page �w�b�_�[�Ŏ��y�[�W�����
+            // GitLab の X-Next-Page ヘッダーで次ページを判断
             if (response.Headers.TryGetValues("X-Next-Page", out var nextVals)
                 && int.TryParse(nextVals.FirstOrDefault(), out int nextPage)
                 && nextPage > 0)
@@ -66,7 +66,7 @@ public class GitLabIssueProvider : IIssueProvider
         var baseUrl   = settings.BaseUrl.TrimEnd('/');
         var projectId = Uri.EscapeDataString(settings.ProjectId);
 
-        // �v���W�F�N�g����1���擾���ăg�[�N����URL�̑a�ʂ�m�F
+        // プロジェクト情報を1件取得してトークンや URL の疎通を確認
         var url = $"{baseUrl}/api/v4/projects/{projectId}";
 
         using var client = BuildClient(settings);
@@ -74,7 +74,7 @@ public class GitLabIssueProvider : IIssueProvider
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        // �X�e�[�^�X�R�[�h�� 2xx �ȊO�͗�O�����ČĂяo�����ŃG���[�����ɂ���
+        // ステータスコードが 2xx 以外は例外を生成して呼び出し元でエラー処理にする
         if (!response.IsSuccessStatusCode)
         {
             throw new HttpRequestException(
@@ -83,7 +83,7 @@ public class GitLabIssueProvider : IIssueProvider
                 response.StatusCode);
         }
 
-        // ���X�|���X����₷���C���f���g���`���ĕԂ�
+        // レスポンスを読みやすいインデント形式にして返す
         var pretty = PrettyJson(body);
         return (url, pretty);
     }
@@ -133,7 +133,7 @@ public class GitLabIssueProvider : IIssueProvider
         WriteIndented = true,
     };
 
-    // ���� GitLab API ���X�|���X DTO ������������������������������������������������
+    // ── GitLab API レスポンス DTO ─────────────────────────────────────────────
     private class GitLabIssueDto
     {
         public int? Id       { get; set; }

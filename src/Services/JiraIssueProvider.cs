@@ -1,4 +1,3 @@
-﻿using System.Net.Http;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -8,8 +7,8 @@ using todochart.Models;
 namespace todochart.Services;
 
 /// <summary>
-/// Jira REST API v3 繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ Issue 繝ｻ・ｽ繝ｻ・ｽ隰ｫ・ｾ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽv繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽo繝ｻ・ｽC繝ｻ・ｽ_繝ｻ・ｽ[繝ｻ・ｽB
-/// JQL 繝ｻ・ｽ繝ｻ・ｽg繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ・・ｯ会ｽｿ・ｽ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽ繝ｻ・ｽB
+/// Jira REST API v3 を使用して Issue を取得するプロバイダー。
+/// JQL を利用してフィルタリングを行う。
 /// </summary>
 public class JiraIssueProvider : IIssueProvider
 {
@@ -66,7 +65,7 @@ public class JiraIssueProvider : IIssueProvider
                 // nextPageToken なしかつ isLast もない場合は startAt で続行
                 startAt += dto.Issues.Count;
                 if (dto.Total.HasValue && startAt >= dto.Total.Value) break;
-                // total 不明の場合は issues が 0 件の時に全体ブレーク（先頭のガードで層別済み）
+                // total 不明の場合は issues が 0 件の時に全体ブレーク（先頭のガードで処理済み）
             }
         }
 
@@ -103,7 +102,7 @@ public class JiraIssueProvider : IIssueProvider
         sb.AppendLine(PrettyJson(projBody));
         sb.AppendLine();
 
-        // ② Issue 検索 (maxResults=3 で痎通確認)
+        // ② Issue 検索 (maxResults=3 で疎通確認)
         var jql        = string.IsNullOrWhiteSpace(settings.Query)
                          ? BuildDefaultJql(settings.ProjectId)
                          : settings.Query;
@@ -137,7 +136,7 @@ public class JiraIssueProvider : IIssueProvider
 
     /// <summary>
     /// プロジェクトID（数値またはキー）からデフォルトJQLを生成する。
-    /// Jira Cloudでは数値IDをクオート付きデ指定すると文字列比較になり0件になるが、
+    /// Jira Cloudでは数値IDをクオート付きで指定すると文字列比較になり0件になるが、
     /// 数値のまま指定するか id() 関数を使うと正しく動く。
     /// </summary>
     private static string BuildDefaultJql(string projectId)

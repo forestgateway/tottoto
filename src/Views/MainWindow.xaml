@@ -14,7 +14,8 @@
         Icon="/snowflake.ico"
         Background="{StaticResource WindowBgBrush}"
         Foreground="{StaticResource WindowFgBrush}"
-        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13">
+        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13"
+        AllowsTransparency="True" WindowStyle="None">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
@@ -48,6 +49,7 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>    <!-- カスタムタイトルバー -->
             <RowDefinition Height="Auto"/>  <!-- メニュー -->
             <RowDefinition Height="Auto"/>  <!-- ツールバー -->
             <RowDefinition Height="Auto"/>  <!-- スケジュールタブバー -->
@@ -55,8 +57,39 @@
             <RowDefinition Height="Auto"/>  <!-- ステータスバー -->
         </Grid.RowDefinitions>
 
+        <!-- ══ カスタムタイトルバー ═══════════════════════════════ -->
+        <Grid Grid.Row="0"
+              Background="{StaticResource HeaderBgBrush}"
+              MouseLeftButtonDown="OnTitleBarMouseDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="{Binding WindowTitle}"
+                       Foreground="{StaticResource WindowFgBrush}"
+                       VerticalAlignment="Center"
+                       Margin="10,0,0,0"
+                       FontSize="12"
+                       IsHitTestVisible="False"/>
+            <Button Grid.Column="1" Content="🗕" Width="32" Height="32"
+                    Click="OnMinimizeClick"
+                    Style="{StaticResource ToolBarButtonStyle}"
+                    ToolTip="最小化"/>
+            <Button Grid.Column="2" Content="🗗" Width="32" Height="32"
+                    Click="OnMaximizeClick"
+                    Style="{StaticResource ToolBarButtonStyle}"
+                    ToolTip="最大化"/>
+            <Button Grid.Column="3" Content="✕" Width="32" Height="32"
+                    Click="OnCloseClick"
+                    Style="{StaticResource ToolBarButtonStyle}"
+                    ToolTip="閉じる"/>
+        </Grid>
+
         <!-- ══ メニューバー ══════════════════════════════════════ -->
-        <Menu Grid.Row="0" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource WindowFgBrush}">
+        <Menu Grid.Row="1" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource WindowFgBrush}">
             <MenuItem Header="ファイル(_F)" Foreground="{StaticResource WindowFgBrush}">
                 <MenuItem Header="新規作成(タスクリスト)(_N)" Command="{Binding NewCommand}"/>
                 <MenuItem Header="新規作成(Issue Tracking)(_I)" Command="{Binding NewIssueTrackingCommand}"/>
@@ -111,7 +144,7 @@
         </Menu>
 
         <!-- ══ ツールバー ═══════════════════════════════════════ -->
-        <ToolBar Grid.Row="1"
+        <ToolBar Grid.Row="2"
                  Background="{StaticResource PanelBgBrush}"
                  Foreground="{StaticResource SubTextBrush}"
                  ToolBarTray.IsLocked="True">
@@ -164,7 +197,7 @@
         </ToolBar>
 
         <!-- ══ スケジュールタブバー ══════════════════════════════ -->
-        <Border Grid.Row="2"
+        <Border Grid.Row="3"
                 Background="{StaticResource PanelBgBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="0,0,0,1">
@@ -236,7 +269,7 @@
         </Border>
 
         <!-- ══ コンテンツ（タスクリスト ＋ ガントチャート） ═══════ -->
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="440" MinWidth="200" x:Name="LeftColDef"/>
                 <ColumnDefinition Width="1"/>
@@ -360,11 +393,11 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
                             <Border Background="{Binding RowBackground}"
-                                    BorderBrush="#15000000" BorderThickness="0,0,0,1">
+                                    BorderBrush="#20AABBCC" BorderThickness="0,0,0,1">
                                 <Grid>
                                     <!-- 選択色オーバーレイ (ヒットテスト無効にして下の操作を妨げない) -->
                                     <Border Background="{StaticResource RowSelectedBrush}"
-                                            BorderBrush="#FFADD6FF"
+                                            BorderBrush="#AA00C8FF"
                                             BorderThickness="0,1,0,1"
                                             Visibility="{Binding IsSelected, Converter={StaticResource BoolVis}}"
                                             IsHitTestVisible="False"/>
@@ -413,7 +446,7 @@
                                                     Visibility="{Binding ToggleVisibility}"
                                                     Command="{Binding ToggleExpandCommand}"
                                                     Style="{StaticResource ExpandToggleStyle}"
-                                                    Foreground="#FF666666"/>
+                                                    Foreground="#FF4477AA"/>
 
                                             <StackPanel Grid.Column="2" Orientation="Horizontal">
                                                 <!-- ステータスアイコン -->
@@ -429,7 +462,7 @@
                                                                VerticalAlignment="Center"/>
                                                     <!-- 完了タスク用：緑丸 + 白✔ -->
                                                     <Border x:Name="CheckBadge"
-                                                            Background="#FF22AA44"
+                                                            Background="#FF00A878"
                                                             CornerRadius="8"
                                                             Width="16" Height="16"
                                                             Visibility="Collapsed">
@@ -443,7 +476,7 @@
                                                     </Border>
                                                     <!-- 完了フォルダ用：緑四角背景 + 白フォルダ -->
                                                     <Border x:Name="FolderBadge"
-                                                            Background="#FF22AA44"
+                                                            Background="#FF00A878"
                                                             CornerRadius="3"
                                                             Width="16" Height="16"
                                                             Visibility="Collapsed">
@@ -489,20 +522,14 @@
                                                     VerticalAlignment="Center">
                                             <Button Content="📝"
                                                     FontSize="12"
-                                                    Padding="1,0"
                                                     Margin="0,0,1,0"
-                                                    BorderThickness="0"
-                                                    Background="Transparent"
-                                                    Cursor="Hand"
+                                                    Style="{StaticResource MlIconButtonStyle}"
                                                     Visibility="{Binding HasMemo, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenMemoCommand}"
                                                     ToolTip="メモを表示"/>
                                             <Button Content="🔗"
                                                     FontSize="12"
-                                                    Padding="1,0"
-                                                    BorderThickness="0"
-                                                    Background="Transparent"
-                                                    Cursor="Hand"
+                                                    Style="{StaticResource MlIconButtonStyle}"
                                                     Visibility="{Binding HasLink, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenLinkCommand}"
                                                     ToolTip="{Binding Item.Link}"/>
@@ -630,7 +657,7 @@
         </Grid>
 
         <!-- ══ ステータスバー ════════════════════════════════════ -->
-        <StatusBar Grid.Row="4" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource SubTextBrush}">
+        <StatusBar Grid.Row="5" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource SubTextBrush}">
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusText}" FontSize="12"/>
             </StatusBarItem>

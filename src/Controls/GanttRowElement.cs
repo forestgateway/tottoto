@@ -73,13 +73,13 @@ public class GanttRowElement : FrameworkElement
         return new Size(count * CellWidth, 22);
     }
 
-    private static readonly Brush s_hoverBrush    = new SolidColorBrush(Color.FromArgb(0x1A, 0x00, 0x78, 0xD7));
-    private static readonly Brush s_selectedBrush = new SolidColorBrush(Color.FromArgb(0x7A, 0xAD, 0xD6, 0xFF));
-    private static readonly Pen   s_selectedPen   = new(new SolidColorBrush(Color.FromArgb(0xFF, 0xAD, 0xD6, 0xFF)), 1.0);
-    private static readonly Pen   s_weekPen       = new(new SolidColorBrush(Color.FromArgb(0x33, 0x99, 0x99, 0x99)), 1.0);
-    private static readonly Pen   s_rowPen        = new(new SolidColorBrush(Color.FromArgb(0x15, 0x00, 0x00, 0x00)), 1.0);
-    private static readonly Brush s_todayOverlay  = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x88, 0x88)); // 透明度80% = alpha 51(0x33)
-    private static readonly Brush s_calloutMarker = new SolidColorBrush(Color.FromRgb(0xFF, 0x00, 0x00));
+    private static readonly Brush s_hoverBrush    = new SolidColorBrush(Color.FromArgb(0x22, 0x00, 0xC8, 0xFF));
+    private static readonly Brush s_selectedBrush = new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF));
+    private static readonly Pen   s_selectedPen   = new(new SolidColorBrush(Color.FromArgb(0xFF, 0x00, 0xC8, 0xFF)), 1.0);
+    private static readonly Pen   s_weekPen       = new(new SolidColorBrush(Color.FromArgb(0x44, 0x00, 0xC8, 0xFF)), 1.0);
+    private static readonly Pen   s_rowPen        = new(new SolidColorBrush(Color.FromArgb(0x30, 0xAA, 0xBB, 0xCC)), 1.0);
+    private static readonly Brush s_todayOverlay  = new SolidColorBrush(Color.FromArgb(0x30, 0x00, 0xC8, 0xFF));
+    private static readonly Brush s_calloutMarker = new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44));
 
     static GanttRowElement()
     {
@@ -100,38 +100,56 @@ public class GanttRowElement : FrameworkElement
         if (Cells is null) return;
 
         var calloutTexts = CalloutTexts;
-        double x = 0;
         double cw = CellWidth;
         double h = ActualHeight > 0 ? ActualHeight : 22;
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         int hoverCol = HoveredColumnIndex;
         bool isSelected = IsSelected;
-
         double snapOffset = 0.5 / dpi;
-
         double todayX = -1;
 
-        for (int i = 0; i < Cells.Count; i++)
+        // ── Pass 1: セル背景 ────────────────────────────────────────
+        double x = 0;
+        for (int i = 0; i < Cells.Count; i++, x += cw)
+            dc.DrawRectangle(Cells[i].Background, null, new Rect(x, 0, cw, h));
+
+        // ── タスクバー: 連続セルをセグメントとして連結・端を角丸で描画 ──
         {
-            var c = Cells[i];
+            double barH   = (h - 4.0) * 0.8;
+            double barTop = (h - barH) / 2.0;
+            const double barRadius = 3.0;
+
+            x = 0;
+            Brush? segBrush  = null;
+            double segStartX = 0;
+            for (int i = 0; i < Cells.Count; i++, x += cw)
+            {
+                var bb = Cells[i].BarBrush;
+                if (bb != segBrush)
+                {
+                    if (segBrush is not null)
+                        dc.DrawRoundedRectangle(segBrush, null,
+                            new Rect(segStartX, barTop, x - segStartX, barH),
+                            barRadius, barRadius);
+                    segBrush  = bb;
+                    segStartX = x;
+                }
+            }
+            if (segBrush is not null)
+                dc.DrawRoundedRectangle(segBrush, null,
+                    new Rect(segStartX, barTop, x - segStartX, barH),
+                    barRadius, barRadius);
+        }
+
+        // ── Pass 2: 選択・ホバー・縦線・記号・コールアウト ──────────
+        x = 0;
+        for (int i = 0; i < Cells.Count; i++, x += cw)
+        {
+            var c    = Cells[i];
             var rect = new Rect(x, 0, cw, h);
 
-            // セル背景（横縞・土日）
-            dc.DrawRectangle(c.Background, null, rect);
-
-            // タスクバー：セルより上下3px・左右2px小さい正方形
-            if (c.BarBrush is not null)
-            {
-                const double marginX = 0.6;
-                const double marginY = 2.0;
-                var barRect = new Rect(x + marginX, marginY, cw - marginX * 2, h - marginY * 2);
-                dc.DrawRectangle(c.BarBrush, null, barRect);
-            }
-
-            if (isSelected)
-                dc.DrawRectangle(s_selectedBrush, null, rect);
-            if (i == hoverCol)
-                dc.DrawRectangle(s_hoverBrush, null, rect);
+            if (isSelected)   dc.DrawRectangle(s_selectedBrush, null, rect);
+            if (i == hoverCol) dc.DrawRectangle(s_hoverBrush,   null, rect);
 
             // 日曜と月曜の間に縦線（月曜セルの左端）
             if (c.Date.DayOfWeek == DayOfWeek.Monday)
@@ -150,7 +168,7 @@ public class GanttRowElement : FrameworkElement
 
             if (c.IsToday) todayX = x;
 
-            // 吸き出しマーカー：セル右上に赤小三角（Excel コメントインジケーター类似）
+            // 吸き出しマーカー：セル右上に赤小三角
             if (calloutTexts is not null && calloutTexts.ContainsKey(i))
             {
                 const double ts = 5.0;
@@ -164,20 +182,18 @@ public class GanttRowElement : FrameworkElement
                 geo.Freeze();
                 dc.DrawGeometry(s_calloutMarker, null, geo);
             }
-
-            x += cw;
         }
 
-        // 行下端に横線（タスクリストと同色）
+        // 行下端に横線
         double totalW = Cells.Count * cw;
         double ly = h - snapOffset;
         dc.DrawLine(s_rowPen, new Point(0, ly), new Point(totalW, ly));
 
-        // 今日列のオーバーレイを最後に重ねる（タスクバーの色を残しつつ薄い赤を載せる）
+        // 今日列のオーバーレイを最後に重ねる
         if (todayX >= 0)
             dc.DrawRectangle(s_todayOverlay, null, new Rect(todayX, 0, cw, h));
 
-        // 選択時に外枠線を描画（上下1px、完全不透明の選択色）
+        // 選択時に外枠線を描画
         if (isSelected)
         {
             double selW = Cells.Count * cw;

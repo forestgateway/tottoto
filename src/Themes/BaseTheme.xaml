@@ -2,28 +2,28 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <!-- ── カラーパレット (Modern Light) ─────────────────── -->
-    <Color x:Key="AccentColor">#FF0070C0</Color>
-    <Color x:Key="PanelBg">#FFF0F0F0</Color>
-    <Color x:Key="HeaderBg">#FFE2E6EA</Color>
-    <Color x:Key="RowSelected">#99B8D9F5</Color>
+    <!-- ── カラーパレット (Dark Transparent) ──────────────── -->
+    <Color x:Key="AccentColor">#FF00C8FF</Color>
+    <Color x:Key="PanelBg">#E61A2A3E</Color>
+    <Color x:Key="HeaderBg">#E61E3050</Color>
+    <Color x:Key="RowSelected">#6600C8FF</Color>
 
     <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="PanelBgBrush"      Color="{StaticResource PanelBg}"/>
     <SolidColorBrush x:Key="HeaderBgBrush"     Color="{StaticResource HeaderBg}"/>
     <SolidColorBrush x:Key="RowSelectedBrush"  Color="{StaticResource RowSelected}"/>
-    <SolidColorBrush x:Key="WindowBgBrush"     Color="#FFFFFFFF"/>
-    <SolidColorBrush x:Key="WindowFgBrush"     Color="#FF1A1A1A"/>
-    <SolidColorBrush x:Key="SubTextBrush"      Color="#FF3A3A3A"/>
-    <SolidColorBrush x:Key="BorderBrush"       Color="#FFD0D5DC"/>
-    <SolidColorBrush x:Key="ChartBgBrush"      Color="#FFFAFAFA"/>
+    <SolidColorBrush x:Key="WindowBgBrush"     Color="#E60D1B2A"/>
+    <SolidColorBrush x:Key="WindowFgBrush"     Color="#FFD0E8FF"/>
+    <SolidColorBrush x:Key="SubTextBrush"      Color="#FFAABBCC"/>
+    <SolidColorBrush x:Key="BorderBrush"       Color="#CC1E3050"/>
+    <SolidColorBrush x:Key="ChartBgBrush"      Color="#E60F1E30"/>
 
-    <!-- ── 共通定数 ──────────────────────────────────── -->
+    <!-- ── 共通定数 ──────────────────────────────────────── -->
     <sys:Double x:Key="RowHeight">24</sys:Double>
     <sys:Double x:Key="CellWidth">22</sys:Double>
     <sys:Double x:Key="HeaderHeight">36</sys:Double>
 
-    <!-- ── ToolBar ボタン ─────────────────────────────── -->
+    <!-- ── ToolBar ボタン ─────────────────────────────────── -->
     <Style x:Key="ToolBarButtonStyle" TargetType="Button">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
@@ -43,15 +43,15 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background"   Value="#1A0070C0"/>
-                            <Setter TargetName="bd" Property="BorderBrush"  Value="#440070C0"/>
+                            <Setter TargetName="bd" Property="Background"   Value="#2200C8FF"/>
+                            <Setter TargetName="bd" Property="BorderBrush"  Value="#4400C8FF"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bd" Property="Background"   Value="#330070C0"/>
+                            <Setter TargetName="bd" Property="Background"   Value="#4400C8FF"/>
                             <Setter TargetName="bd" Property="BorderBrush"  Value="{StaticResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="#FFBBBBBB"/>
+                            <Setter Property="Foreground" Value="#FF334455"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -59,11 +59,11 @@
         </Setter>
     </Style>
 
-    <!-- ── ToggleButton（展開／折りたたみ用） ─────────── -->
+    <!-- ── ToggleButton（展開／折りたたみ用） ───────────────── -->
     <Style x:Key="ExpandToggleStyle" TargetType="Button">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
-        <Setter Property="Foreground"   Value="#FF888888"/>
+        <Setter Property="Foreground"   Value="#FF4477AA"/>
         <Setter Property="FontSize"     Value="9"/>
         <Setter Property="Padding"      Value="1"/>
         <Setter Property="Cursor"       Value="Hand"/>
@@ -78,7 +78,7 @@
         </Setter>
     </Style>
 
-    <!-- ── ListBox / ListView の行スタイル ──────────── -->
+    <!-- ── ListBox / ListView の行スタイル ────────────────── -->
     <Style x:Key="TaskRowContainerStyle" TargetType="ListBoxItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Padding"         Value="0"/>
@@ -100,7 +100,7 @@
         </Setter>
     </Style>
 
-    <!-- ── ToolBar トグルボタン ────────────────────────── -->
+    <!-- ── ToolBar トグルボタン ──────────────────────────── -->
     <Style x:Key="ToolBarToggleButtonStyle" TargetType="ToggleButton">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
@@ -120,18 +120,18 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="bd" Property="Background"  Value="{StaticResource RowSelectedBrush}"/>
+                            <Setter TargetName="bd" Property="Background"  Value="#3300C8FF"/>
                             <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background"   Value="#1A0070C0"/>
-                            <Setter TargetName="bd" Property="BorderBrush"  Value="#440070C0"/>
+                            <Setter TargetName="bd" Property="Background"   Value="#2200C8FF"/>
+                            <Setter TargetName="bd" Property="BorderBrush"  Value="#4400C8FF"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bd" Property="Background"   Value="#330070C0"/>
+                            <Setter TargetName="bd" Property="Background"   Value="#4400C8FF"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="#FFBBBBBB"/>
+                            <Setter Property="Foreground" Value="#FF334455"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -176,15 +176,193 @@
         </Setter>
     </Style>
 
-    <!-- ── ColumnHeader ─────────────────────────────── -->
+    <!-- ── ColumnHeader ──────────────────────────────────── -->
     <Style x:Key="ColumnHeaderStyle" TargetType="TextBlock">
         <Setter Property="Background"          Value="Transparent"/>
-        <Setter Property="Foreground"          Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"          Value="{StaticResource AccentBrush}"/>
         <Setter Property="FontSize"            Value="12"/>
         <Setter Property="FontWeight"          Value="SemiBold"/>
         <Setter Property="VerticalAlignment"   Value="Center"/>
         <Setter Property="Padding"             Value="6,0"/>
         <Setter Property="TextTrimming"        Value="CharacterEllipsis"/>
+    </Style>
+
+    <!-- ── ML列アイコンボタン（メモ・リンク） ────────────── -->
+    <Style x:Key="MlIconButtonStyle" TargetType="Button">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="BorderBrush"     Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground"      Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Padding"         Value="1,0"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}"
+                            CornerRadius="3" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#1A00C8FF"/>
+                            <Setter Property="Foreground" Value="{StaticResource WindowFgBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#3300C8FF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── Separator ─────────────────────────────────────── -->
+    <Style TargetType="Separator">
+        <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Height"     Value="1"/>
+        <Setter Property="Margin"     Value="4,2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}"
+                            Height="{TemplateBinding Height}"
+                            Margin="{TemplateBinding Margin}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── ContextMenu 本体 ──────────────────────────────── -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background"      Value="{StaticResource PanelBgBrush}"/>
+        <Setter Property="Foreground"      Value="{StaticResource WindowFgBrush}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── MenuItem (トップレベル / ドロップダウン / サブメニュー 共通) ── -->
+    <Style TargetType="MenuItem">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="Foreground"      Value="{StaticResource WindowFgBrush}"/>
+        <Setter Property="BorderBrush"     Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="8,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="22" SharedSizeGroup="MenuIcon"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="MenuGesture"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter x:Name="icon"
+                                              Grid.Column="0"
+                                              ContentSource="Icon"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Width="16" Height="16"/>
+                            <TextBlock x:Name="check"
+                                       Grid.Column="0"
+                                       Text="&#x2714;"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Visibility="Collapsed"/>
+                            <ContentPresenter Grid.Column="1"
+                                              ContentSource="Header"
+                                              RecognizesAccessKey="True"
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"/>
+                            <TextBlock x:Name="gesture"
+                                       Grid.Column="2"
+                                       Text="{TemplateBinding InputGestureText}"
+                                       Foreground="{StaticResource SubTextBrush}"
+                                       FontSize="11"
+                                       Margin="12,0,6,0"
+                                       VerticalAlignment="Center"/>
+                            <Path x:Name="arrow"
+                                  Grid.Column="2"
+                                  Data="M0,0 L4,4 L0,8"
+                                  Stroke="{StaticResource SubTextBrush}"
+                                  StrokeThickness="1.5"
+                                  Margin="8,0,6,0"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed"/>
+                            <Popup x:Name="PART_Popup"
+                                   Grid.Column="0"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Placement="Bottom"
+                                   PopupAnimation="Fade">
+                                <Border Background="{StaticResource PanelBgBrush}"
+                                        BorderBrush="{StaticResource AccentBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="2"
+                                        SnapsToDevicePixels="True">
+                                    <ScrollViewer CanContentScroll="True">
+                                        <ItemsPresenter
+                                            Grid.IsSharedSizeScope="True"
+                                            KeyboardNavigation.DirectionalNavigation="Cycle"
+                                            KeyboardNavigation.TabNavigation="Cycle"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="bd" Property="Background"  Value="#2200C8FF"/>
+                            <Setter TargetName="bd" Property="BorderBrush" Value="#3300C8FF"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground"                    Value="#FF334455"/>
+                            <Setter TargetName="check" Property="Foreground" Value="#FF334455"/>
+                        </Trigger>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="arrow"        Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="gesture"      Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="PART_Popup"   Property="Placement"  Value="Right"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="check" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsSubmenuOpen" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#3300C8FF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── Menu バー本体 ─────────────────────────────────── -->
+    <Style TargetType="Menu">
+        <Setter Property="Background" Value="{StaticResource PanelBgBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource WindowFgBrush}"/>
     </Style>
 
 </ResourceDictionary>

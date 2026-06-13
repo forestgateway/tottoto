@@ -1,7 +1,24 @@
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
-* text=auto
+* text=auto eol=lf
+
+# Source files — always LF, UTF-8
+*.cs     text eol=lf
+*.xaml   text eol=lf
+*.csproj text eol=lf
+*.sln    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.xml    text eol=lf
+
+# Binary files — no conversion
+*.ico    binary
+*.png    binary
+*.jpg    binary
+*.gif    binary
 
 ###############################################################################
 # Set default behavior for command prompt diff.

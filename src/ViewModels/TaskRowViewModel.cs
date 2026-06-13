@@ -258,13 +258,13 @@ public class TaskRowViewModel : ViewModelBase
 
     public static Brush StatusToBrush(ItemStatus status) => status switch
     {
-        ItemStatus.Complete => new SolidColorBrush(Color.FromRgb(0xBB, 0x44, 0xBB)),
+        ItemStatus.Complete => new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0xAA)),
         ItemStatus.Wait     => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
-        ItemStatus.Progress => new SolidColorBrush(Color.FromRgb(0x22, 0xBB, 0x22)),
+        ItemStatus.Progress => new SolidColorBrush(Color.FromRgb(0x00, 0xC8, 0x80)),
         ItemStatus.Warning  => new SolidColorBrush(Color.FromRgb(0xFF, 0xAA, 0x00)),
-        ItemStatus.Error    => new SolidColorBrush(Color.FromRgb(0xFF, 0x33, 0x33)),
-        ItemStatus.Over     => new SolidColorBrush(Color.FromRgb(0x99, 0x00, 0x00)),
-        _                   => new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
+        ItemStatus.Error    => new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44)),
+        ItemStatus.Over     => new SolidColorBrush(Color.FromRgb(0xCC, 0x22, 0x22)),
+        _                   => new SolidColorBrush(Color.FromRgb(0x44, 0x66, 0x88)),
     };
 
     public string StatusIcon
@@ -289,8 +289,8 @@ public class TaskRowViewModel : ViewModelBase
     /// <summary>フォルダかつ全タスク完了のとき true。アイコン背景色切り替えに使用。</summary>
     public bool IsCompletedFolder => IsFolder && Item.Status == ItemStatus.Complete;
 
-    private static readonly Brush s_rowEven = Freeze(new SolidColorBrush(Colors.White));
-    private static readonly Brush s_rowOdd  = Freeze(new SolidColorBrush(Color.FromRgb(0xF8, 0xF8, 0xF8)));
+    private static readonly Brush s_rowEven = Freeze(new SolidColorBrush(Color.FromRgb(0x0D, 0x1B, 0x2A)));
+    private static readonly Brush s_rowOdd  = Freeze(new SolidColorBrush(Color.FromRgb(0x0F, 0x20, 0x30)));
 
     public Brush RowBackground => _rowIndex % 2 == 0 ? s_rowEven : s_rowOdd;
 
@@ -378,16 +378,16 @@ public class TaskRowViewModel : ViewModelBase
     }
 
     // ── セル背景ブラシのキャッシュ ────────────────────────
-    private static readonly Brush s_bgWeekend  = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xFF)));
+    private static readonly Brush s_bgWeekend  = Freeze(new SolidColorBrush(Color.FromRgb(0x16, 0x2A, 0x3F)));
 
-    // ── バー（小正方形）ブラシのキャッシュ ───────────────
-    private static readonly Brush s_barSkip     = Freeze(new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)));
-    private static readonly Brush s_barComplete = Freeze(new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0xD4)));
-    private static readonly Brush s_barWait     = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0xB3, 0xB3)));
-    private static readonly Brush s_barProgress = Freeze(new SolidColorBrush(Color.FromRgb(0x90, 0xEE, 0x90)));
-    private static readonly Brush s_barWarning  = Freeze(new SolidColorBrush(Color.FromRgb(0x90, 0xE0, 0xE0)));
-    private static readonly Brush s_barError    = Freeze(new SolidColorBrush(Color.FromRgb(0xA0, 0xA0, 0xFF)));
-    private static readonly Brush s_barOver     = Freeze(new SolidColorBrush(Color.FromRgb(0x70, 0x70, 0xDD)));
+    // ── バー（連結角丸）ブラシのキャッシュ ─────────────────
+    private static readonly Brush s_barSkip     = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0x22, 0x33, 0x44)));
+    private static readonly Brush s_barComplete = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0x00, 0x88, 0x88)));
+    private static readonly Brush s_barWait     = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0x20, 0x50, 0x80)));
+    private static readonly Brush s_barProgress = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0x00, 0xC8, 0x80)));
+    private static readonly Brush s_barWarning  = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0xCC, 0x88, 0x00)));
+    private static readonly Brush s_barError    = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0xCC, 0x30, 0x30)));
+    private static readonly Brush s_barOver     = Freeze(new SolidColorBrush(Color.FromArgb(0xCC, 0x88, 0x10, 0x10)));
 
     private static Brush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
 

@@ -41,13 +41,13 @@ public class GanttHeaderElement : FrameworkElement
         return new Size(count * CellWidth, 32);
     }
 
-    private static readonly Pen s_gridPen  = new(Brushes.Gray, 0.5);
-    private static readonly Pen s_weekPen  = new(new SolidColorBrush(Color.FromArgb(0x33, 0x99, 0x99, 0x99)), 1.0);
+    private static readonly Pen s_gridPen  = new(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF)), 0.5);
+    private static readonly Pen s_weekPen  = new(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF)), 1.0);
     private static readonly Brush s_todayBg   = new SolidColorBrush(Color.FromRgb(0xFF, 0xCC, 0x00));
-    private static readonly Brush s_holiday2  = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0xFF));
-    private static readonly Brush s_holiday1  = new SolidColorBrush(Color.FromRgb(0xBB, 0xBB, 0xFF));
-    private static readonly Brush s_normalBg  = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44));
-    private static readonly Brush s_monthBg   = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x22));
+    private static readonly Brush s_holiday2  = new SolidColorBrush(Color.FromRgb(0x20, 0x30, 0x60));
+    private static readonly Brush s_holiday1  = new SolidColorBrush(Color.FromRgb(0x18, 0x28, 0x50));
+    private static readonly Brush s_normalBg  = new SolidColorBrush(Color.FromRgb(0x1A, 0x2A, 0x3E));
+    private static readonly Brush s_monthBg   = new SolidColorBrush(Color.FromRgb(0x0F, 0x1E, 0x30));
 
     static GanttHeaderElement()
     {

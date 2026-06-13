@@ -1,9 +1,11 @@
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using todochart.Controls;
@@ -49,6 +51,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         TodayLabel.Text = $"今日: {DateTime.Today.ToString("yyyy'年'M'月'd'日' (ddd)", System.Globalization.CultureInfo.CurrentCulture)}";
 
         Loaded += OnLoaded;
+        SourceInitialized += OnSourceInitialized;
 
         sw.Stop();
         System.Diagnostics.Debug.WriteLine($"[STARTUP] MainWindow 初期化完了: {sw.ElapsedMilliseconds}ms");
@@ -517,6 +520,75 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _dragStartPoint = null;
         _dragSource     = null;
     }
+
+    // ──── カスタムタイトルバー / リサイズ ───────────────────────────────
+    private const int WM_NCHITTEST  = 0x0084;
+    private const int HTLEFT        = 10;
+    private const int HTRIGHT       = 11;
+    private const int HTTOP         = 12;
+    private const int HTTOPLEFT     = 13;
+    private const int HTTOPRIGHT    = 14;
+    private const int HTBOTTOM      = 15;
+    private const int HTBOTTOMLEFT  = 16;
+    private const int HTBOTTOMRIGHT = 17;
+    private const int ResizeGrip    = 8; // px（HiDPI 考慮前の論理ピクセル）
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT pt);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int X, Y; }
+
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
+        hwndSource?.AddHook(WndProc);
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == WM_NCHITTEST)
+        {
+            GetCursorPos(out var pt);
+            var pos   = new Point(pt.X, pt.Y);
+            var src   = PresentationSource.FromVisual(this);
+            if (src?.CompositionTarget is { } ct)
+                pos = ct.TransformFromDevice.Transform(pos);
+
+            double left   = Left;
+            double top    = Top;
+            double right  = Left + ActualWidth;
+            double bottom = Top  + ActualHeight;
+
+            bool onLeft   = pos.X - left   < ResizeGrip;
+            bool onRight  = right  - pos.X < ResizeGrip;
+            bool onTop    = pos.Y - top    < ResizeGrip;
+            bool onBottom = bottom - pos.Y < ResizeGrip;
+
+            if (onTop    && onLeft)  { handled = true; return (IntPtr)HTTOPLEFT;     }
+            if (onTop    && onRight) { handled = true; return (IntPtr)HTTOPRIGHT;    }
+            if (onBottom && onLeft)  { handled = true; return (IntPtr)HTBOTTOMLEFT;  }
+            if (onBottom && onRight) { handled = true; return (IntPtr)HTBOTTOMRIGHT; }
+            if (onLeft)              { handled = true; return (IntPtr)HTLEFT;        }
+            if (onRight)             { handled = true; return (IntPtr)HTRIGHT;       }
+            if (onTop)               { handled = true; return (IntPtr)HTTOP;         }
+            if (onBottom)            { handled = true; return (IntPtr)HTBOTTOM;      }
+        }
+        return IntPtr.Zero;
+    }
+
+    private void OnTitleBarMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Left)
+            DragMove();
+    }
+
+    private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnMaximizeClick(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 
     // ──── メニュー ────────────────────────────────────────────────────────
     private void OnExitClick(object sender, RoutedEventArgs e) => Close();

@@ -14,7 +14,7 @@ public class TreeLinesElement : FrameworkElement
 
     static TreeLinesElement()
     {
-        LinePen = new Pen(new SolidColorBrush(Color.FromRgb(0xB0, 0xB0, 0xB0)), 1.0);
+        LinePen = new Pen(new SolidColorBrush(Color.FromArgb(0x66, 0x00, 0xC8, 0xFF)), 1.0);
         LinePen.Freeze();
     }
 
