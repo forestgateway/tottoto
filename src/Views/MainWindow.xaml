@@ -106,6 +106,8 @@
                 <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
             </MenuItem>
             <MenuItem Header="ヘルプ(_H)" Foreground="{StaticResource WindowFgBrush}">
+                <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>
+                <Separator/>
                 <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
             </MenuItem>
         </Menu>

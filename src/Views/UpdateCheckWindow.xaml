@@ -1,0 +1,195 @@
+<Window x:Class="todochart.Views.UpdateCheckWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="バージョン更新確認"
+        Width="500" Height="420"
+        MinWidth="400" MinHeight="320"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="#FFFFFFFF"
+        Foreground="#FF000000"
+        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVis"/>
+        <Style TargetType="Button">
+            <Setter Property="Background"  Value="#FFE8E8E8"/>
+            <Setter Property="Foreground"  Value="#FF000000"/>
+            <Setter Property="BorderBrush" Value="#FFC8C8C8"/>
+            <Setter Property="Padding"     Value="16,6"/>
+            <Setter Property="Cursor"      Value="Hand"/>
+            <Setter Property="MinWidth"    Value="90"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background"  Value="#FFF5F5F5"/>
+            <Setter Property="Foreground"  Value="#FF000000"/>
+            <Setter Property="BorderBrush" Value="#FFC8C8C8"/>
+            <Setter Property="Padding"     Value="6,4"/>
+            <Setter Property="FontFamily"  Value="Consolas, Meiryo UI, sans-serif"/>
+            <Setter Property="FontSize"    Value="12"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- タイトル -->
+        <TextBlock Grid.Row="0"
+                   Text="バージョン更新確認"
+                   FontSize="15" FontWeight="Bold"
+                   Foreground="#FF3B3B3B"
+                   Margin="0,0,0,14"/>
+
+        <!-- バージョン比較行 -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="現在のバージョン:"
+                       Foreground="#FF666666" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding CurrentVersion}"
+                       FontWeight="Bold" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="2" Text="→"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="#FF666666"/>
+            <TextBlock Grid.Column="3" Text="最新バージョン:"
+                       Foreground="#FF666666" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="4" Text="{Binding LatestVersion}"
+                       FontWeight="Bold" Foreground="#FF0078D4"
+                       VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- リリースノートラベル -->
+        <TextBlock Grid.Row="2"
+                   Text="リリースノート"
+                   Foreground="#FF666666"
+                   Margin="0,0,0,4"/>
+
+        <!-- リリースノート本文（バージョン別リスト） -->
+        <Border Grid.Row="3"
+                BorderBrush="#FFC8C8C8" BorderThickness="1"
+                Margin="0,0,0,10">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <!-- 更新なしの場合のメッセージ -->
+                    <TextBlock Text="現在最新バージョンです。"
+                               Foreground="#FF666666" FontSize="12"
+                               Margin="8,12,8,12"
+                               HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUpdateAvailable, Mode=OneWay}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <!-- リリース一覧（各バージョンのヘッダー＋ノート） -->
+                    <ItemsControl ItemsSource="{Binding ReleaseEntries, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,2">
+                                    <!-- バージョンヘッダー -->
+                                    <Border Background="#FFE8F0FE" BorderBrush="#FFB8D0F8" BorderThickness="0,0,0,1">
+                                        <TextBlock Text="{Binding Version}"
+                                                   FontWeight="Bold" FontSize="12"
+                                                   Foreground="#FF0050A0"
+                                                   Padding="8,4"/>
+                                    </Border>
+                                    <!-- ノート本文 -->
+                                    <TextBox Text="{Binding Notes, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             BorderThickness="0"
+                                             Background="#FFFAFAFA"
+                                             Foreground="#FF000000"
+                                             Padding="8,6"
+                                             FontFamily="Meiryo UI, Segoe UI, sans-serif"
+                                             FontSize="12"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- 進捗バー（更新中のみ表示） -->
+        <ProgressBar Grid.Row="4"
+                     Height="6" Margin="0,0,0,6"
+                     Minimum="0" Maximum="1"
+                     Value="{Binding Progress, Mode=OneWay}"
+                     IsIndeterminate="{Binding IsChecking, Mode=OneWay}"
+                     Visibility="{Binding IsUpdating, Mode=OneWay, Converter={StaticResource BoolVis}}"/>
+
+        <!-- ステータスメッセージ -->
+        <TextBlock Grid.Row="5"
+                   Text="{Binding StatusMessage}"
+                   Foreground="#FF666666" FontSize="12"
+                   TextTrimming="CharacterEllipsis"
+                   Margin="0,0,0,12"/>
+
+        <!-- ボタン行 -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+
+            <!-- 「更新する」: 更新可能 かつ まだ完了前のみ表示 -->
+            <Button Margin="0,0,8,0">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Content"     Value="更新する"/>
+                        <Setter Property="Command"     Value="{Binding UpdateCommand}"/>
+                        <Setter Property="Visibility"  Value="Collapsed"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsUpdateAvailable, Mode=OneWay}"  Value="True"/>
+                                    <Condition Binding="{Binding IsUpdateComplete,  Mode=OneWay}"  Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- 「今すぐ再起動して適用する」: 完了後のみ表示 -->
+            <Button Command="{Binding RestartNowCommand}"
+                    Margin="0,0,8,0"
+                    Visibility="{Binding IsUpdateComplete, Mode=OneWay, Converter={StaticResource BoolVis}}"
+                    Content="今すぐ再起動して適用する"/>
+
+            <!-- 「閉じる」/「後でにする」 -->
+            <Button IsCancel="True" Click="OnCloseClick">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Content" Value="閉じる"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsUpdateComplete, Mode=OneWay}" Value="True">
+                                <Setter Property="Content" Value="後でにする"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+        </StackPanel>
+    </Grid>
+</Window>
