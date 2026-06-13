@@ -8,6 +8,9 @@ public class ScheduleToDo : ScheduleItemBase
     public override bool IsFolder => false;
     public bool Completed { get; set; }
 
+    /// <summary>進捗率（0〜100、10%単位）。</summary>
+    public int Progress { get; set; } = 0;
+
     /// <summary>このタスクに紐づく吹き出しのリスト。</summary>
     public List<Callout> Callouts { get; } = new();
 
@@ -41,6 +44,7 @@ public class ScheduleToDo : ScheduleItemBase
             Link           = Link,
             DateCountLevel = DateCountLevel,
             Completed      = Completed,
+            Progress       = Progress,
             MarkLevel      = MarkLevel,
             IsWait         = IsWait,
         };

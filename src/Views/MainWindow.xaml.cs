@@ -251,7 +251,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // TaskListBox が仮想化で ItemContainer を生成するまで Background 優先度で遅延
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
-            TaskListBox.ScrollIntoView(row);
+            // 既に表示中でコンテナが生成済みの行には不要なスクロールを行わない
+            if (TaskListBox.ItemContainerGenerator.ContainerFromItem(row) is null)
+                TaskListBox.ScrollIntoView(row);
+
             row.BeginEdit();
         });
     }
@@ -518,6 +521,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ──── メニュー ────────────────────────────────────────────────────────
     private void OnExitClick(object sender, RoutedEventArgs e) => Close();
 
+    private void OnCheckUpdateClick(object sender, RoutedEventArgs e)
+    {
+        var vm  = new ViewModels.UpdateCheckViewModel();
+        var win = new UpdateCheckWindow(vm) { Owner = this };
+        win.ShowDialog();
+    }
+
     private void OnAboutClick(object sender, RoutedEventArgs e)
     {
         var asm     = System.Reflection.Assembly.GetExecutingAssembly();
@@ -671,8 +681,34 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private Point  _chartDragStart;
     private double _chartScrollStart;
 
+    // Shift + ドラッグでタスク期間を平行移動
+    private bool              _chartTaskShiftDragging;
+    private Point             _chartTaskShiftDragStart;
+    private int               _chartTaskShiftAppliedDays;
+    private TaskRowViewModel? _chartTaskShiftRow;
+    private todochart.Models.ScheduleItemBase? _chartTaskShiftItem;
+
     private void OnChartMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        var pos = e.GetPosition(ChartRowsControl);
+        var row = GetChartRowViewModelAt(pos);
+
+        if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 &&
+            row?.Item is todochart.Models.ScheduleToDo &&
+            IsOnTaskPeriodCell(row, pos))
+        {
+            Vm.Selected = row;
+            _chartTaskShiftDragging = true;
+            _chartTaskShiftDragStart = e.GetPosition(ChartBodyScroll);
+            _chartTaskShiftAppliedDays = 0;
+            _chartTaskShiftRow = row;
+            _chartTaskShiftItem = row.Item;
+            ChartBodyScroll.CaptureMouse();
+            ChartBodyScroll.Cursor = Cursors.ScrollWE;
+            e.Handled = true;
+            return;
+        }
+
         // Begin potential drag but do not capture immediately so click handlers (elements) run first.
         _chartPotentialDrag = true;
         _chartDragStart = e.GetPosition(ChartBodyScroll);
@@ -683,24 +719,52 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void OnChartMouseMove(object sender, MouseEventArgs e)
     {
-        // If potential drag and user moved enough with left button pressed, start actual dragging/capture
-        if (_chartPotentialDrag && e.LeftButton == MouseButtonState.Pressed && !_chartDragging)
+        if (_chartTaskShiftDragging)
         {
-            var pos = e.GetPosition(ChartBodyScroll);
-            var dx = Math.Abs(pos.X - _chartDragStart.X);
-            if (dx >= SystemParameters.MinimumHorizontalDragDistance)
+            if (e.LeftButton != MouseButtonState.Pressed)
             {
-                _chartDragging = true;
-                ChartBodyScroll.CaptureMouse();
-                ChartBodyScroll.Cursor = Cursors.SizeWE;
+                _chartTaskShiftDragging = false;
+                _chartTaskShiftRow = null;
+                _chartTaskShiftItem = null;
+                _chartTaskShiftAppliedDays = 0;
+                ChartBodyScroll.ReleaseMouseCapture();
+                ChartBodyScroll.Cursor = Cursors.Arrow;
+            }
+            else
+            {
+                double dragCellWidth = (double)FindResource("CellWidth");
+                double deltaX = e.GetPosition(ChartBodyScroll).X - _chartTaskShiftDragStart.X;
+                int shiftDays = (int)(deltaX / dragCellWidth);
+                int diff = shiftDays - _chartTaskShiftAppliedDays;
+                if (diff != 0 && _chartTaskShiftItem is not null && Vm.Selected?.Item == _chartTaskShiftItem)
+                {
+                    Vm.ShiftSelectedKeepingDurationBy(diff);
+                    _chartTaskShiftAppliedDays = shiftDays;
+                }
+                e.Handled = true;
             }
         }
-
-        if (_chartDragging)
+        else
         {
-            double delta = e.GetPosition(ChartBodyScroll).X - _chartDragStart.X;
-            ChartBodyScroll.ScrollToHorizontalOffset(_chartScrollStart - delta);
-            e.Handled = true;
+            // If potential drag and user moved enough with left button pressed, start actual dragging/capture
+            if (_chartPotentialDrag && e.LeftButton == MouseButtonState.Pressed && !_chartDragging)
+            {
+                var pos = e.GetPosition(ChartBodyScroll);
+                var dx = Math.Abs(pos.X - _chartDragStart.X);
+                if (dx >= SystemParameters.MinimumHorizontalDragDistance)
+                {
+                    _chartDragging = true;
+                    ChartBodyScroll.CaptureMouse();
+                    ChartBodyScroll.Cursor = Cursors.SizeWE;
+                }
+            }
+
+            if (_chartDragging)
+            {
+                double delta = e.GetPosition(ChartBodyScroll).X - _chartDragStart.X;
+                ChartBodyScroll.ScrollToHorizontalOffset(_chartScrollStart - delta);
+                e.Handled = true;
+            }
         }
 
         // マウス位置に応じたコラムの Hover 表示（既存）
@@ -739,9 +803,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return null;
     }
 
+    private bool IsOnTaskPeriodCell(TaskRowViewModel row, Point chartPoint)
+    {
+        double cellWidth = (double)FindResource("CellWidth");
+        int col = (int)(chartPoint.X / cellWidth);
+        if (col < 0 || col >= row.ChartCells.Count) return false;
+
+        // 期間内セルは BarBrush が設定されている
+        return row.ChartCells[col].BarBrush is not null;
+    }
+
     private void OnChartMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (_chartDragging)
+        if (_chartTaskShiftDragging)
+        {
+            _chartTaskShiftDragging = false;
+            _chartTaskShiftRow = null;
+            _chartTaskShiftItem = null;
+            _chartTaskShiftAppliedDays = 0;
+            ChartBodyScroll.ReleaseMouseCapture();
+            ChartBodyScroll.Cursor = Cursors.Arrow;
+            e.Handled = true;
+        }
+        else if (_chartDragging)
         {
             _chartDragging = false;
             ChartBodyScroll.ReleaseMouseCapture();
@@ -766,6 +850,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void OnChartMouseLeave(object sender, MouseEventArgs e)
     {
+        if (_chartTaskShiftDragging)
+        {
+            _chartTaskShiftDragging = false;
+            _chartTaskShiftRow = null;
+            _chartTaskShiftItem = null;
+            _chartTaskShiftAppliedDays = 0;
+            ChartBodyScroll.ReleaseMouseCapture();
+            ChartBodyScroll.Cursor = Cursors.Arrow;
+        }
+
         if (_chartDragging)
         {
             _chartDragging = false;

@@ -20,6 +20,7 @@
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolVis"/>
         <conv:IsEqualConverter x:Key="IsEqual"/>
+        <conv:IsEqualToParameterConverter x:Key="IsEqualToParam"/>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -105,6 +106,8 @@
                 <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
             </MenuItem>
             <MenuItem Header="ヘルプ(_H)" Foreground="{StaticResource WindowFgBrush}">
+                <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>
+                <Separator/>
                 <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
             </MenuItem>
         </Menu>
@@ -314,6 +317,31 @@
                             <MenuItem Header="{Binding ContextWaitHeader}"
                                       Command="{Binding ToggleWaitCommand}"
                                       IsEnabled="{Binding IsContextWaitEnabled}"/>
+                            <MenuItem Header="進捗率(_P)"
+                                      IsEnabled="{Binding IsContextProgressEnabled}">
+                                <MenuItem Header="0%"   Command="{Binding SetProgressCommand}" CommandParameter="0"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=0, Mode=OneWay}"/>
+                                <MenuItem Header="10%"  Command="{Binding SetProgressCommand}" CommandParameter="10"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=10, Mode=OneWay}"/>
+                                <MenuItem Header="20%"  Command="{Binding SetProgressCommand}" CommandParameter="20"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=20, Mode=OneWay}"/>
+                                <MenuItem Header="30%"  Command="{Binding SetProgressCommand}" CommandParameter="30"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=30, Mode=OneWay}"/>
+                                <MenuItem Header="40%"  Command="{Binding SetProgressCommand}" CommandParameter="40"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=40, Mode=OneWay}"/>
+                                <MenuItem Header="50%"  Command="{Binding SetProgressCommand}" CommandParameter="50"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=50, Mode=OneWay}"/>
+                                <MenuItem Header="60%"  Command="{Binding SetProgressCommand}" CommandParameter="60"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=60, Mode=OneWay}"/>
+                                <MenuItem Header="70%"  Command="{Binding SetProgressCommand}" CommandParameter="70"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=70, Mode=OneWay}"/>
+                                <MenuItem Header="80%"  Command="{Binding SetProgressCommand}" CommandParameter="80"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=80, Mode=OneWay}"/>
+                                <MenuItem Header="90%"  Command="{Binding SetProgressCommand}" CommandParameter="90"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=90, Mode=OneWay}"/>
+                                <MenuItem Header="100%" Command="{Binding SetProgressCommand}" CommandParameter="100"
+                                          IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=100, Mode=OneWay}"/>
+                            </MenuItem>
                             <Separator/>
                             <MenuItem Header="新規タスク(_T)"
                                       Command="{Binding NewToDoCommand}"/>

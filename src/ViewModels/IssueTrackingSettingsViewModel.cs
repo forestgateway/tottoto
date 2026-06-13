@@ -1,4 +1,4 @@
-﻿using todochart.Models;
+using todochart.Models;
 
 namespace todochart.ViewModels;
 

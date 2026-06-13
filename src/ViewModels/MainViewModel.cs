@@ -108,6 +108,8 @@ public class MainViewModel : ViewModelBase
             OnPropertyChanged(nameof(ContextCompleteHeader));
             OnPropertyChanged(nameof(IsContextWaitEnabled));
             OnPropertyChanged(nameof(ContextWaitHeader));
+            OnPropertyChanged(nameof(IsContextProgressEnabled));
+            OnPropertyChanged(nameof(ContextProgressValue));
             _todayVm?.NotifySelectedChanged();
             CommandManager.InvalidateRequerySuggested();
         }
@@ -128,6 +130,8 @@ public class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(ContextCompleteHeader));
         OnPropertyChanged(nameof(IsContextWaitEnabled));
         OnPropertyChanged(nameof(ContextWaitHeader));
+        OnPropertyChanged(nameof(IsContextProgressEnabled));
+        OnPropertyChanged(nameof(ContextProgressValue));
         _todayVm?.NotifySelectedChanged();
         CommandManager.InvalidateRequerySuggested();
     }
@@ -141,6 +145,11 @@ public class MainViewModel : ViewModelBase
 
     public string ContextWaitHeader =>
         Selected?.Item is ScheduleToDo todo2 && todo2.IsWait ? "WAITを外す(_W)" : "WAIT(_W)";
+
+    public bool IsContextProgressEnabled => Selected?.Item is ScheduleToDo;
+
+    public int ContextProgressValue =>
+        Selected?.Item is ScheduleToDo td2 ? td2.Progress : 0;
 
     private string _statusText = "準備完了";
     public string StatusText
@@ -258,6 +267,7 @@ public class MainViewModel : ViewModelBase
     public ICommand EditCommand              { get; private set; } = null!;
     public ICommand ToggleCompleteCommand    { get; private set; } = null!;
     public ICommand ToggleWaitCommand        { get; private set; } = null!;
+    public ICommand SetProgressCommand       { get; private set; } = null!;
     public ICommand MoveUpCommand            { get; private set; } = null!;
     public ICommand MoveDownCommand          { get; private set; } = null!;
     public ICommand ChartNextCommand         { get; private set; } = null!;
@@ -330,6 +340,18 @@ public class MainViewModel : ViewModelBase
         ToggleWaitCommand = new RelayCommand(
             () => { ToggleWait(); },
             () => Selected?.Item is ScheduleToDo td && !td.Completed);
+
+        SetProgressCommand = new RelayCommand(
+            p =>
+            {
+                if (Selected?.Item is not ScheduleToDo todo) return;
+                if (p is int v) todo.Progress = v;
+                else if (p is string s && int.TryParse(s, out int sv)) todo.Progress = sv;
+                var entry = FindEntryForItem(todo);
+                if (entry is not null) entry.IsModified = true;
+                OnPropertyChanged(nameof(ContextProgressValue));
+            },
+            _ => Selected?.Item is ScheduleToDo);
 
         MoveUpCommand   = new RelayCommand(MoveUp,   () => CanMoveUp());
         MoveDownCommand = new RelayCommand(MoveDown, () => CanMoveDown());
@@ -1031,6 +1053,34 @@ public class MainViewModel : ViewModelBase
     }
 
     // ──── 日付シフト ───────────────────────────────────────────────────────
+    public void ShiftSelectedKeepingDurationBy(int deltaDays)
+    {
+        if (deltaDays == 0 || Selected is null) return;
+
+        var item = Selected.Item;
+        var beginDate = item.BeginDate;
+        var endDate = item.EndDate;
+
+        // 期間平行移動では開始・終了を同じ日数だけ移動し、期間長を維持する
+        if (beginDate.HasValue && endDate.HasValue)
+        {
+            item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+        else
+        {
+            if (beginDate.HasValue)
+                item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            if (endDate.HasValue)
+                item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+
+        UpdateAllStatuses();
+        RefreshFlatList();
+        MarkModifiedForItem(item);
+        Selected?.Refresh();
+    }
+
     private void ShiftDate(int deltaBegin, int deltaEnd)
     {
         if (Selected is null) return;

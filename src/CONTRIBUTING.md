@@ -1,4 +1,4 @@
-﻿# CONTRIBUTING.md — Tottoto (todochart) 開発ガイドライン
+# CONTRIBUTING.md — Tottoto (todochart) 開発ガイドライン
 
 > **⚠️ 機能追加・修正の前に必ずこのファイルを読むこと。**
 > 変更後は「主要クラス一覧」を必ず更新すること。
@@ -77,6 +77,7 @@ src/
 | `HolidaySettingsViewModel` | `ViewModels/HolidaySettingsViewModel.cs` | 休日設定ダイアログの ViewModel（曜日レベル、祝日取得、任意休日追加・削除） |
 | `HolidayYearSelectionViewModel` | `ViewModels/HolidayYearSelectionViewModel.cs` | 祝日反映対象の年チェックリストを管理する ViewModel |
 | `CalloutViewModel` | `ViewModels/CalloutViewModel.cs` | 吹き出し注釈の表示状態・位置計算を扱う ViewModel |
+| `UpdateCheckViewModel` | `ViewModels/UpdateCheckViewModel.cs` | バージョン更新確認ダイアログの ViewModel |
 
 ### Views
 
@@ -89,6 +90,7 @@ src/
 | `Views/HolidaySettingsWindow.xaml` | 休日設定ダイアログ |
 | `Views/HolidayYearSelectionWindow.xaml` | 祝日反映対象の西暦をチェック選択するダイアログ |
 | `Views/ArchiveListWindow.xaml` | アーカイブ済みタスク一覧 |
+| `Views/UpdateCheckWindow.xaml` | バージョン更新確認ダイアログ |
 
 ### Services
 
@@ -105,6 +107,7 @@ src/
 | `RedmineIssueProvider` | `Services/RedmineIssueProvider.cs` | Redmine Issues API との連携実装 |
 | `IssueTrackingHelper` | `Services/IssueTrackingHelper.cs` | Issue 状態文字列 → `ItemStatus` マッピングなどのユーティリティ |
 | `LinkPreviewService` | `Services/LinkPreviewService.cs` | URL のタイトル取得などリンクプレビュー情報を取得するサービス |
+| `UpdateCheckService` | `Services/UpdateCheckService.cs` | GitHub Releases API によるバージョン確認・zip ダウンロード・バッチ更新 |
 
 ### Controls
 

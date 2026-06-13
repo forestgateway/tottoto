@@ -1,4 +1,4 @@
-﻿# GitHub Copilot カスタム指示 — todochart
+# GitHub Copilot カスタム指示 — todochart
 
 <!-- アーキテクチャ・クラス一覧の詳細は下記ファイルを参照: Refer to [CONTRIBUTING.md](../src/CONTRIBUTING.md) -->
 
@@ -6,6 +6,8 @@
 
 1. `src/CONTRIBUTING.md` を読み、アーキテクチャ・クラス一覧・責務ルールを把握すること。
 2. 実装完了後、新しいクラス・機能・ルールを追加・変更した場合は **必ず `src/CONTRIBUTING.md` を更新**すること。
+3. UTF-8 BOMなし、改行はLFで統一すること。
+4. 回答や説明はコード内コメントも含め、日本語を主体とする。技術用語も可能な限り日本語で補足する。
 
 ---
 
