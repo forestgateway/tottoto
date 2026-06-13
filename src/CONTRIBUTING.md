@@ -1,4 +1,4 @@
-﻿# CONTRIBUTING.md — Tottoto (todochart) 開発ガイドライン
+# CONTRIBUTING.md — Tottoto (todochart) 開発ガイドライン
 
 > **⚠️ 機能追加・修正の前に必ずこのファイルを読むこと。**
 > 変更後は「主要クラス一覧」を必ず更新すること。
