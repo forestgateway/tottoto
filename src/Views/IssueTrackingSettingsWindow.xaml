@@ -256,7 +256,7 @@
                         <LineBreak/>
                         <Run Text="Redmine: URL クエリ追加条件 (例: status_id=open&amp;assigned_to_id=me)"/>
                         <LineBreak/>
-                        <Run Text="　　空欄の場合は project={projectKey} のみで検索します。"/>
+                        <Run Text="    空欄の場合は project={projectKey} のみで検索します。"/>
                     </TextBlock>
                 </TextBox.ToolTip>
             </TextBox>

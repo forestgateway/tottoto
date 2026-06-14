@@ -61,7 +61,7 @@ public class TaskPropertiesViewModel : ViewModelBase
     }
 
     // ── 進捗率 ───────────────────────────────────────
-    /// <summary>進捗率プルダウンの選択肢ﾈ0, 10, 20, ... 100）。</summary>
+    /// <summary>進捗率プルダウンの選択肢（0, 10, 20, ... 100）。</summary>
     public IReadOnlyList<int> ProgressOptions { get; } =
         Enumerable.Range(0, 11).Select(i => i * 10).ToArray();
 

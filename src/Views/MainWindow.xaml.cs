@@ -593,6 +593,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ──── メニュー ────────────────────────────────────────────────────────
     private void OnExitClick(object sender, RoutedEventArgs e) => Close();
 
+    private void OnCheckUpdateClick(object sender, RoutedEventArgs e)
+    {
+        var vm  = new ViewModels.UpdateCheckViewModel();
+        var win = new UpdateCheckWindow(vm) { Owner = this };
+        win.ShowDialog();
+    }
+
     private void OnAboutClick(object sender, RoutedEventArgs e)
     {
         var asm     = System.Reflection.Assembly.GetExecutingAssembly();
