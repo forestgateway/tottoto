@@ -5,6 +5,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- カラーテーマ（App.xaml.cs の OnStartup で選択済みテーマに差し替え） -->
+                <ResourceDictionary Source="Themes/Colors/ThemeDarkCyan.xaml"/>
                 <ResourceDictionary Source="Themes/BaseTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

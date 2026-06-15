@@ -2,21 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <!-- ── カラーパレット (Dark Transparent) ──────────────── -->
-    <Color x:Key="AccentColor">#FF00C8FF</Color>
-    <Color x:Key="PanelBg">#E61A2A3E</Color>
-    <Color x:Key="HeaderBg">#E61E3050</Color>
-    <Color x:Key="RowSelected">#6600C8FF</Color>
-
-    <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
-    <SolidColorBrush x:Key="PanelBgBrush"      Color="{StaticResource PanelBg}"/>
-    <SolidColorBrush x:Key="HeaderBgBrush"     Color="{StaticResource HeaderBg}"/>
-    <SolidColorBrush x:Key="RowSelectedBrush"  Color="{StaticResource RowSelected}"/>
-    <SolidColorBrush x:Key="WindowBgBrush"     Color="#E60D1B2A"/>
-    <SolidColorBrush x:Key="WindowFgBrush"     Color="#FFD0E8FF"/>
-    <SolidColorBrush x:Key="SubTextBrush"      Color="#FFAABBCC"/>
-    <SolidColorBrush x:Key="BorderBrush"       Color="#CC1E3050"/>
-    <SolidColorBrush x:Key="ChartBgBrush"      Color="#E60F1E30"/>
+    <!-- ── カラーパレット はテーマファイル (Themes/Colors/*.xaml) で定義 ── -->
 
     <!-- ── 共通定数 ──────────────────────────────────────── -->
     <sys:Double x:Key="RowHeight">24</sys:Double>
@@ -27,7 +13,7 @@
     <Style x:Key="ToolBarButtonStyle" TargetType="Button">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
-        <Setter Property="Foreground"   Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"   Value="{DynamicResource SubTextBrush}"/>
         <Setter Property="Padding"      Value="8,4"/>
         <Setter Property="FontSize"     Value="13"/>
         <Setter Property="FontFamily"   Value="Meiryo UI, Segoe UI, sans-serif"/>
@@ -48,7 +34,7 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="bd" Property="Background"   Value="#4400C8FF"/>
-                            <Setter TargetName="bd" Property="BorderBrush"  Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="bd" Property="BorderBrush"  Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="#FF334455"/>
@@ -104,7 +90,7 @@
     <Style x:Key="ToolBarToggleButtonStyle" TargetType="ToggleButton">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
-        <Setter Property="Foreground"   Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"   Value="{DynamicResource SubTextBrush}"/>
         <Setter Property="Padding"      Value="8,4"/>
         <Setter Property="FontSize"     Value="13"/>
         <Setter Property="FontFamily"   Value="Meiryo UI, Segoe UI, sans-serif"/>
@@ -121,7 +107,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="bd" Property="Background"  Value="#3300C8FF"/>
-                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="bd" Property="Background"   Value="#2200C8FF"/>
@@ -179,7 +165,7 @@
     <!-- ── ColumnHeader ──────────────────────────────────── -->
     <Style x:Key="ColumnHeaderStyle" TargetType="TextBlock">
         <Setter Property="Background"          Value="Transparent"/>
-        <Setter Property="Foreground"          Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground"          Value="{DynamicResource AccentBrush}"/>
         <Setter Property="FontSize"            Value="12"/>
         <Setter Property="FontWeight"          Value="SemiBold"/>
         <Setter Property="VerticalAlignment"   Value="Center"/>
@@ -192,7 +178,7 @@
         <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="BorderBrush"     Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Foreground"      Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource SubTextBrush}"/>
         <Setter Property="Padding"         Value="1,0"/>
         <Setter Property="Cursor"          Value="Hand"/>
         <Setter Property="Template">
@@ -205,7 +191,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="bd" Property="Background" Value="#1A00C8FF"/>
-                            <Setter Property="Foreground" Value="{StaticResource WindowFgBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource WindowFgBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="bd" Property="Background" Value="#3300C8FF"/>
@@ -218,7 +204,7 @@
 
     <!-- ── Separator ─────────────────────────────────────── -->
     <Style TargetType="Separator">
-        <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="Height"     Value="1"/>
         <Setter Property="Margin"     Value="4,2"/>
         <Setter Property="Template">
@@ -234,9 +220,9 @@
 
     <!-- ── ContextMenu 本体 ──────────────────────────────── -->
     <Style TargetType="ContextMenu">
-        <Setter Property="Background"      Value="{StaticResource PanelBgBrush}"/>
-        <Setter Property="Foreground"      Value="{StaticResource WindowFgBrush}"/>
-        <Setter Property="BorderBrush"     Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource PanelBgBrush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource WindowFgBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding"         Value="2"/>
         <Setter Property="Template">
@@ -258,7 +244,7 @@
     <!-- ── MenuItem (トップレベル / ドロップダウン / サブメニュー 共通) ── -->
     <Style TargetType="MenuItem">
         <Setter Property="Background"      Value="Transparent"/>
-        <Setter Property="Foreground"      Value="{StaticResource WindowFgBrush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource WindowFgBrush}"/>
         <Setter Property="BorderBrush"     Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="8,4"/>
@@ -285,7 +271,7 @@
                             <TextBlock x:Name="check"
                                        Grid.Column="0"
                                        Text="&#x2714;"
-                                       Foreground="{StaticResource AccentBrush}"
+                                       Foreground="{DynamicResource AccentBrush}"
                                        FontSize="10"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
@@ -298,14 +284,14 @@
                             <TextBlock x:Name="gesture"
                                        Grid.Column="2"
                                        Text="{TemplateBinding InputGestureText}"
-                                       Foreground="{StaticResource SubTextBrush}"
+                                       Foreground="{DynamicResource SubTextBrush}"
                                        FontSize="11"
                                        Margin="12,0,6,0"
                                        VerticalAlignment="Center"/>
                             <Path x:Name="arrow"
                                   Grid.Column="2"
                                   Data="M0,0 L4,4 L0,8"
-                                  Stroke="{StaticResource SubTextBrush}"
+                                  Stroke="{DynamicResource SubTextBrush}"
                                   StrokeThickness="1.5"
                                   Margin="8,0,6,0"
                                   VerticalAlignment="Center"
@@ -317,18 +303,16 @@
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
                                    Placement="Bottom"
                                    PopupAnimation="Fade">
-                                <Border Background="{StaticResource PanelBgBrush}"
-                                        BorderBrush="{StaticResource AccentBrush}"
+                                <Border Background="{DynamicResource PanelBgBrush}"
+                                        BorderBrush="{DynamicResource AccentBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4"
                                         Padding="2"
                                         SnapsToDevicePixels="True">
-                                    <ScrollViewer CanContentScroll="True">
-                                        <ItemsPresenter
-                                            Grid.IsSharedSizeScope="True"
-                                            KeyboardNavigation.DirectionalNavigation="Cycle"
-                                            KeyboardNavigation.TabNavigation="Cycle"/>
-                                    </ScrollViewer>
+                                    <ItemsPresenter
+                                        Grid.IsSharedSizeScope="True"
+                                        KeyboardNavigation.DirectionalNavigation="Cycle"
+                                        KeyboardNavigation.TabNavigation="Cycle"/>
                                 </Border>
                             </Popup>
                         </Grid>
@@ -361,8 +345,8 @@
 
     <!-- ── Menu バー本体 ─────────────────────────────────── -->
     <Style TargetType="Menu">
-        <Setter Property="Background" Value="{StaticResource PanelBgBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource WindowFgBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource PanelBgBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource WindowFgBrush}"/>
     </Style>
 
 </ResourceDictionary>

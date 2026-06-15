@@ -137,6 +137,29 @@
             </MenuItem>
             <MenuItem Header="オプション(_O)" Foreground="{StaticResource WindowFgBrush}">
                 <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
+                <Separator/>
+                <MenuItem Header="テーマ変更(_T)">
+                    <MenuItem Header="ダーク シアン"
+                              IsCheckable="True"
+                              IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=DarkCyan, Mode=OneWay}"
+                              Command="{Binding ChangeThemeCommand}" CommandParameter="DarkCyan"/>
+                    <MenuItem Header="ダーク パープル"
+                              IsCheckable="True"
+                              IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=DarkPurple, Mode=OneWay}"
+                              Command="{Binding ChangeThemeCommand}" CommandParameter="DarkPurple"/>
+                    <MenuItem Header="ダーク グリーン"
+                              IsCheckable="True"
+                              IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=DarkGreen, Mode=OneWay}"
+                              Command="{Binding ChangeThemeCommand}" CommandParameter="DarkGreen"/>
+                    <MenuItem Header="ダーク オレンジ"
+                              IsCheckable="True"
+                              IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=DarkOrange, Mode=OneWay}"
+                              Command="{Binding ChangeThemeCommand}" CommandParameter="DarkOrange"/>
+                    <MenuItem Header="ライト"
+                              IsCheckable="True"
+                              IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=Light, Mode=OneWay}"
+                              Command="{Binding ChangeThemeCommand}" CommandParameter="Light"/>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="ヘルプ(_H)" Foreground="{StaticResource WindowFgBrush}">
                 <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>

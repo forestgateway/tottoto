@@ -96,7 +96,8 @@ src/
 
 | クラス / 型 | ファイル | 役割 |
 |---|---|---|
-| `AppSettings` | `Services/AppSettings.cs` | アプリ設定（ウィンドウ位置・列幅など）の保存・読み込み（JSON） |
+| `AppSettings` | `Services/AppSettings.cs` | アプリ設定（ウィンドウ位置・列幅・テーマ名など）の保存・読み込み（JSON） |
+| `ThemeService` | `Services/ThemeService.cs` | カラーテーマの切り替え（MergedDictionaries 差し替え）・`ThemeChanged` イベント発火 |
 | `ScheduleFileService` | `Services/ScheduleFileService.cs` | スケジュールデータの JSON 形式での保存・読み込み |
 | `ArchiveService` | `Services/ArchiveService.cs` | アーカイブファイル（`*.archive`）の読み書き |
 | `HolidayService` | `Services/HolidayService.cs` | 祝日・休日判定ロジック |
@@ -133,7 +134,12 @@ src/
 
 | ファイル | 役割 |
 |---|---|
-| `Themes/BaseTheme.xaml` | アプリ共通のスタイル・ブラシ・テンプレート定義 |
+| `Themes/BaseTheme.xaml` | アプリ共通のスタイル・テンプレート定義（ブラシは DynamicResource で参照） |
+| `Themes/Colors/ThemeDarkCyan.xaml` | ダーク シアン テーマのカラーパレット定義（デフォルト） |
+| `Themes/Colors/ThemeDarkPurple.xaml` | ダーク パープル テーマのカラーパレット定義 |
+| `Themes/Colors/ThemeDarkGreen.xaml` | ダーク グリーン テーマのカラーパレット定義 |
+| `Themes/Colors/ThemeDarkOrange.xaml` | ダーク オレンジ テーマのカラーパレット定義 |
+| `Themes/Colors/ThemeLight.xaml` | ライト テーマのカラーパレット定義 |
 
 ---
 

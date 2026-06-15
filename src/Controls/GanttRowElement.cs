@@ -73,26 +73,47 @@ public class GanttRowElement : FrameworkElement
         return new Size(count * CellWidth, 22);
     }
 
-    private static readonly Brush s_hoverBrush    = new SolidColorBrush(Color.FromArgb(0x22, 0x00, 0xC8, 0xFF));
-    private static readonly Brush s_selectedBrush = new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF));
-    private static readonly Pen   s_selectedPen   = new(new SolidColorBrush(Color.FromArgb(0xFF, 0x00, 0xC8, 0xFF)), 1.0);
-    private static readonly Pen   s_weekPen       = new(new SolidColorBrush(Color.FromArgb(0x44, 0x00, 0xC8, 0xFF)), 1.0);
-    private static readonly Pen   s_rowPen        = new(new SolidColorBrush(Color.FromArgb(0x30, 0xAA, 0xBB, 0xCC)), 1.0);
-    private static readonly Brush s_todayOverlay  = new SolidColorBrush(Color.FromArgb(0x30, 0x00, 0xC8, 0xFF));
+    private Brush _hoverBrush    = new SolidColorBrush(Color.FromArgb(0x22, 0x00, 0xC8, 0xFF));
+    private Brush _selectedBrush = new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF));
+    private Pen   _selectedPen   = new(new SolidColorBrush(Color.FromArgb(0xFF, 0x00, 0xC8, 0xFF)), 1.0);
+    private Pen   _weekPen       = new(new SolidColorBrush(Color.FromArgb(0x44, 0x00, 0xC8, 0xFF)), 1.0);
+    private Pen   _rowPen        = new(new SolidColorBrush(Color.FromArgb(0x30, 0xAA, 0xBB, 0xCC)), 1.0);
+    private Brush _todayOverlay  = new SolidColorBrush(Color.FromArgb(0x30, 0x00, 0xC8, 0xFF));
     private static readonly Brush s_calloutMarker = new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44));
 
     static GanttRowElement()
     {
-        s_hoverBrush.Freeze();
-        s_selectedBrush.Freeze();
-        ((SolidColorBrush)s_selectedPen.Brush).Freeze();
-        s_selectedPen.Freeze();
-        ((SolidColorBrush)s_weekPen.Brush).Freeze();
-        s_weekPen.Freeze();
-        ((SolidColorBrush)s_rowPen.Brush).Freeze();
-        s_rowPen.Freeze();
-        ((SolidColorBrush)s_todayOverlay).Freeze();
-        s_calloutMarker.Freeze();
+        ((SolidColorBrush)s_calloutMarker).Freeze();
+    }
+
+    public GanttRowElement()
+    {
+        // テーマ変更時にブラシを更新して再描画
+        todochart.Services.ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged()
+    {
+        UpdateBrushesFromTheme();
+        InvalidateVisual();
+    }
+
+    private void UpdateBrushesFromTheme()
+    {
+        var res = Application.Current?.Resources;
+        if (res is null) return;
+
+        // アクセントカラーをリソースから取得してブラシ/ペンを再生成
+        var accent = res["AccentBrush"] is SolidColorBrush ab ? ab.Color : Color.FromArgb(0xFF, 0x00, 0xC8, 0xFF);
+
+        _hoverBrush    = new SolidColorBrush(Color.FromArgb(0x22, accent.R, accent.G, accent.B));
+        _selectedBrush = new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B));
+        _selectedPen   = new Pen(new SolidColorBrush(Color.FromArgb(0xFF, accent.R, accent.G, accent.B)), 1.0);
+        _weekPen       = new Pen(new SolidColorBrush(Color.FromArgb(0x44, accent.R, accent.G, accent.B)), 1.0);
+        _todayOverlay  = new SolidColorBrush(Color.FromArgb(0x30, accent.R, accent.G, accent.B));
+
+        var subText = res["SubTextBrush"] is SolidColorBrush sb ? sb.Color : Color.FromArgb(0x30, 0xAA, 0xBB, 0xCC);
+        _rowPen = new Pen(new SolidColorBrush(Color.FromArgb(0x30, subText.R, subText.G, subText.B)), 1.0);
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -148,14 +169,14 @@ public class GanttRowElement : FrameworkElement
             var c    = Cells[i];
             var rect = new Rect(x, 0, cw, h);
 
-            if (isSelected)   dc.DrawRectangle(s_selectedBrush, null, rect);
-            if (i == hoverCol) dc.DrawRectangle(s_hoverBrush,   null, rect);
+            if (isSelected)   dc.DrawRectangle(_selectedBrush, null, rect);
+            if (i == hoverCol) dc.DrawRectangle(_hoverBrush,   null, rect);
 
             // 日曜と月曜の間に縦線（月曜セルの左端）
             if (c.Date.DayOfWeek == DayOfWeek.Monday)
             {
                 double lx = x + snapOffset;
-                dc.DrawLine(s_weekPen, new Point(lx, 0), new Point(lx, h));
+                dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
             }
 
             if (!string.IsNullOrEmpty(c.Symbol))
@@ -187,18 +208,18 @@ public class GanttRowElement : FrameworkElement
         // 行下端に横線
         double totalW = Cells.Count * cw;
         double ly = h - snapOffset;
-        dc.DrawLine(s_rowPen, new Point(0, ly), new Point(totalW, ly));
+        dc.DrawLine(_rowPen, new Point(0, ly), new Point(totalW, ly));
 
         // 今日列のオーバーレイを最後に重ねる
         if (todayX >= 0)
-            dc.DrawRectangle(s_todayOverlay, null, new Rect(todayX, 0, cw, h));
+            dc.DrawRectangle(_todayOverlay, null, new Rect(todayX, 0, cw, h));
 
         // 選択時に外枠線を描画
         if (isSelected)
         {
             double selW = Cells.Count * cw;
-            dc.DrawLine(s_selectedPen, new Point(0, snapOffset),     new Point(selW, snapOffset));
-            dc.DrawLine(s_selectedPen, new Point(0, h - snapOffset), new Point(selW, h - snapOffset));
+            dc.DrawLine(_selectedPen, new Point(0, snapOffset),     new Point(selW, snapOffset));
+            dc.DrawLine(_selectedPen, new Point(0, h - snapOffset), new Point(selW, h - snapOffset));
         }
     }
 

@@ -56,6 +56,9 @@ public class AppSettings
     // ── 完了タスク非表示 ─────────────────────────────────
     public bool HideCompleted { get; set; } = false;
 
+    // ── カラーテーマ ─────────────────────────────────────
+    public string ThemeName { get; set; } = "DarkCyan";
+
     // ─────────────────────────────────────────────────────
     private static string SettingsPath =>
         Path.Combine(AppContext.BaseDirectory, "tottoto.json");

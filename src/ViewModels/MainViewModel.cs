@@ -204,6 +204,9 @@ public class MainViewModel : ViewModelBase
 
         _chartStart    = DateTime.Today.AddDays(_settings.ChartOffsetFromToday);
         _hideCompleted = _settings.HideCompleted;
+        // 保存済みテーマを CurrentTheme に反映（実際の適用は App.xaml.cs OnStartup で済み）
+        _currentTheme  = Services.ThemeService.IsValidTheme(_settings.ThemeName)
+                         ? _settings.ThemeName : "DarkCyan";
         RefreshChartDays();
 
         InitCommands();
@@ -394,6 +397,9 @@ public class MainViewModel : ViewModelBase
         {
             if (p is not string name) return;
             CurrentTheme = name;
+            Services.ThemeService.ApplyTheme(name);
+            _settings.ThemeName = name;
+            _settings.Save();
         });
 
         CopyItemCommand  = new RelayCommand(CopySelected,  () => Selected is not null);

@@ -141,7 +141,7 @@ public class JiraIssueProvider : IIssueProvider
     /// </summary>
     private static string BuildDefaultJql(string projectId)
     {
-        // 数値IDの場合: id() 関数 → project = 10000 (Jira Cloud Next-gen 対応)
+        // 数値IDの場合: project = 10000 形式 (Jira Cloud Next-gen 対応)
         if (long.TryParse(projectId.Trim(), out _))
             return $"project = {projectId.Trim()} ORDER BY created DESC";
 

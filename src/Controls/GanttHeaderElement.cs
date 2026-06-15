@@ -41,19 +41,49 @@ public class GanttHeaderElement : FrameworkElement
         return new Size(count * CellWidth, 32);
     }
 
-    private static readonly Pen s_gridPen  = new(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF)), 0.5);
-    private static readonly Pen s_weekPen  = new(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF)), 1.0);
+    private Pen   _gridPen  = new(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF)), 0.5);
+    private Pen   _weekPen  = new(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0xC8, 0xFF)), 1.0);
     private static readonly Brush s_todayBg   = new SolidColorBrush(Color.FromRgb(0xFF, 0xCC, 0x00));
-    private static readonly Brush s_holiday2  = new SolidColorBrush(Color.FromRgb(0x20, 0x30, 0x60));
-    private static readonly Brush s_holiday1  = new SolidColorBrush(Color.FromRgb(0x18, 0x28, 0x50));
-    private static readonly Brush s_normalBg  = new SolidColorBrush(Color.FromRgb(0x1A, 0x2A, 0x3E));
-    private static readonly Brush s_monthBg   = new SolidColorBrush(Color.FromRgb(0x0F, 0x1E, 0x30));
+    private Brush _holiday2  = new SolidColorBrush(Color.FromRgb(0x20, 0x30, 0x60));
+    private Brush _holiday1  = new SolidColorBrush(Color.FromRgb(0x18, 0x28, 0x50));
+    private Brush _normalBg  = new SolidColorBrush(Color.FromRgb(0x1A, 0x2A, 0x3E));
+    private Brush _monthBg   = new SolidColorBrush(Color.FromRgb(0x0F, 0x1E, 0x30));
 
     static GanttHeaderElement()
     {
-        s_gridPen.Freeze(); ((SolidColorBrush)s_weekPen.Brush).Freeze(); s_weekPen.Freeze();
-        s_todayBg.Freeze(); s_holiday2.Freeze();
-        s_holiday1.Freeze(); s_normalBg.Freeze(); s_monthBg.Freeze();
+        ((SolidColorBrush)s_todayBg).Freeze();
+    }
+
+    public GanttHeaderElement()
+    {
+        // テーマ変更時にブラシを更新して再描画
+        todochart.Services.ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged()
+    {
+        UpdateBrushesFromTheme();
+        InvalidateVisual();
+    }
+
+    private void UpdateBrushesFromTheme()
+    {
+        var res = Application.Current?.Resources;
+        if (res is null) return;
+
+        var accent  = res["AccentBrush"]  is SolidColorBrush ab ? ab.Color : Color.FromArgb(0xFF, 0x00, 0xC8, 0xFF);
+        var panelBg = res["PanelBgBrush"] is SolidColorBrush pb ? pb.Color : Color.FromRgb(0x1A, 0x2A, 0x3E);
+        var chartBg = res["ChartBgBrush"] is SolidColorBrush cb ? cb.Color : Color.FromRgb(0x0F, 0x1E, 0x30);
+
+        _gridPen  = new Pen(new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B)), 0.5);
+        _weekPen  = new Pen(new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B)), 1.0);
+        _normalBg = new SolidColorBrush(panelBg);
+        _monthBg  = new SolidColorBrush(chartBg);
+        // holiday2 / holiday1 はパネル背景より少し暗い色で生成
+        _holiday2 = new SolidColorBrush(Color.FromRgb(
+            (byte)Math.Min(panelBg.R + 10, 255), (byte)Math.Min(panelBg.G + 10, 255), (byte)Math.Min(panelBg.B + 30, 255)));
+        _holiday1 = new SolidColorBrush(Color.FromRgb(
+            (byte)Math.Max(panelBg.R - 8, 0),  (byte)Math.Max(panelBg.G - 8, 0),  (byte)Math.Min(panelBg.B + 20, 255)));
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -82,8 +112,8 @@ public class GanttHeaderElement : FrameworkElement
 
             double monthW = monthCount * cw;
             var monthRect = new Rect(x, 0, monthW, topH);
-            dc.DrawRectangle(s_monthBg, null, monthRect);
-            dc.DrawRectangle(null, s_gridPen, monthRect);
+            dc.DrawRectangle(_monthBg, null, monthRect);
+            dc.DrawRectangle(null, _gridPen, monthRect);
 
             var monthText = new FormattedText(
                 d.Date.ToString("yyyy/M"),
@@ -105,18 +135,18 @@ public class GanttHeaderElement : FrameworkElement
             var rect = new Rect(x, topH, cw, botH);
 
             Brush bg = d.IsToday ? s_todayBg
-                     : d.HolidayLv >= 2 ? s_holiday2
-                     : d.HolidayLv == 1 ? s_holiday1
-                     : s_normalBg;
+                     : d.HolidayLv >= 2 ? _holiday2
+                     : d.HolidayLv == 1 ? _holiday1
+                     : _normalBg;
 
             dc.DrawRectangle(bg, null, rect);
-            dc.DrawRectangle(null, s_gridPen, rect);
+            dc.DrawRectangle(null, _gridPen, rect);
 
             // 日曜と月曜の間に週境界線（ヘッダー全高）
             if (d.Date.DayOfWeek == DayOfWeek.Monday)
             {
                 double lx = x + snapOffset;
-                dc.DrawLine(s_weekPen, new Point(lx, 0), new Point(lx, h));
+                dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
             }
 
             Brush fg = d.IsToday ? Brushes.Black : Brushes.White;
