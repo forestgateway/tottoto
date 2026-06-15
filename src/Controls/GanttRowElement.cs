@@ -136,7 +136,7 @@ public class GanttRowElement : FrameworkElement
 
         // ── タスクバー: 連続セルをセグメントとして連結・端を角丸で描画 ──
         {
-            double barH   = (h - 4.0) * 0.8;
+            double barH   = (h - 4.0) * 0.45;
             double barTop = (h - barH) / 2.0;
             const double barRadius = 3.0;
 

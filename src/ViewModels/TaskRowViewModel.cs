@@ -289,8 +289,8 @@ public class TaskRowViewModel : ViewModelBase
     /// <summary>フォルダかつ全タスク完了のとき true。アイコン背景色切り替えに使用。</summary>
     public bool IsCompletedFolder => IsFolder && Item.Status == ItemStatus.Complete;
 
-    private static readonly Brush s_rowEven = Freeze(new SolidColorBrush(Color.FromRgb(0x0D, 0x1B, 0x2A)));
-    private static readonly Brush s_rowOdd  = Freeze(new SolidColorBrush(Color.FromRgb(0x0F, 0x20, 0x30)));
+    private static readonly Brush s_rowEven = Freeze(new SolidColorBrush(Color.FromArgb(0x70, 0x0D, 0x1B, 0x2A)));
+    private static readonly Brush s_rowOdd  = Freeze(new SolidColorBrush(Color.FromArgb(0x70, 0x0F, 0x20, 0x30)));
 
     public Brush RowBackground => _rowIndex % 2 == 0 ? s_rowEven : s_rowOdd;
 

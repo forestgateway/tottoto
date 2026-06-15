@@ -3,18 +3,18 @@
 
     <!-- ダーク パープル カラーパレット -->
     <Color x:Key="AccentColor">#FFCC88FF</Color>
-    <Color x:Key="PanelBg">#E62A1A3E</Color>
-    <Color x:Key="HeaderBg">#E6281640</Color>
+    <Color x:Key="PanelBg">#D92A1A3E</Color>
+    <Color x:Key="HeaderBg">#D9281640</Color>
     <Color x:Key="RowSelected">#6699AAFF</Color>
 
     <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="PanelBgBrush"      Color="{StaticResource PanelBg}"/>
     <SolidColorBrush x:Key="HeaderBgBrush"     Color="{StaticResource HeaderBg}"/>
     <SolidColorBrush x:Key="RowSelectedBrush"  Color="{StaticResource RowSelected}"/>
-    <SolidColorBrush x:Key="WindowBgBrush"     Color="#E6130A20"/>
+    <SolidColorBrush x:Key="WindowBgBrush"     Color="#D9130A20"/>
     <SolidColorBrush x:Key="WindowFgBrush"     Color="#FFEEDDFF"/>
     <SolidColorBrush x:Key="SubTextBrush"      Color="#FFBBAACC"/>
     <SolidColorBrush x:Key="BorderBrush"       Color="#CC2A1540"/>
-    <SolidColorBrush x:Key="ChartBgBrush"      Color="#E60F0A1E"/>
+    <SolidColorBrush x:Key="ChartBgBrush"      Color="#D90F0A1E"/>
 
 </ResourceDictionary>

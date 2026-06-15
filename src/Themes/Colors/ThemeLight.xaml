@@ -3,18 +3,18 @@
 
     <!-- ライト カラーパレット -->
     <Color x:Key="AccentColor">#FF0077CC</Color>
-    <Color x:Key="PanelBg">#FFE8F0F8</Color>
-    <Color x:Key="HeaderBg">#FFD0E4F8</Color>
+    <Color x:Key="PanelBg">#D9E8F0F8</Color>
+    <Color x:Key="HeaderBg">#D9D0E4F8</Color>
     <Color x:Key="RowSelected">#440077CC</Color>
 
     <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="PanelBgBrush"      Color="{StaticResource PanelBg}"/>
     <SolidColorBrush x:Key="HeaderBgBrush"     Color="{StaticResource HeaderBg}"/>
     <SolidColorBrush x:Key="RowSelectedBrush"  Color="{StaticResource RowSelected}"/>
-    <SolidColorBrush x:Key="WindowBgBrush"     Color="#FFF4F8FF"/>
+    <SolidColorBrush x:Key="WindowBgBrush"     Color="#D9F4F8FF"/>
     <SolidColorBrush x:Key="WindowFgBrush"     Color="#FF1A2A3A"/>
     <SolidColorBrush x:Key="SubTextBrush"      Color="#FF445566"/>
     <SolidColorBrush x:Key="BorderBrush"       Color="#CCAABBCC"/>
-    <SolidColorBrush x:Key="ChartBgBrush"      Color="#FFE0ECFA"/>
+    <SolidColorBrush x:Key="ChartBgBrush"      Color="#D9E0ECFA"/>
 
 </ResourceDictionary>
