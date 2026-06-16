@@ -72,6 +72,17 @@ public partial class TaskPropertiesWindow : Window
         var link = _vm.Link?.Trim();
         if (string.IsNullOrWhiteSpace(link)) return;
 
+        // 既にデスクトップアプリ用の形式かチェック
+        if (link.StartsWith("ms-excel:",    StringComparison.OrdinalIgnoreCase) ||
+            link.StartsWith("ms-word:",     StringComparison.OrdinalIgnoreCase) ||
+            link.StartsWith("ms-powerpoint:", StringComparison.OrdinalIgnoreCase) ||
+            link.StartsWith("msteams:",     StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show("既にデスクトップアプリ用のリンク形式です。",
+                            "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         if (!Uri.TryCreate(link, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
@@ -80,12 +91,11 @@ public partial class TaskPropertiesWindow : Window
             return;
         }
 
-        if (link.StartsWith("ms-excel:", StringComparison.OrdinalIgnoreCase) ||
-            link.StartsWith("ms-word:", StringComparison.OrdinalIgnoreCase) ||
-            link.StartsWith("ms-powerpoint:", StringComparison.OrdinalIgnoreCase))
+        // Teams URL → msteams:// に変換（https:// の部分だけ msteams:// に置き換える）
+        if (link.Contains("teams.microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+            link.Contains("teams.live.com",      StringComparison.OrdinalIgnoreCase))
         {
-            MessageBox.Show("既にデスクトップアプリ用のリンク形式です。",
-                            "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+            _vm.Link = "msteams" + link[link.IndexOf(':')..];
             return;
         }
 

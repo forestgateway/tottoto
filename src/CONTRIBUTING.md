@@ -106,7 +106,7 @@ src/
 | `JiraOnPremIssueProvider` | `Services/JiraOnPremIssueProvider.cs` | Jira オンプレミス API との連携実装 |
 | `RedmineIssueProvider` | `Services/RedmineIssueProvider.cs` | Redmine Issues API との連携実装 |
 | `IssueTrackingHelper` | `Services/IssueTrackingHelper.cs` | Issue 状態文字列 → `ItemStatus` マッピングなどのユーティリティ |
-| `LinkPreviewService` | `Services/LinkPreviewService.cs` | URL のタイトル取得などリンクプレビュー情報を取得するサービス |
+| `LinkPreviewService` | `Services/LinkPreviewService.cs` | URL のタイトル取得（GitLab/Jira は API、Teams は URL 構造、その他は HTML `<title>` スクレイピング）|
 | `UpdateCheckService` | `Services/UpdateCheckService.cs` | GitHub Releases API によるバージョン確認・zip ダウンロード・バッチ更新 |
 
 ### Controls

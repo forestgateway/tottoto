@@ -32,6 +32,11 @@ public static class LinkPreviewService
         @"charset\s*=\s*[""']?\s*(?<cs>[A-Za-z0-9\-_]{2,32})",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    // Teams チャンネル URL: /l/channel/{id}/{encodedName}
+    private static readonly Regex s_teamsChannelRegex = new(
+        @"/l/channel/[^/]+/(?<name>[^?#/]+)",
+        RegexOptions.Compiled);
+
     // GitLab issue URL: /-/issues/{iid} または /issues/{iid}
     private static readonly Regex s_gitlabIssueRegex = new(
         @"(?:/-/issues|/issues)/(\d+)",
@@ -62,7 +67,12 @@ public static class LinkPreviewService
                 return apiTitle;
         }
 
-        // 2. HTML <title> スクレイピングにフォールバック
+        // 2. Teams URL は URL 構造からタイトルを生成（ログイン必須のため HTML 取得不可）
+        var teamsTitle = TryExtractTeamsTitle(url);
+        if (teamsTitle is not null)
+            return teamsTitle;
+
+        // 3. HTML <title> スクレイピングにフォールバック
         return await FetchHtmlTitleAsync(url, cts.Token);
     }
 
@@ -237,5 +247,79 @@ public static class LinkPreviewService
             return Encoding.GetEncoding(name.Trim());
         }
         catch { return null; }
+    }
+
+    // ── Teams URL からタイトルを抽出 ──────────────────────────────────────
+
+    /// <summary>
+    /// teams.microsoft.com の URL から URL 構造のみでタスク名を生成する。
+    /// Teams はログイン必須のため HTML スクレイピングは機能しない。
+    /// </summary>
+    private static string? TryExtractTeamsTitle(string url)
+    {
+        // teams.microsoft.com（法人）と teams.live.com（個人/コンシューマー）の両方に対応
+        bool isTeamsUrl = url.Contains("teams.microsoft.com", StringComparison.OrdinalIgnoreCase)
+                       || url.Contains("teams.live.com",      StringComparison.OrdinalIgnoreCase);
+        if (!isTeamsUrl)
+            return null;
+
+        // クエリパラメーターから teamName / channelName を取得
+        var (teamName, channelName) = ParseTeamsQueryParams(url);
+
+        if (!string.IsNullOrWhiteSpace(teamName) && !string.IsNullOrWhiteSpace(channelName))
+            return $"{teamName} - {channelName}";
+
+        if (!string.IsNullOrWhiteSpace(channelName))
+            return channelName;
+
+        if (!string.IsNullOrWhiteSpace(teamName))
+            return teamName;
+
+        // 会議リンク
+        if (url.Contains("/l/meetup-join"))
+            return "Teams 会議リンク";
+
+        // メッセージリンク
+        if (url.Contains("/l/message"))
+            return "Teams メッセージ";
+
+        // ファイルリンク
+        if (url.Contains("/l/file"))
+            return "Teams ファイル";
+
+        // チャンネルリンク /l/channel/{id}/{encodedName}
+        var m = s_teamsChannelRegex.Match(url);
+        if (m.Success)
+        {
+            var name = Uri.UnescapeDataString(m.Groups["name"].Value.Replace("+", " "));
+            return string.IsNullOrWhiteSpace(name) ? "Teams チャンネル" : name;
+        }
+
+        return "Teams リンク";
+    }
+
+    /// <summary>URL クエリ文字列から teamName / channelName を取り出す。</summary>
+    private static (string? teamName, string? channelName) ParseTeamsQueryParams(string url)
+    {
+        try
+        {
+            var query = new Uri(url).Query;
+            if (string.IsNullOrEmpty(query)) return (null, null);
+
+            string? teamName    = null;
+            string? channelName = null;
+
+            foreach (var part in query.TrimStart('?').Split('&'))
+            {
+                var eq = part.IndexOf('=');
+                if (eq < 0) continue;
+                var key = Uri.UnescapeDataString(part[..eq]);
+                var val = Uri.UnescapeDataString(part[(eq + 1)..]);
+                if (key.Equals("teamName",    StringComparison.OrdinalIgnoreCase)) teamName    = val;
+                if (key.Equals("channelName", StringComparison.OrdinalIgnoreCase)) channelName = val;
+            }
+            return (teamName, channelName);
+        }
+        catch { return (null, null); }
     }
 }
