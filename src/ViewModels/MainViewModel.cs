@@ -1407,12 +1407,13 @@ public class MainViewModel : ViewModelBase
             return;
         }
 
-        // それ以外の文字列 → タスク名として登録
+        // それ以外の文字列 → 先頭行を全角18文字以内に要約してタイトル、全文をメモに登録
         var entry = nearItem2 is not null ? FindEntryForItem(nearItem2) ?? _activeEntry : _activeEntry;
         if (entry is null) return;
         var todo = new Models.ScheduleToDo
         {
-            Name      = text,
+            Name      = SummarizeTitle(text, maxFullWidthChars: 18),
+            Memo      = text,
             BeginDate = Today,
             EndDate   = Today.AddDays(7),
         };
@@ -1420,6 +1421,51 @@ public class MainViewModel : ViewModelBase
         InsertItem(entry, p2, todo, ib2);
         Selected = FlatItems.FirstOrDefault(r => r.Item == todo);
     }
+
+    /// <summary>
+    /// テキストの先頭非空行を全角換算 maxFullWidthChars 文字以内に収めてタイトルを生成する。
+    /// 全角文字（CJK・ひらがな・カタカナ等）は 1 単位、半角文字は 0.5 単位でカウントする。
+    /// </summary>
+    private static string SummarizeTitle(string text, int maxFullWidthChars)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "新しいタスク";
+
+        // 先頭の非空行を取り出す
+        var firstLine = text
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .FirstOrDefault(l => l.Length > 0)
+            ?? text.Trim();
+
+        // 全角換算幅でトリミング
+        var sb    = new System.Text.StringBuilder();
+        double fw = 0;
+        foreach (char c in firstLine)
+        {
+            double cw = IsFullWidthChar(c) ? 1.0 : 0.5;
+            if (fw + cw > maxFullWidthChars) { sb.Append('…'); break; }
+            sb.Append(c);
+            fw += cw;
+        }
+
+        var result = sb.ToString().Trim();
+        return string.IsNullOrEmpty(result) ? "新しいタスク" : result;
+    }
+
+    /// <summary>全角相当の文字（CJK・仮名・全角記号等）かどうかを判定する。</summary>
+    private static bool IsFullWidthChar(char c) =>
+        c is >= '\u1100' and <= '\u115F'   // Hangul Jamo
+     || c is >= '\u2E80' and <= '\u303F'   // CJK 部首補助 ～ CJK 記号
+     || c is >= '\u3040' and <= '\u33FF'   // ひらがな ～ CJK 互換
+     || c is >= '\u3400' and <= '\u4DBF'   // CJK 統合漢字拡張 A
+     || c is >= '\u4E00' and <= '\uA4CF'   // CJK 統合漢字
+     || c is >= '\uA960' and <= '\uA97F'   // Hangul Jamo 拡張 A
+     || c is >= '\uAC00' and <= '\uD7FF'   // ハングル音節
+     || c is >= '\uF900' and <= '\uFAFF'   // CJK 互換漢字
+     || c is >= '\uFE10' and <= '\uFE19'   // 縦書き記号
+     || c is >= '\uFE30' and <= '\uFE6F'   // CJK 互換形式
+     || c is >= '\uFF00' and <= '\uFF60'   // 全角形
+     || c is >= '\uFFE0' and <= '\uFFE6';  // 全角記号
 
     // ──── 設定保存 ─────────────────────────────────────────────────────────
     public void SaveSettings()
