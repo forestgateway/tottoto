@@ -67,8 +67,38 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         Loaded += OnLoaded;
 
+        // 起動 10 秒後に非同期で更新確認を開始
+        _ = CheckForUpdateDelayedAsync();
+
         sw.Stop();
         System.Diagnostics.Debug.WriteLine($"[STARTUP] MainWindow 初期化完了: {sw.ElapsedMilliseconds}ms");
+    }
+
+    private async Task CheckForUpdateDelayedAsync()
+    {
+        try
+        {
+            // 起動後 10 秒待つ
+            await Task.Delay(TimeSpan.FromSeconds(10));
+
+            // 10 秒でタイムアウトする更新チェック
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var svc = new todochart.Services.UpdateCheckService();
+            var info = await svc.CheckAsync(cts.Token);
+
+            if (info.IsUpdateAvailable)
+            {
+                Dispatcher.Invoke(() => { UpdateAvailableButton.Visibility = Visibility.Visible; });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // タイムアウト時は無視
+        }
+        catch
+        {
+            // 失敗時は無視
+        }
     }
 }
 
