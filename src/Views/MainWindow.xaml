@@ -292,7 +292,17 @@
                             <ColumnDefinition x:Name="ColML"     Width="36" MinWidth="28"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="1" Text="タスク名" Style="{StaticResource ColumnHeaderStyle}"/>
-                        <TextBlock Grid.Column="0" Text="★" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"/>
+                        <Button Grid.Column="0"
+                                Command="{Binding ToggleStarFilterCommand}"
+                                ToolTip="{Binding StarFilterTooltip}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                HorizontalAlignment="Center"
+                                Padding="0"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
+                                       Foreground="{Binding StarFilterBrush, Mode=OneWay}"/>
+                        </Button>
                         <GridSplitter Grid.Column="2"
                                       Width="4"
                                       HorizontalAlignment="Stretch"
