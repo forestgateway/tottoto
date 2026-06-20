@@ -27,6 +27,7 @@
         <KeyBinding Key="T"      Modifiers="Ctrl"       Command="{Binding NewToDoCommand}"/>
         <KeyBinding Key="N"      Modifiers="Ctrl"       Command="{Binding NewFolderCommand}"/>
         <KeyBinding Key="Delete"                        Command="{Binding DeleteCommand}"/>
+        <KeyBinding Key="D"      Modifiers="Ctrl"       Command="{Binding DeleteCommand}"/>
         <KeyBinding Key="Return"                        Command="{Binding EditCommand}"/>
         <KeyBinding Key="F2"                            Command="{Binding BeginRenameCommand}"/>
         <KeyBinding Key="Space"                         Command="{Binding ToggleCompleteCommand}"/>
@@ -80,7 +81,7 @@
                 <MenuItem Header="プロパティ(_P)" Command="{Binding EditCommand}"         InputGestureText="Enter"/>
                 <MenuItem Header="完了切替(_R)"   Command="{Binding ToggleCompleteCommand}" InputGestureText="Space"/>
                 <Separator/>
-                <MenuItem Header="削除(_D)" Command="{Binding DeleteCommand}" InputGestureText="Delete"/>
+                <MenuItem Header="削除(_D)" Command="{Binding DeleteCommand}" InputGestureText="Delete / Ctrl+D"/>
                 <Separator/>
                 <MenuItem Header="上へ移動(_U)" Command="{Binding MoveUpCommand}"   InputGestureText="Ctrl+↑"/>
                 <MenuItem Header="下へ移動(_D)" Command="{Binding MoveDownCommand}" InputGestureText="Ctrl+↓"/>
@@ -308,6 +309,19 @@
                         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
                         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
                         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteItemCommand}"/>
+                        <KeyBinding Key="Space" Modifiers="Ctrl" Command="{Binding ToggleMarkSelectedCommand}"/>
+                        <KeyBinding Key="M" Modifiers="Control" Command="{Binding EditOnMemoCommand}"/>
+                        <KeyBinding Key="L" Modifiers="Control" Command="{Binding Selected.OpenLinkCommand}"/>
+                        <KeyBinding Key="OemSemicolon" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <!-- 代替キー：英語/日本語キーボード差分やテンキー対応 -->
+                        <KeyBinding Key="Oem1" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                        <KeyBinding Key="F" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <KeyBinding Key="B" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ShiftEndPlusCommand}"/>
+                        <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding ShiftEndMinusCommand}"/>
                     </ListBox.InputBindings>
                     <ListBox.ContextMenu>
                         <ContextMenu>

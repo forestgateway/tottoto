@@ -30,6 +30,16 @@ public partial class TaskPropertiesWindow : Window
             PropertiesInitialTab.Link => LinkTab,
             _                         => MainTabControl.Items[0],
         };
+        // Memo タブを開いた場合はメモの先頭にフォーカスを合わせる
+        if (MainTabControl.SelectedItem == MemoTab)
+        {
+            // Dispatcher で遅延実行して UI が準備できた後にフォーカス / キャレット移動
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                MemoTextBox.Focus();
+                MemoTextBox.CaretIndex = 0;
+            }));
+        }
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e)

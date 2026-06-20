@@ -265,11 +265,17 @@ public class MainViewModel : ViewModelBase
     public ICommand NewToDoCommand           { get; private set; } = null!;
     public ICommand DeleteCommand            { get; private set; } = null!;
     public ICommand EditCommand              { get; private set; } = null!;
+    public ICommand EditOnMemoCommand         { get; private set; } = null!;
     public ICommand ToggleCompleteCommand    { get; private set; } = null!;
     public ICommand ToggleWaitCommand        { get; private set; } = null!;
     public ICommand SetProgressCommand       { get; private set; } = null!;
     public ICommand MoveUpCommand            { get; private set; } = null!;
     public ICommand MoveDownCommand          { get; private set; } = null!;
+    public ICommand ToggleMarkSelectedCommand { get; private set; } = null!;
+    public ICommand IncreaseProgressCommand  { get; private set; } = null!;
+    public ICommand DecreaseProgressCommand  { get; private set; } = null!;
+    public ICommand SelectNextCommand        { get; private set; } = null!;
+    public ICommand SelectPreviousCommand    { get; private set; } = null!;
     public ICommand ChartNextCommand         { get; private set; } = null!;
     public ICommand ChartPrevCommand         { get; private set; } = null!;
     public ICommand ChartNext7Command        { get; private set; } = null!;
@@ -334,6 +340,7 @@ public class MainViewModel : ViewModelBase
         NewToDoCommand   = new RelayCommand(AddToDo,    () => _activeEntry is not null);
         DeleteCommand    = new RelayCommand(DeleteSelected, () => Selected is not null);
         EditCommand      = new RelayCommand(() => EditItem(Selected!), () => Selected is not null);
+        EditOnMemoCommand = new RelayCommand(() => EditItemOnMemoTab(Selected!), () => Selected is not null);
         ToggleCompleteCommand = new RelayCommand(
             () => { Selected?.ToggleComplete(); OnPropertyChanged(nameof(ContextCompleteHeader)); OnPropertyChanged(nameof(IsContextWaitEnabled)); },
             () => Selected?.Item is ScheduleToDo);
@@ -355,6 +362,36 @@ public class MainViewModel : ViewModelBase
 
         MoveUpCommand   = new RelayCommand(MoveUp,   () => CanMoveUp());
         MoveDownCommand = new RelayCommand(MoveDown, () => CanMoveDown());
+        SelectNextCommand     = new RelayCommand(SelectNext,     () => FlatItems.Count > 0);
+        SelectPreviousCommand = new RelayCommand(SelectPrevious, () => FlatItems.Count > 0);
+        ToggleMarkSelectedCommand = new RelayCommand(() =>
+        {
+            if (Selected is not null)
+            {
+                Selected.ToggleMarkCommand.Execute(null);
+            }
+        }, () => Selected is not null);
+        IncreaseProgressCommand = new RelayCommand(() =>
+        {
+            if (Selected?.Item is ScheduleToDo td)
+            {
+                td.Progress = Math.Min(100, td.Progress + 10);
+                var entry = FindEntryForItem(td);
+                if (entry is not null) entry.IsModified = true;
+                OnPropertyChanged(nameof(ContextProgressValue));
+            }
+        }, () => Selected?.Item is ScheduleToDo);
+
+        DecreaseProgressCommand = new RelayCommand(() =>
+        {
+            if (Selected?.Item is ScheduleToDo td)
+            {
+                td.Progress = Math.Max(0, td.Progress - 10);
+                var entry = FindEntryForItem(td);
+                if (entry is not null) entry.IsModified = true;
+                OnPropertyChanged(nameof(ContextProgressValue));
+            }
+        }, () => Selected?.Item is ScheduleToDo);
 
         ChartNextCommand  = new RelayCommand(() => ChartStart = ChartStart.AddDays(1));
         ChartPrevCommand  = new RelayCommand(() => ChartStart = ChartStart.AddDays(-1));
@@ -914,6 +951,46 @@ public class MainViewModel : ViewModelBase
         UpdateAllStatuses();
         RefreshFlatList();
         if (entry is not null) entry.IsModified = true;
+    }
+
+    private void SelectNext()
+    {
+        if (FlatItems.Count == 0) return;
+        if (Selected is null)
+        {
+            Selected = FlatItems[0];
+            return;
+        }
+
+        var index = FlatItems.IndexOf(Selected);
+        if (index < 0)
+        {
+            Selected = FlatItems[0];
+            return;
+        }
+
+        if (index + 1 < FlatItems.Count)
+            Selected = FlatItems[index + 1];
+    }
+
+    private void SelectPrevious()
+    {
+        if (FlatItems.Count == 0) return;
+        if (Selected is null)
+        {
+            Selected = FlatItems[^1];
+            return;
+        }
+
+        var index = FlatItems.IndexOf(Selected);
+        if (index < 0)
+        {
+            Selected = FlatItems[^1];
+            return;
+        }
+
+        if (index > 0)
+            Selected = FlatItems[index - 1];
     }
 
     // ──── プロパティ編集 ───────────────────────────────────────────────────

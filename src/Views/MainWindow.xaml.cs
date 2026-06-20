@@ -1,5 +1,8 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 using todochart.ViewModels;
 
 namespace todochart.Views;
@@ -28,6 +31,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var vm = new MainViewModel();
         DataContext = vm;
         vm.RequestBeginEdit += OnRequestBeginEdit;
+        // 選択がプログラムで変更されたときに ListBoxItem にキーボードフォーカスを移す
+        vm.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != nameof(vm.Selected)) return;
+            // Dispatcher で遅延実行し、ItemContainerGenerator がコンテナを生成するまで待つ
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                var selected = vm.Selected;
+                if (selected is null) return;
+                // アイテムが可視でなければスクロールして生成を促す
+                var containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
+                if (containerObj is not ListBoxItem)
+                {
+                    TaskListBox.ScrollIntoView(selected);
+                    containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
+                }
+
+                var container = containerObj as ListBoxItem;
+                if (container != null)
+                {
+                    // フォーカスを与えてキーボード入力がその行に届くようにする
+                    container.Focus();
+                    Keyboard.Focus(container);
+                }
+                else
+                {
+                    // 最低でも ListBox 自体にフォーカス
+                    TaskListBox.Focus();
+                }
+            }));
+        };
 
         TodayLabel.Text = $"今日: {DateTime.Today.ToString("yyyy'年'M'月'd'日' (ddd)", System.Globalization.CultureInfo.CurrentCulture)}";
 

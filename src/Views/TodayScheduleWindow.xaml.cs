@@ -1,4 +1,7 @@
+using System;
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Controls;
 using System.Windows.Input;
 using todochart.ViewModels;
@@ -15,6 +18,33 @@ public partial class TodayScheduleWindow : Window
         DataContext = vm;
         // XAML Title = "今日の予定"; append today's date here
         Title = Title + " - " + DateTime.Today.ToString("yyyy/MM/dd");
+        // 選択変更時に ListBoxItem にフォーカスを移す
+        vm.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != nameof(vm.Selected)) return;
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                var selected = vm.Selected;
+                if (selected is null) return;
+                var containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
+                if (containerObj is not ListBoxItem)
+                {
+                    TaskListBox.ScrollIntoView(selected);
+                    containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
+                }
+
+                var container = containerObj as ListBoxItem;
+                if (container != null)
+                {
+                    container.Focus();
+                    Keyboard.Focus(container);
+                }
+                else
+                {
+                    TaskListBox.Focus();
+                }
+            }));
+        };
     }
 
     private void OnListBoxMouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -49,20 +79,30 @@ public partial class TodayScheduleWindow : Window
             row.CommitEdit();
     }
 
-    // ListBox の PreviewKeyDown で Ctrl+C/X/V をコマンド経由に統一する。
+    // ListBox の PreviewKeyDown で Ctrl+C/X/V/D/N/P をコマンド経由に統一する。
     // TextBox 編集中は TextBox のデフォルト動作を優先するため、インライン編集中はスキップ。
     private void OnTaskListPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key is not (Key.C or Key.X or Key.V)) return;
-        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+        // Debug: ログで押下 Key / SystemKey を確認する（Ctrl 押下時のみ）
+        //if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
+        //{
+        //    Debug.WriteLine($"Today PreviewKeyDown: Key={e.Key}, SystemKey={e.SystemKey}");
+        //}
+
         // インライン編集中（TextBox にフォーカス）は横取りしない
         if (Keyboard.FocusedElement is TextBox) return;
+
+        if (e.Key is not (Key.C or Key.X or Key.V or Key.D or Key.N or Key.P)) return;
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
 
         switch (e.Key)
         {
             case Key.C: Vm.CopyItemCommand.Execute(null);  e.Handled = true; break;
             case Key.X: Vm.CutItemCommand.Execute(null);   e.Handled = true; break;
             case Key.V: Vm.PasteItemCommand.Execute(null); e.Handled = true; break;
+            case Key.D: Vm.DeleteCommand.Execute(null);   e.Handled = true; break;
+            case Key.N: Vm.SelectNextCommand.Execute(null); e.Handled = true; break;
+            case Key.P: Vm.SelectPreviousCommand.Execute(null); e.Handled = true; break;
         }
     }
 

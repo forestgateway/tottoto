@@ -17,6 +17,7 @@
         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteItemCommand}"/>
+        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding DeleteCommand}"/>
     </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -67,6 +68,19 @@
                 <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
                 <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
                 <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteItemCommand}"/>
+                <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding DeleteCommand}"/>
+                <KeyBinding Key="Space" Modifiers="Ctrl" Command="{Binding Selected.ToggleMarkCommand}"/>
+                <KeyBinding Key="OemSemicolon" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                <KeyBinding Key="Oem1" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                <KeyBinding Key="M" Modifiers="Control" Command="{Binding EditOnMemoCommand}"/>
+                <KeyBinding Key="L" Modifiers="Control" Command="{Binding Selected.OpenLinkCommand}"/>
+                <KeyBinding Key="F" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                <KeyBinding Key="B" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ShiftEndPlusCommand}"/>
+                <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding ShiftEndMinusCommand}"/>
             </ListBox.InputBindings>
 
             <ListBox.ContextMenu>
@@ -88,7 +102,8 @@
                     <MenuItem Header="貼り付け(_V)"     Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
                     <Separator/>
                     <MenuItem Header="&#21066;&#38500;(_D)"
-                              Command="{Binding DeleteCommand}"/>
+                              Command="{Binding DeleteCommand}"
+                              InputGestureText="Ctrl+D"/>
                     <Separator/>
                     <MenuItem Header="アーカイブ(_A)"
                               Command="{Binding ArchiveCommand}"/>
