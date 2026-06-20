@@ -41,13 +41,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var selected = vm.Selected;
                 if (selected is null) return;
                 // アイテムが可視でなければスクロールして生成を促す
-                if (TaskListBox.ItemContainerGenerator.ContainerFromItem(selected) is not ListBoxItem container)
+                var containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
+                if (containerObj is not ListBoxItem)
                 {
                     TaskListBox.ScrollIntoView(selected);
-                    container = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected) as ListBoxItem;
+                    containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
                 }
 
-                if (container is not null)
+                var container = containerObj as ListBoxItem;
+                if (container != null)
                 {
                     // フォーカスを与えてキーボード入力がその行に届くようにする
                     container.Focus();

@@ -26,13 +26,15 @@ public partial class TodayScheduleWindow : Window
             {
                 var selected = vm.Selected;
                 if (selected is null) return;
-                if (TaskListBox.ItemContainerGenerator.ContainerFromItem(selected) is not ListBoxItem container)
+                var containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
+                if (containerObj is not ListBoxItem)
                 {
                     TaskListBox.ScrollIntoView(selected);
-                    container = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected) as ListBoxItem;
+                    containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
                 }
 
-                if (container is not null)
+                var container = containerObj as ListBoxItem;
+                if (container != null)
                 {
                     container.Focus();
                     Keyboard.Focus(container);
