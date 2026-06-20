@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -48,6 +49,14 @@ public partial class MainWindow
         if (sender is not TextBox tb) return;
         if (tb.DataContext is not TaskRowViewModel row) return;
 
+        // 編集中に Ctrl+N が押された場合は既定のアプリ側の新規作成処理を抑止する
+        // （タスク名編集中にフォルダ等が新規作成されるのを防ぐ）
+        if (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Return)
         {
             row.CommitEdit();
@@ -69,19 +78,30 @@ public partial class MainWindow
             row.CommitEdit();
     }
 
-    // ListBox の PreviewKeyDown で Ctrl+C/X/V をコマンド経由に統一する。
+    // ListBox の PreviewKeyDown で Ctrl+C/X/V/D/N/P をコマンド経由に統一する。
     // TextBox 編集中は TextBox のデフォルト動作を優先するため、インライン編集中はスキップ。
     private void OnTaskListPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key is not (Key.C or Key.X or Key.V)) return;
-        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+        // Debug: ログで押下 Key / SystemKey を確認する（Ctrl 押下時のみ）
+        //if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
+        //{
+        //    Debug.WriteLine($"PreviewKeyDown: Key={e.Key}, SystemKey={e.SystemKey}");
+        //}
+
         if (Keyboard.FocusedElement is TextBox) return;
+
+        // 既存のコマンド群はそのまま維持
+        if (e.Key is not (Key.C or Key.X or Key.V or Key.D or Key.N or Key.P)) return;
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
 
         switch (e.Key)
         {
             case Key.C: Vm.CopyItemCommand.Execute(null);  e.Handled = true; break;
             case Key.X: Vm.CutItemCommand.Execute(null);   e.Handled = true; break;
             case Key.V: Vm.PasteItemCommand.Execute(null); e.Handled = true; break;
+            case Key.D: Vm.DeleteCommand.Execute(null);   e.Handled = true; break;
+            case Key.N: Vm.SelectNextCommand.Execute(null); e.Handled = true; break;
+            case Key.P: Vm.SelectPreviousCommand.Execute(null); e.Handled = true; break;
         }
     }
 }

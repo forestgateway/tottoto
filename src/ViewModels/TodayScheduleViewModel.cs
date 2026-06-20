@@ -58,10 +58,19 @@ public class TodayScheduleViewModel : ViewModelBase
     public ICommand NewFolderCommand      => _main.NewFolderCommand;
     public ICommand DeleteCommand         => _main.DeleteCommand;
     public ICommand EditCommand           => _main.EditCommand;
+    public ICommand EditOnMemoCommand     => _main.EditOnMemoCommand;
     public ICommand ArchiveCommand        => _main.ArchiveCommand;
     public ICommand CopyItemCommand       => _main.CopyItemCommand;
     public ICommand CutItemCommand        => _main.CutItemCommand;
     public ICommand PasteItemCommand      => _main.PasteItemCommand;
+    public ICommand SelectNextCommand     => _main.SelectNextCommand;
+    public ICommand SelectPreviousCommand => _main.SelectPreviousCommand;
+    // Progress change commands proxy to MainViewModel
+    public ICommand IncreaseProgressCommand => _main.IncreaseProgressCommand;
+    public ICommand DecreaseProgressCommand => _main.DecreaseProgressCommand;
+    // Shift end date commands proxy to MainViewModel
+    public ICommand ShiftEndPlusCommand     => _main.ShiftEndPlusCommand;
+    public ICommand ShiftEndMinusCommand    => _main.ShiftEndMinusCommand;
 
     // -- Called by MainViewModel when its Selected changes -------------------
     public void NotifySelectedChanged()
