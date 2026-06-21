@@ -1,78 +1,77 @@
-using System;
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Threading;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using todochart.ViewModels;
 
 namespace todochart.Views;
 
-public partial class TodayScheduleWindow : Window
+/// <summary>インライン名前編集・Ctrl+C/X/V キーハンドリング。</summary>
+public partial class MainWindow
 {
-    private TodayScheduleViewModel Vm => (TodayScheduleViewModel)DataContext;
-
-    public TodayScheduleWindow(TodayScheduleViewModel vm)
-    {
-        InitializeComponent();
-        DataContext = vm;
-        // XAML Title = "今日の予定"; append today's date here
-        Title = Title + " - " + DateTime.Today.ToString("yyyy/MM/dd");
-        // 選択変更時に ListBoxItem にフォーカスを移す
-        vm.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName != nameof(vm.Selected)) return;
-            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
-            {
-                var selected = vm.Selected;
-                if (selected is null) return;
-                var containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
-                if (containerObj is not ListBoxItem)
-                {
-                    TaskListBox.ScrollIntoView(selected);
-                    containerObj = TaskListBox.ItemContainerGenerator.ContainerFromItem(selected);
-                }
-
-                var container = containerObj as ListBoxItem;
-                if (container != null)
-                {
-                    container.Focus();
-                    Keyboard.Focus(container);
-                }
-                else
-                {
-                    TaskListBox.Focus();
-                }
-            }));
-        };
-    }
-
+    // ── ダブルクリックでプロパティ編集 ───────────────────
     private void OnListBoxMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (Vm.Selected is not null)
             Vm.EditCommand.Execute(null);
     }
 
+    // ── インライン名前編集 ────────────────────────────────
+
+    /// <summary>TextBox が表示されたら全選択してフォーカスを当てる</summary>
     private void OnNameEditorIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (sender is TextBox tb && tb.IsVisible)
-            tb.Dispatcher.BeginInvoke(() => { tb.Focus(); tb.SelectAll(); });
+        {
+            tb.Dispatcher.BeginInvoke(() =>
+            {
+                tb.Focus();
+                tb.SelectAll();
+            });
+        }
     }
 
+    /// <summary>新規タスク追加時に ListBox が行を生成するまで待ってから BeginEdit を呼ぶ</summary>
+    private void OnRequestBeginEdit(TaskRowViewModel row)
+    {
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        {
+            if (TaskListBox.ItemContainerGenerator.ContainerFromItem(row) is null)
+                TaskListBox.ScrollIntoView(row);
+            row.BeginEdit();
+        });
+    }
+
+    /// <summary>Enter で確定、Escape でキャンセル</summary>
     private void OnNameEditorKeyDown(object sender, KeyEventArgs e)
     {
         if (sender is not TextBox tb) return;
         if (tb.DataContext is not TaskRowViewModel row) return;
+
+        // 編集中に Ctrl+N が押された場合は既定のアプリ側の新規作成処理を抑止する
+        // （タスク名編集中にフォルダ等が新規作成されるのを防ぐ）
+        if (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Return)
         {
-            row.CommitEdit(); e.Handled = true; TaskListBox.Focus();
+            row.CommitEdit();
+            e.Handled = true;
+            TaskListBox.Focus();
         }
         else if (e.Key == Key.Escape)
         {
-            row.CancelEdit(); e.Handled = true; TaskListBox.Focus();
+            row.CancelEdit();
+            e.Handled = true;
+            TaskListBox.Focus();
         }
     }
 
+    /// <summary>フォーカスが外れたら確定</summary>
     private void OnNameEditorLostFocus(object sender, RoutedEventArgs e)
     {
         if (sender is TextBox tb && tb.DataContext is TaskRowViewModel row)
@@ -86,12 +85,12 @@ public partial class TodayScheduleWindow : Window
         // Debug: ログで押下 Key / SystemKey を確認する（Ctrl 押下時のみ）
         //if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
         //{
-        //    Debug.WriteLine($"Today PreviewKeyDown: Key={e.Key}, SystemKey={e.SystemKey}");
+        //    Debug.WriteLine($"PreviewKeyDown: Key={e.Key}, SystemKey={e.SystemKey}");
         //}
 
-        // インライン編集中（TextBox にフォーカス）は横取りしない
         if (Keyboard.FocusedElement is TextBox) return;
 
+        // 既存のコマンド群はそのまま維持
         if (e.Key is not (Key.C or Key.X or Key.V or Key.D or Key.N or Key.P)) return;
         if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
 
@@ -104,11 +103,5 @@ public partial class TodayScheduleWindow : Window
             case Key.N: Vm.SelectNextCommand.Execute(null); e.Handled = true; break;
             case Key.P: Vm.SelectPreviousCommand.Execute(null); e.Handled = true; break;
         }
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        Vm.Detach();
-        base.OnClosed(e);
     }
 }

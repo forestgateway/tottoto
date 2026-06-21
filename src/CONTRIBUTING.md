@@ -96,7 +96,7 @@ src/
 
 | クラス / 型 | ファイル | 役割 |
 |---|---|---|
-| `AppSettings` | `Services/AppSettings.cs` | アプリ設定（ウィンドウ位置・列幅など）の保存・読み込み（JSON） |
+| `AppSettings` | `Services/AppSettings.cs` | アプリ設定（ウィンドウ位置・列幅・起動時更新確認フラグなど）の保存・読み込み（JSON） |
 | `ScheduleFileService` | `Services/ScheduleFileService.cs` | スケジュールデータの JSON 形式での保存・読み込み |
 | `ArchiveService` | `Services/ArchiveService.cs` | アーカイブファイル（`*.archive`）の読み書き |
 | `HolidayService` | `Services/HolidayService.cs` | 祝日・休日判定ロジック |
@@ -106,7 +106,7 @@ src/
 | `JiraOnPremIssueProvider` | `Services/JiraOnPremIssueProvider.cs` | Jira オンプレミス API との連携実装 |
 | `RedmineIssueProvider` | `Services/RedmineIssueProvider.cs` | Redmine Issues API との連携実装 |
 | `IssueTrackingHelper` | `Services/IssueTrackingHelper.cs` | Issue 状態文字列 → `ItemStatus` マッピングなどのユーティリティ |
-| `LinkPreviewService` | `Services/LinkPreviewService.cs` | URL のタイトル取得などリンクプレビュー情報を取得するサービス |
+| `LinkPreviewService` | `Services/LinkPreviewService.cs` | URL のタイトル取得（GitLab/Jira は API、Teams は URL 構造、その他は HTML `<title>` スクレイピング）|
 | `UpdateCheckService` | `Services/UpdateCheckService.cs` | GitHub Releases API によるバージョン確認・zip ダウンロード・バッチ更新 |
 
 ### Controls

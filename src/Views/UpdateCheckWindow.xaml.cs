@@ -21,6 +21,16 @@ public partial class UpdateCheckWindow : Window
     protected override async void OnContentRendered(EventArgs e)
     {
         base.OnContentRendered(e);
+        // Ensure the Toggle visual reflects the persisted value immediately
+        try
+        {
+            if (StartupCheckToggle is not null)
+            {
+                StartupCheckToggle.IsChecked = _vm.CheckForUpdatesOnStartup;
+            }
+        }
+        catch { }
+
         await _vm.LoadAsync();
     }
 

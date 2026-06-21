@@ -22,8 +22,57 @@ public class TodayScheduleViewModel : ViewModelBase
         _main.FlatItems.CollectionChanged += OnFlatItemsChanged;
         // Schedules 自体の追加・削除を監視
         _main.Schedules.CollectionChanged += OnSchedulesChanged;
+
+        // Today ウィンドウ専用の ★ フィルタ状態とコマンド
+        ToggleStarFilterCommand = new RelayCommand(() =>
+        {
+            StarFilterState = (StarFilterState + 1) % 3;
+            RebuildTodayItems();
+        });
+
         RebuildTodayItems();
     }
+
+    // Today ウィンドウ専用の ★フィルタ（0=なし,1=黄色のみ,2=黄色+黒）
+    private int _starFilterState = 0;
+    public int StarFilterState
+    {
+        get => _starFilterState;
+        private set
+        {
+            if (SetField(ref _starFilterState, value))
+            {
+                OnPropertyChanged(nameof(StarFilterBrush));
+                OnPropertyChanged(nameof(StarFilterTooltip));
+                OnPropertyChanged(nameof(StarFilterGlyph));
+            }
+        }
+    }
+
+    public System.Windows.Input.ICommand ToggleStarFilterCommand { get; private set; }
+
+    public System.Windows.Media.Brush StarFilterBrush
+    {
+        get
+        {
+            return StarFilterState switch
+            {
+                1 => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
+                2 => System.Windows.Media.Brushes.Black,
+                _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SubTextBrush")
+            };
+        }
+    }
+
+    public string StarFilterTooltip => StarFilterState switch
+    {
+        0 => "★フィルタ: すべて表示 (クリックで黄色のみ表示)",
+        1 => "★フィルタ: 黄色のみ (クリックで黄色＋黒を表示)",
+        2 => "★フィルタ: 黄色＋黒 (クリックで全て表示)",
+        _ => string.Empty,
+    };
+
+    public string StarFilterGlyph => StarFilterState == 0 ? "∀" : "★";
 
     // -- Selected: proxy to MainViewModel (bidirectional sync) ---------------
     public TaskRowViewModel? Selected
@@ -58,10 +107,19 @@ public class TodayScheduleViewModel : ViewModelBase
     public ICommand NewFolderCommand      => _main.NewFolderCommand;
     public ICommand DeleteCommand         => _main.DeleteCommand;
     public ICommand EditCommand           => _main.EditCommand;
+    public ICommand EditOnMemoCommand     => _main.EditOnMemoCommand;
     public ICommand ArchiveCommand        => _main.ArchiveCommand;
     public ICommand CopyItemCommand       => _main.CopyItemCommand;
     public ICommand CutItemCommand        => _main.CutItemCommand;
     public ICommand PasteItemCommand      => _main.PasteItemCommand;
+    public ICommand SelectNextCommand     => _main.SelectNextCommand;
+    public ICommand SelectPreviousCommand => _main.SelectPreviousCommand;
+    // Progress change commands proxy to MainViewModel
+    public ICommand IncreaseProgressCommand => _main.IncreaseProgressCommand;
+    public ICommand DecreaseProgressCommand => _main.DecreaseProgressCommand;
+    // Shift end date commands proxy to MainViewModel
+    public ICommand ShiftEndPlusCommand     => _main.ShiftEndPlusCommand;
+    public ICommand ShiftEndMinusCommand    => _main.ShiftEndMinusCommand;
 
     // -- Called by MainViewModel when its Selected changes -------------------
     public void NotifySelectedChanged()
@@ -100,6 +158,12 @@ public class TodayScheduleViewModel : ViewModelBase
         {
             if (row.Item.IsFolder) continue;
             if (!IsTaskActiveToday(row.Item, today)) continue;
+
+            // StarFilterState を考慮: 0=なし,1=黄色のみ,2=黄色+黒
+            bool matchesStar = StarFilterState == 0
+                || row.Item.MarkLevel == 1
+                || (StarFilterState == 2 && row.Item.MarkLevel == 2);
+            if (!matchesStar) continue;
 
             needed.Add(row.Item);
             var ancestor = row.Item.Parent;

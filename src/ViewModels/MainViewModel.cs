@@ -45,6 +45,67 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private bool ShouldIncludeByStarFilter(ScheduleItemBase node)
+    {
+        // StarFilterState: 0=なし,1=黄色のみ,2=黄色+黒
+        if (StarFilterState == 0) return true;
+        bool Predicate(ScheduleItemBase n)
+        {
+            if (StarFilterState == 1) return n.MarkLevel == 1;
+            if (StarFilterState == 2) return n.MarkLevel == 1 || n.MarkLevel == 2;
+            return true;
+        }
+
+        return SubtreeHasMatch(node, Predicate);
+    }
+
+    private bool SubtreeHasMatch(ScheduleItemBase node, Func<ScheduleItemBase, bool> predicate)
+    {
+        if (predicate(node)) return true;
+        foreach (var c in node.Children)
+            if (SubtreeHasMatch(c, predicate)) return true;
+        return false;
+    }
+
+    // ──── ★フィルタリング状態（0=なし,1=黄色のみ,2=黄色+黒） ─────────────────
+    private int _starFilterState = 0;
+    /// <summary>0=フィルタなし, 1=黄色のみ, 2=黄色+黒</summary>
+    public int StarFilterState
+    {
+        get => _starFilterState;
+        private set { if (SetField(ref _starFilterState, value)) { OnPropertyChanged(nameof(StarFilterBrush)); OnPropertyChanged(nameof(StarFilterTooltip)); OnPropertyChanged(nameof(StarFilterGlyph)); } }
+    }
+
+    public System.Windows.Input.ICommand ToggleStarFilterCommand { get; private set; }
+
+    public System.Windows.Media.Brush StarFilterBrush
+    {
+        get
+        {
+            return StarFilterState switch
+            {
+                1 => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
+                2 => System.Windows.Media.Brushes.Black,
+                _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SubTextBrush")
+            };
+        }
+    }
+
+    public string StarFilterTooltip => StarFilterState switch
+    {
+        0 => "★フィルタ: すべて表示 (クリックで黄色のみ表示)",
+        1 => "★フィルタ: 黄色のみ (クリックで黒のみ表示)",
+        2 => "★フィルタ: 黒のみ (クリックですべて表示)",
+        _ => string.Empty,
+    };
+
+    public string StarFilterGlyph => StarFilterState switch
+    {
+        1 => "★",
+        2 => "★",
+        _ => "∀",
+    };
+
     public bool HasActiveEntry => _activeEntry is not null;
 
     // ──── フラットリスト ───────────────────────────────────────────────────
@@ -208,6 +269,12 @@ public class MainViewModel : ViewModelBase
 
         InitCommands();
 
+        ToggleStarFilterCommand = new RelayCommand(() =>
+        {
+            StarFilterState = (StarFilterState + 1) % 3;
+            RefreshFlatList();
+        });
+
         // コマンドライン引数 → OpenFiles → LastFile の優先順で開く
         // 起動高速化: 最初の1件のみ同期ロード（タスクリスト即時表示）、残りは遅延ロード
         var args = Environment.GetCommandLineArgs();
@@ -265,11 +332,17 @@ public class MainViewModel : ViewModelBase
     public ICommand NewToDoCommand           { get; private set; } = null!;
     public ICommand DeleteCommand            { get; private set; } = null!;
     public ICommand EditCommand              { get; private set; } = null!;
+    public ICommand EditOnMemoCommand         { get; private set; } = null!;
     public ICommand ToggleCompleteCommand    { get; private set; } = null!;
     public ICommand ToggleWaitCommand        { get; private set; } = null!;
     public ICommand SetProgressCommand       { get; private set; } = null!;
     public ICommand MoveUpCommand            { get; private set; } = null!;
     public ICommand MoveDownCommand          { get; private set; } = null!;
+    public ICommand ToggleMarkSelectedCommand { get; private set; } = null!;
+    public ICommand IncreaseProgressCommand  { get; private set; } = null!;
+    public ICommand DecreaseProgressCommand  { get; private set; } = null!;
+    public ICommand SelectNextCommand        { get; private set; } = null!;
+    public ICommand SelectPreviousCommand    { get; private set; } = null!;
     public ICommand ChartNextCommand         { get; private set; } = null!;
     public ICommand ChartPrevCommand         { get; private set; } = null!;
     public ICommand ChartNext7Command        { get; private set; } = null!;
@@ -334,6 +407,7 @@ public class MainViewModel : ViewModelBase
         NewToDoCommand   = new RelayCommand(AddToDo,    () => _activeEntry is not null);
         DeleteCommand    = new RelayCommand(DeleteSelected, () => Selected is not null);
         EditCommand      = new RelayCommand(() => EditItem(Selected!), () => Selected is not null);
+        EditOnMemoCommand = new RelayCommand(() => EditItemOnMemoTab(Selected!), () => Selected is not null);
         ToggleCompleteCommand = new RelayCommand(
             () => { Selected?.ToggleComplete(); OnPropertyChanged(nameof(ContextCompleteHeader)); OnPropertyChanged(nameof(IsContextWaitEnabled)); },
             () => Selected?.Item is ScheduleToDo);
@@ -355,6 +429,36 @@ public class MainViewModel : ViewModelBase
 
         MoveUpCommand   = new RelayCommand(MoveUp,   () => CanMoveUp());
         MoveDownCommand = new RelayCommand(MoveDown, () => CanMoveDown());
+        SelectNextCommand     = new RelayCommand(SelectNext,     () => FlatItems.Count > 0);
+        SelectPreviousCommand = new RelayCommand(SelectPrevious, () => FlatItems.Count > 0);
+        ToggleMarkSelectedCommand = new RelayCommand(() =>
+        {
+            if (Selected is not null)
+            {
+                Selected.ToggleMarkCommand.Execute(null);
+            }
+        }, () => Selected is not null);
+        IncreaseProgressCommand = new RelayCommand(() =>
+        {
+            if (Selected?.Item is ScheduleToDo td)
+            {
+                td.Progress = Math.Min(100, td.Progress + 10);
+                var entry = FindEntryForItem(td);
+                if (entry is not null) entry.IsModified = true;
+                OnPropertyChanged(nameof(ContextProgressValue));
+            }
+        }, () => Selected?.Item is ScheduleToDo);
+
+        DecreaseProgressCommand = new RelayCommand(() =>
+        {
+            if (Selected?.Item is ScheduleToDo td)
+            {
+                td.Progress = Math.Max(0, td.Progress - 10);
+                var entry = FindEntryForItem(td);
+                if (entry is not null) entry.IsModified = true;
+                OnPropertyChanged(nameof(ContextProgressValue));
+            }
+        }, () => Selected?.Item is ScheduleToDo);
 
         ChartNextCommand  = new RelayCommand(() => ChartStart = ChartStart.AddDays(1));
         ChartPrevCommand  = new RelayCommand(() => ChartStart = ChartStart.AddDays(-1));
@@ -916,6 +1020,46 @@ public class MainViewModel : ViewModelBase
         if (entry is not null) entry.IsModified = true;
     }
 
+    private void SelectNext()
+    {
+        if (FlatItems.Count == 0) return;
+        if (Selected is null)
+        {
+            Selected = FlatItems[0];
+            return;
+        }
+
+        var index = FlatItems.IndexOf(Selected);
+        if (index < 0)
+        {
+            Selected = FlatItems[0];
+            return;
+        }
+
+        if (index + 1 < FlatItems.Count)
+            Selected = FlatItems[index + 1];
+    }
+
+    private void SelectPrevious()
+    {
+        if (FlatItems.Count == 0) return;
+        if (Selected is null)
+        {
+            Selected = FlatItems[^1];
+            return;
+        }
+
+        var index = FlatItems.IndexOf(Selected);
+        if (index < 0)
+        {
+            Selected = FlatItems[^1];
+            return;
+        }
+
+        if (index > 0)
+            Selected = FlatItems[index - 1];
+    }
+
     // ──── プロパティ編集 ───────────────────────────────────────────────────
     public void EditItem(TaskRowViewModel? row)
     {
@@ -1197,6 +1341,9 @@ public class MainViewModel : ViewModelBase
         for (int i = 0; i < children.Count; i++)
         {
             var child = children[i];
+            // ★フィルタ適用: フィルタ状態に合致しないサブツリーはスキップ
+            if (!ShouldIncludeByStarFilter(child))
+                continue;
 
             if (filterCompleted
                 && child is ScheduleToDo { Completed: true }
@@ -1407,12 +1554,13 @@ public class MainViewModel : ViewModelBase
             return;
         }
 
-        // それ以外の文字列 → タスク名として登録
+        // それ以外の文字列 → 先頭行を全角18文字以内に要約してタイトル、全文をメモに登録
         var entry = nearItem2 is not null ? FindEntryForItem(nearItem2) ?? _activeEntry : _activeEntry;
         if (entry is null) return;
         var todo = new Models.ScheduleToDo
         {
-            Name      = text,
+            Name      = SummarizeTitle(text, maxFullWidthChars: 18),
+            Memo      = text,
             BeginDate = Today,
             EndDate   = Today.AddDays(7),
         };
@@ -1421,18 +1569,78 @@ public class MainViewModel : ViewModelBase
         Selected = FlatItems.FirstOrDefault(r => r.Item == todo);
     }
 
+    /// <summary>
+    /// テキストの先頭非空行を全角換算 maxFullWidthChars 文字以内に収めてタイトルを生成する。
+    /// 全角文字（CJK・ひらがな・カタカナ等）は 1 単位、半角文字は 0.5 単位でカウントする。
+    /// </summary>
+    private static string SummarizeTitle(string text, int maxFullWidthChars)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "新しいタスク";
+
+        // 先頭の非空行を取り出す
+        var firstLine = text
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .FirstOrDefault(l => l.Length > 0)
+            ?? text.Trim();
+
+        // 全角換算幅でトリミング
+        var sb    = new System.Text.StringBuilder();
+        double fw = 0;
+        foreach (char c in firstLine)
+        {
+            double cw = IsFullWidthChar(c) ? 1.0 : 0.5;
+            if (fw + cw > maxFullWidthChars) { sb.Append('…'); break; }
+            sb.Append(c);
+            fw += cw;
+        }
+
+        var result = sb.ToString().Trim();
+        return string.IsNullOrEmpty(result) ? "新しいタスク" : result;
+    }
+
+    /// <summary>全角相当の文字（CJK・仮名・全角記号等）かどうかを判定する。</summary>
+    private static bool IsFullWidthChar(char c) =>
+        c is >= '\u1100' and <= '\u115F'   // Hangul Jamo
+     || c is >= '\u2E80' and <= '\u303F'   // CJK 部首補助 ～ CJK 記号
+     || c is >= '\u3040' and <= '\u33FF'   // ひらがな ～ CJK 互換
+     || c is >= '\u3400' and <= '\u4DBF'   // CJK 統合漢字拡張 A
+     || c is >= '\u4E00' and <= '\uA4CF'   // CJK 統合漢字
+     || c is >= '\uA960' and <= '\uA97F'   // Hangul Jamo 拡張 A
+     || c is >= '\uAC00' and <= '\uD7FF'   // ハングル音節
+     || c is >= '\uF900' and <= '\uFAFF'   // CJK 互換漢字
+     || c is >= '\uFE10' and <= '\uFE19'   // 縦書き記号
+     || c is >= '\uFE30' and <= '\uFE6F'   // CJK 互換形式
+     || c is >= '\uFF00' and <= '\uFF60'   // 全角形
+     || c is >= '\uFFE0' and <= '\uFFE6';  // 全角記号
+
     // ──── 設定保存 ─────────────────────────────────────────────────────────
     public void SaveSettings()
     {
-        _settings.OpenFiles            = Schedules.Select(e => e.FilePath)
+        // Load persisted settings first and merge our runtime-only fields into it.
+        // This avoids clobbering values that might have been changed by other dialogs
+        // (e.g., the UpdateCheckWindow toggling CheckForUpdatesOnStartup).
+        var persisted = AppSettings.Load();
+
+        persisted.OpenFiles            = Schedules.Select(e => e.FilePath)
                                                    .Where(p => !string.IsNullOrEmpty(p))
                                                    .ToList();
-        _settings.LastFile             = _activeEntry?.FilePath ?? string.Empty;
-        _settings.ChartOffsetFromToday = (int)(_chartStart - Today).TotalDays;
-        _settings.WeekdayLevels        = Holidays.GetWeekdayLevels();
-        _settings.AlertCount           = Holidays.AlertCount;
-        _settings.DateCountLevel       = Holidays.DateCountLevel;
-        _settings.Save();
+        persisted.LastFile             = _activeEntry?.FilePath ?? string.Empty;
+        persisted.ChartOffsetFromToday = (int)(_chartStart - Today).TotalDays;
+        persisted.WeekdayLevels        = Holidays.GetWeekdayLevels();
+        persisted.AlertCount           = Holidays.AlertCount;
+        persisted.DateCountLevel       = Holidays.DateCountLevel;
+
+        // Save merged settings back to disk
+        persisted.Save();
+
+        // Update our in-memory settings fields so other code sees the persisted values
+        _settings.OpenFiles            = persisted.OpenFiles;
+        _settings.LastFile             = persisted.LastFile;
+        _settings.ChartOffsetFromToday = persisted.ChartOffsetFromToday;
+        _settings.WeekdayLevels        = persisted.WeekdayLevels;
+        _settings.AlertCount           = persisted.AlertCount;
+        _settings.DateCountLevel       = persisted.DateCountLevel;
     }
 
     /// <summary>タスクペイン幅を取得する。</summary>

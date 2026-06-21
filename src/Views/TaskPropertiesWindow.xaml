@@ -148,7 +148,8 @@
 
             <!-- メモタブ -->
             <TabItem x:Name="MemoTab" Header="メモ">
-                <TextBox Text="{Binding Memo, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox x:Name="MemoTextBox"
+                         Text="{Binding Memo, UpdateSourceTrigger=PropertyChanged}"
                          AcceptsReturn="True"
                          TextWrapping="Wrap"
                          VerticalScrollBarVisibility="Auto"

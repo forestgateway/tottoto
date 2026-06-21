@@ -27,6 +27,7 @@
         <KeyBinding Key="T"      Modifiers="Ctrl"       Command="{Binding NewToDoCommand}"/>
         <KeyBinding Key="N"      Modifiers="Ctrl"       Command="{Binding NewFolderCommand}"/>
         <KeyBinding Key="Delete"                        Command="{Binding DeleteCommand}"/>
+        <KeyBinding Key="D"      Modifiers="Ctrl"       Command="{Binding DeleteCommand}"/>
         <KeyBinding Key="Return"                        Command="{Binding EditCommand}"/>
         <KeyBinding Key="F2"                            Command="{Binding BeginRenameCommand}"/>
         <KeyBinding Key="Space"                         Command="{Binding ToggleCompleteCommand}"/>
@@ -48,69 +49,94 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- メニュー -->
-            <RowDefinition Height="Auto"/>  <!-- ツールバー -->
-            <RowDefinition Height="Auto"/>  <!-- スケジュールタブバー -->
-            <RowDefinition Height="*"/>     <!-- コンテンツ -->
-            <RowDefinition Height="Auto"/>  <!-- ステータスバー -->
+            <RowDefinition Height="Auto"/>
+            <!-- メニュー -->
+            <RowDefinition Height="Auto"/>
+            <!-- ツールバー -->
+            <RowDefinition Height="Auto"/>
+            <!-- スケジュールタブバー -->
+            <RowDefinition Height="*"/>
+            <!-- コンテンツ -->
+            <RowDefinition Height="Auto"/>
+            <!-- ステータスバー -->
         </Grid.RowDefinitions>
 
-        <!-- ══ メニューバー ══════════════════════════════════════ -->
-        <Menu Grid.Row="0" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource WindowFgBrush}">
-            <MenuItem Header="ファイル(_F)" Foreground="{StaticResource WindowFgBrush}">
-                <MenuItem Header="新規作成(タスクリスト)(_N)" Command="{Binding NewCommand}"/>
-                <MenuItem Header="新規作成(Issue Tracking)(_I)" Command="{Binding NewIssueTrackingCommand}"/>
-                <MenuItem Header="開く(_O)..."       Command="{Binding OpenCommand}"   InputGestureText="Ctrl+O"/>
-                <Separator/>
-                <MenuItem Header="上書き保存(_S)"    Command="{Binding SaveCommand}"   InputGestureText="Ctrl+S"/>
-                <MenuItem Header="名前を付けて保存(_A)..." Command="{Binding SaveAsCommand}"/>
-                <Separator/>
-                <MenuItem Header="このスケジュールを閉じる(_W)" Command="{Binding CloseScheduleCommand}"/>
-                <Separator/>
-                <MenuItem Header="終了(_X)" Click="OnExitClick"/>
-            </MenuItem>
-            <MenuItem Header="編集(_E)" Foreground="{StaticResource WindowFgBrush}">
-                <MenuItem Header="フォルダの新規作成(_F)" Command="{Binding NewFolderCommand}" InputGestureText="Ctrl+N"/>
-                <MenuItem Header="タスクの新規作成(_T)"   Command="{Binding NewToDoCommand}"   InputGestureText="Ctrl+T"/>
-                <Separator/>
-                <MenuItem Header="コピー(_C)"     Command="{Binding CopyItemCommand}"  InputGestureText="Ctrl+C"/>
-                <MenuItem Header="切り取り(_X)"   Command="{Binding CutItemCommand}"   InputGestureText="Ctrl+X"/>
-                <MenuItem Header="貼り付け(_V)"   Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
-                <Separator/>
-                <MenuItem Header="プロパティ(_P)" Command="{Binding EditCommand}"         InputGestureText="Enter"/>
-                <MenuItem Header="完了切替(_R)"   Command="{Binding ToggleCompleteCommand}" InputGestureText="Space"/>
-                <Separator/>
-                <MenuItem Header="削除(_D)" Command="{Binding DeleteCommand}" InputGestureText="Delete"/>
-                <Separator/>
-                <MenuItem Header="上へ移動(_U)" Command="{Binding MoveUpCommand}"   InputGestureText="Ctrl+↑"/>
-                <MenuItem Header="下へ移動(_D)" Command="{Binding MoveDownCommand}" InputGestureText="Ctrl+↓"/>
-                <Separator/>
-                <MenuItem Header="アーカイブ(_A)" Command="{Binding ArchiveCommand}"/>
-                <MenuItem Header="アーカイブ一覧(_V)..." Command="{Binding ShowArchiveListCommand}"/>
-                <Separator/>
-                <MenuItem Header="Issue Tracking 設定編集(_G)..." Command="{Binding EditIssueTrackingCommand}"/>
-            </MenuItem>
-            <MenuItem Header="チャート(_C)" Foreground="{StaticResource WindowFgBrush}">
-                <MenuItem Header="1日進む"     Command="{Binding ChartNextCommand}"  InputGestureText="Alt+→"/>
-                <MenuItem Header="1日戻る"     Command="{Binding ChartPrevCommand}"  InputGestureText="Alt+←"/>
-                <MenuItem Header="7日進む"     Command="{Binding ChartNext7Command}" InputGestureText="Alt+Shift+→"/>
-                <MenuItem Header="7日戻る"     Command="{Binding ChartPrev7Command}" InputGestureText="Alt+Shift+←"/>
-                <MenuItem Header="今日を表示"  Command="{Binding ChartTodayCommand}" InputGestureText="Alt+Home"/>
-                <Separator/>
-                <MenuItem Header="開始日を⊕1日" Command="{Binding ShiftBeginPlusCommand}"  InputGestureText="Shift+→"/>
-                <MenuItem Header="開始日を⊖1日" Command="{Binding ShiftBeginMinusCommand}" InputGestureText="Shift+←"/>
-                <MenuItem Header="終了日を⊕1日" Command="{Binding ShiftEndPlusCommand}"    InputGestureText="Ctrl+→"/>
-                <MenuItem Header="終了日を⊖1日" Command="{Binding ShiftEndMinusCommand}"   InputGestureText="Ctrl+←"/>
-            </MenuItem>
-            <MenuItem Header="オプション(_O)" Foreground="{StaticResource WindowFgBrush}">
-                <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
-            </MenuItem>
-            <MenuItem Header="ヘルプ(_H)" Foreground="{StaticResource WindowFgBrush}">
-                <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>
-                <Separator/>
-                <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
-            </MenuItem>
-        </Menu>
+        <!-- ══ メニューバー + 更新ボタン（左寄せ） ══════════════════════════════════════ -->
+        <Grid Grid.Row="0" Background="{DynamicResource PanelBgBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <!-- メニューの右側に 200px の余白カラムを挿入 -->
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Menu x:Name="MainMenu" Grid.Column="0" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource WindowFgBrush}">
+                <MenuItem Header="ファイル(_F)" Foreground="{StaticResource WindowFgBrush}">
+                    <MenuItem Header="新規作成(タスクリスト)(_N)" Command="{Binding NewCommand}"/>
+                    <MenuItem Header="新規作成(Issue Tracking)(_I)" Command="{Binding NewIssueTrackingCommand}"/>
+                    <MenuItem Header="開く(_O)..."       Command="{Binding OpenCommand}"   InputGestureText="Ctrl+O"/>
+                    <Separator/>
+                    <MenuItem Header="上書き保存(_S)"    Command="{Binding SaveCommand}"   InputGestureText="Ctrl+S"/>
+                    <MenuItem Header="名前を付けて保存(_A)..." Command="{Binding SaveAsCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="このスケジュールを閉じる(_W)" Command="{Binding CloseScheduleCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="終了(_X)" Click="OnExitClick"/>
+                </MenuItem>
+                <MenuItem Header="編集(_E)" Foreground="{StaticResource WindowFgBrush}">
+                    <MenuItem Header="フォルダの新規作成(_F)" Command="{Binding NewFolderCommand}" InputGestureText="Ctrl+N"/>
+                    <MenuItem Header="タスクの新規作成(_T)"   Command="{Binding NewToDoCommand}"   InputGestureText="Ctrl+T"/>
+                    <Separator/>
+                    <MenuItem Header="コピー(_C)"     Command="{Binding CopyItemCommand}"  InputGestureText="Ctrl+C"/>
+                    <MenuItem Header="切り取り(_X)"   Command="{Binding CutItemCommand}"   InputGestureText="Ctrl+X"/>
+                    <MenuItem Header="貼り付け(_V)"   Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
+                    <Separator/>
+                    <MenuItem Header="プロパティ(_P)" Command="{Binding EditCommand}"         InputGestureText="Enter"/>
+                    <MenuItem Header="完了切替(_R)"   Command="{Binding ToggleCompleteCommand}" InputGestureText="Space"/>
+                    <Separator/>
+                    <MenuItem Header="削除(_D)" Command="{Binding DeleteCommand}" InputGestureText="Delete / Ctrl+D"/>
+                    <Separator/>
+                    <MenuItem Header="上へ移動(_U)" Command="{Binding MoveUpCommand}"   InputGestureText="Ctrl+↑"/>
+                    <MenuItem Header="下へ移動(_D)" Command="{Binding MoveDownCommand}" InputGestureText="Ctrl+↓"/>
+                    <Separator/>
+                    <MenuItem Header="アーカイブ(_A)" Command="{Binding ArchiveCommand}"/>
+                    <MenuItem Header="アーカイブ一覧(_V)..." Command="{Binding ShowArchiveListCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="Issue Tracking 設定編集(_G)..." Command="{Binding EditIssueTrackingCommand}"/>
+                </MenuItem>
+                <MenuItem Header="チャート(_C)" Foreground="{StaticResource WindowFgBrush}">
+                    <MenuItem Header="1日進む"     Command="{Binding ChartNextCommand}"  InputGestureText="Alt+→"/>
+                    <MenuItem Header="1日戻る"     Command="{Binding ChartPrevCommand}"  InputGestureText="Alt+←"/>
+                    <MenuItem Header="7日進む"     Command="{Binding ChartNext7Command}" InputGestureText="Alt+Shift+→"/>
+                    <MenuItem Header="7日戻る"     Command="{Binding ChartPrev7Command}" InputGestureText="Alt+Shift+←"/>
+                    <MenuItem Header="今日を表示"  Command="{Binding ChartTodayCommand}" InputGestureText="Alt+Home"/>
+                    <Separator/>
+                    <MenuItem Header="開始日を⊕1日" Command="{Binding ShiftBeginPlusCommand}"  InputGestureText="Shift+→"/>
+                    <MenuItem Header="開始日を⊖1日" Command="{Binding ShiftBeginMinusCommand}" InputGestureText="Shift+←"/>
+                    <MenuItem Header="終了日を⊕1日" Command="{Binding ShiftEndPlusCommand}"    InputGestureText="Ctrl+→"/>
+                    <MenuItem Header="終了日を⊖1日" Command="{Binding ShiftEndMinusCommand}"   InputGestureText="Ctrl+←"/>
+                </MenuItem>
+                <MenuItem Header="オプション(_O)" Foreground="{StaticResource WindowFgBrush}">
+                    <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
+                </MenuItem>
+                <MenuItem Header="ヘルプ(_H)" Foreground="{StaticResource WindowFgBrush}">
+                    <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>
+                    <Separator/>
+                    <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
+                </MenuItem>
+            </Menu>
+
+            <Border Grid.Column="2" Background="{StaticResource PanelBgBrush}" HorizontalAlignment="Center" Width="Auto">
+                <Button x:Name="UpdateAvailableButton"
+                        Content="更新"
+                        Click="OnCheckUpdateClick"
+                        Style="{StaticResource UpdateButtonStyle}"
+                        ToolTip="更新の確認"
+                        Visibility="Collapsed"
+                        Height="{Binding ActualHeight, ElementName=MainMenu}"
+                        Margin="0,0,0,0"/>
+            </Border>
+        </Grid>
 
         <!-- ══ ツールバー ═══════════════════════════════════════ -->
         <ToolBar Grid.Row="1"
@@ -248,8 +274,10 @@
             <!-- ┌── 左ペイン（タスクリスト） ───────────────────┐ -->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>  <!-- 列ヘッダー -->
-                    <RowDefinition Height="*"/>     <!-- アイテムリスト -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 列ヘッダー -->
+                    <RowDefinition Height="*"/>
+                    <!-- アイテムリスト -->
                 </Grid.RowDefinitions>
 
                 <!-- 列ヘッダー -->
@@ -264,7 +292,17 @@
                             <ColumnDefinition x:Name="ColML"     Width="36" MinWidth="28"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="1" Text="タスク名" Style="{StaticResource ColumnHeaderStyle}"/>
-                        <TextBlock Grid.Column="0" Text="★" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"/>
+                        <Button Grid.Column="0"
+                                Command="{Binding ToggleStarFilterCommand}"
+                                ToolTip="{Binding StarFilterTooltip}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                HorizontalAlignment="Center"
+                                Padding="0"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
+                                       Foreground="{Binding StarFilterBrush, Mode=OneWay}"/>
+                        </Button>
                         <GridSplitter Grid.Column="2"
                                       Width="4"
                                       HorizontalAlignment="Stretch"
@@ -308,6 +346,19 @@
                         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
                         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
                         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteItemCommand}"/>
+                        <KeyBinding Key="Space" Modifiers="Ctrl" Command="{Binding ToggleMarkSelectedCommand}"/>
+                        <KeyBinding Key="M" Modifiers="Control" Command="{Binding EditOnMemoCommand}"/>
+                        <KeyBinding Key="L" Modifiers="Control" Command="{Binding Selected.OpenLinkCommand}"/>
+                        <KeyBinding Key="OemSemicolon" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <!-- 代替キー：英語/日本語キーボード差分やテンキー対応 -->
+                        <KeyBinding Key="Oem1" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                        <KeyBinding Key="F" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                        <KeyBinding Key="B" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ShiftEndPlusCommand}"/>
+                        <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding ShiftEndMinusCommand}"/>
                     </ListBox.InputBindings>
                     <ListBox.ContextMenu>
                         <ContextMenu>
@@ -399,9 +450,12 @@
                                         <!-- タスク名（罫線 ＋ 展開ボタン ＋ アイコン ＋ テキスト） -->
                                         <Grid Grid.Column="1">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>  <!-- tree lines -->
-                                                <ColumnDefinition Width="16"/>    <!-- toggle -->
-                                                <ColumnDefinition Width="*"/>     <!-- icon + name -->
+                                                <ColumnDefinition Width="Auto"/>
+                                                <!-- tree lines -->
+                                                <ColumnDefinition Width="16"/>
+                                                <!-- toggle -->
+                                                <ColumnDefinition Width="*"/>
+                                                <!-- icon + name -->
                                             </Grid.ColumnDefinitions>
 
                                             <!-- ツリー罫線 -->
@@ -547,8 +601,10 @@
             <!-- ┌── 右ペイン（ガントチャート） ─────────────────┐ -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>   <!-- チャートヘッダー -->
-                    <RowDefinition Height="*"/>    <!-- チャート本体 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- チャートヘッダー -->
+                    <RowDefinition Height="*"/>
+                    <!-- チャート本体 -->
                 </Grid.RowDefinitions>
 
                 <!-- チャートヘッダー（日付ラベル） -->
