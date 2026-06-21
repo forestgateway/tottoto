@@ -45,6 +45,67 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private bool ShouldIncludeByStarFilter(ScheduleItemBase node)
+    {
+        // StarFilterState: 0=なし,1=黄色のみ,2=黄色+黒
+        if (StarFilterState == 0) return true;
+        bool Predicate(ScheduleItemBase n)
+        {
+            if (StarFilterState == 1) return n.MarkLevel == 1;
+            if (StarFilterState == 2) return n.MarkLevel == 1 || n.MarkLevel == 2;
+            return true;
+        }
+
+        return SubtreeHasMatch(node, Predicate);
+    }
+
+    private bool SubtreeHasMatch(ScheduleItemBase node, Func<ScheduleItemBase, bool> predicate)
+    {
+        if (predicate(node)) return true;
+        foreach (var c in node.Children)
+            if (SubtreeHasMatch(c, predicate)) return true;
+        return false;
+    }
+
+    // ──── ★フィルタリング状態（0=なし,1=黄色のみ,2=黄色+黒） ─────────────────
+    private int _starFilterState = 0;
+    /// <summary>0=フィルタなし, 1=黄色のみ, 2=黄色+黒</summary>
+    public int StarFilterState
+    {
+        get => _starFilterState;
+        private set { if (SetField(ref _starFilterState, value)) { OnPropertyChanged(nameof(StarFilterBrush)); OnPropertyChanged(nameof(StarFilterTooltip)); OnPropertyChanged(nameof(StarFilterGlyph)); } }
+    }
+
+    public System.Windows.Input.ICommand ToggleStarFilterCommand { get; private set; }
+
+    public System.Windows.Media.Brush StarFilterBrush
+    {
+        get
+        {
+            return StarFilterState switch
+            {
+                1 => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
+                2 => System.Windows.Media.Brushes.Black,
+                _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SubTextBrush")
+            };
+        }
+    }
+
+    public string StarFilterTooltip => StarFilterState switch
+    {
+        0 => "★フィルタ: すべて表示 (クリックで黄色のみ表示)",
+        1 => "★フィルタ: 黄色のみ (クリックで黒のみ表示)",
+        2 => "★フィルタ: 黒のみ (クリックですべて表示)",
+        _ => string.Empty,
+    };
+
+    public string StarFilterGlyph => StarFilterState switch
+    {
+        1 => "★",
+        2 => "★",
+        _ => "∀",
+    };
+
     public bool HasActiveEntry => _activeEntry is not null;
 
     // ──── フラットリスト ───────────────────────────────────────────────────
@@ -207,6 +268,12 @@ public class MainViewModel : ViewModelBase
         RefreshChartDays();
 
         InitCommands();
+
+        ToggleStarFilterCommand = new RelayCommand(() =>
+        {
+            StarFilterState = (StarFilterState + 1) % 3;
+            RefreshFlatList();
+        });
 
         // コマンドライン引数 → OpenFiles → LastFile の優先順で開く
         // 起動高速化: 最初の1件のみ同期ロード（タスクリスト即時表示）、残りは遅延ロード
@@ -1274,6 +1341,9 @@ public class MainViewModel : ViewModelBase
         for (int i = 0; i < children.Count; i++)
         {
             var child = children[i];
+            // ★フィルタ適用: フィルタ状態に合致しないサブツリーはスキップ
+            if (!ShouldIncludeByStarFilter(child))
+                continue;
 
             if (filterCompleted
                 && child is ScheduleToDo { Completed: true }
@@ -1547,15 +1617,30 @@ public class MainViewModel : ViewModelBase
     // ──── 設定保存 ─────────────────────────────────────────────────────────
     public void SaveSettings()
     {
-        _settings.OpenFiles            = Schedules.Select(e => e.FilePath)
+        // Load persisted settings first and merge our runtime-only fields into it.
+        // This avoids clobbering values that might have been changed by other dialogs
+        // (e.g., the UpdateCheckWindow toggling CheckForUpdatesOnStartup).
+        var persisted = AppSettings.Load();
+
+        persisted.OpenFiles            = Schedules.Select(e => e.FilePath)
                                                    .Where(p => !string.IsNullOrEmpty(p))
                                                    .ToList();
-        _settings.LastFile             = _activeEntry?.FilePath ?? string.Empty;
-        _settings.ChartOffsetFromToday = (int)(_chartStart - Today).TotalDays;
-        _settings.WeekdayLevels        = Holidays.GetWeekdayLevels();
-        _settings.AlertCount           = Holidays.AlertCount;
-        _settings.DateCountLevel       = Holidays.DateCountLevel;
-        _settings.Save();
+        persisted.LastFile             = _activeEntry?.FilePath ?? string.Empty;
+        persisted.ChartOffsetFromToday = (int)(_chartStart - Today).TotalDays;
+        persisted.WeekdayLevels        = Holidays.GetWeekdayLevels();
+        persisted.AlertCount           = Holidays.AlertCount;
+        persisted.DateCountLevel       = Holidays.DateCountLevel;
+
+        // Save merged settings back to disk
+        persisted.Save();
+
+        // Update our in-memory settings fields so other code sees the persisted values
+        _settings.OpenFiles            = persisted.OpenFiles;
+        _settings.LastFile             = persisted.LastFile;
+        _settings.ChartOffsetFromToday = persisted.ChartOffsetFromToday;
+        _settings.WeekdayLevels        = persisted.WeekdayLevels;
+        _settings.AlertCount           = persisted.AlertCount;
+        _settings.DateCountLevel       = persisted.DateCountLevel;
     }
 
     /// <summary>タスクペイン幅を取得する。</summary>

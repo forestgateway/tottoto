@@ -37,7 +37,17 @@
                     <ColumnDefinition Width="4"/>
                     <ColumnDefinition x:Name="ColML"     Width="36" MinWidth="28"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="★" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"/>
+                <Button Grid.Column="0"
+                        Command="{Binding ToggleStarFilterCommand}"
+                        ToolTip="{Binding StarFilterTooltip}"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        HorizontalAlignment="Center"
+                        Padding="0"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
+                               Foreground="{Binding StarFilterBrush, Mode=OneWay}"/>
+                </Button>
                 <TextBlock Grid.Column="1" Text="&#12479;&#12473;&#12463;&#21517;"
                            Style="{StaticResource ColumnHeaderStyle}"/>
                 <GridSplitter Grid.Column="2" Width="4" HorizontalAlignment="Stretch"

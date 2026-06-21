@@ -56,6 +56,9 @@ public class AppSettings
     // ── 完了タスク非表示 ─────────────────────────────────
     public bool HideCompleted { get; set; } = false;
 
+    // ── 起動時の更新確認 ─────────────────────────────────
+    public bool CheckForUpdatesOnStartup { get; set; } = true;
+
     // ─────────────────────────────────────────────────────
     private static string SettingsPath =>
         Path.Combine(AppContext.BaseDirectory, "tottoto.json");

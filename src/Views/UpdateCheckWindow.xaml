@@ -13,6 +13,45 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
+        <!-- スライド式トグル（丸みのあるスイッチ） -->
+        <Style x:Key="SlideToggleStyle" TargetType="ToggleButton">
+            <!-- 小さめのスイッチ -->
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Background" Value="#FFE8E8E8"/>
+            <Setter Property="BorderBrush" Value="#FFC8C8C8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid Width="40" Height="20">
+                            <Border x:Name="Track"
+                                    CornerRadius="10"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" />
+                            <!-- ノブのみ（テキストなし） -->
+                            <Ellipse x:Name="Knob" Width="16" Height="16"
+                                     Fill="#FFF0F0F0"
+                                     Stroke="#FFB0B0B0"
+                                     StrokeThickness="1"
+                                     Margin="2,2,22,2"
+                                     VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#FF4D90FE"/>
+                                <Setter TargetName="Knob" Property="Margin" Value="24,2,2,2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Track" Property="Opacity" Value="0.6"/>
+                                <Setter TargetName="Knob" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="Button">
             <Setter Property="Background"  Value="#FFE8E8E8"/>
             <Setter Property="Foreground"  Value="#FF000000"/>
@@ -147,49 +186,68 @@
                    TextTrimming="CharacterEllipsis"
                    Margin="0,0,0,12"/>
 
-        <!-- ボタン行 -->
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+        <!-- 起動時確認設定とボタン行 -->
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- 「更新する」: 更新可能 かつ まだ完了前のみ表示 -->
-            <Button Margin="0,0,8,0">
-                <Button.Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                        <Setter Property="Content"     Value="更新する"/>
-                        <Setter Property="Command"     Value="{Binding UpdateCommand}"/>
-                        <Setter Property="Visibility"  Value="Collapsed"/>
-                        <Style.Triggers>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding IsUpdateAvailable, Mode=OneWay}"  Value="True"/>
-                                    <Condition Binding="{Binding IsUpdateComplete,  Mode=OneWay}"  Value="False"/>
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="起動時に更新を確認"
+                           Foreground="#FF666666"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <ToggleButton x:Name="StartupCheckToggle"
+                              Style="{StaticResource SlideToggleStyle}"
+                              IsChecked="{Binding CheckForUpdatesOnStartup, Mode=TwoWay}"
+                              Content="{Binding CheckForUpdatesToggleLabel}"
+                              VerticalAlignment="Center"/>
+            </StackPanel>
 
-            <!-- 「今すぐ再起動して適用する」: 完了後のみ表示 -->
-            <Button Command="{Binding RestartNowCommand}"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+
+                <!-- 「更新する」: 更新可能 かつ まだ完了前のみ表示 -->
+                <Button Margin="0,0,8,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Content"     Value="更新する"/>
+                            <Setter Property="Command"     Value="{Binding UpdateCommand}"/>
+                            <Setter Property="Visibility"  Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsUpdateAvailable, Mode=OneWay}"  Value="True"/>
+                                        <Condition Binding="{Binding IsUpdateComplete,  Mode=OneWay}"  Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- 「今すぐ再起動して適用する」: 完了後のみ表示 -->
+                <Button Command="{Binding RestartNowCommand}"
                     Margin="0,0,8,0"
                     Visibility="{Binding IsUpdateComplete, Mode=OneWay, Converter={StaticResource BoolVis}}"
                     Content="今すぐ再起動して適用する"/>
 
-            <!-- 「閉じる」/「後でにする」 -->
-            <Button IsCancel="True" Click="OnCloseClick">
-                <Button.Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                        <Setter Property="Content" Value="閉じる"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsUpdateComplete, Mode=OneWay}" Value="True">
-                                <Setter Property="Content" Value="後でにする"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
+                <!-- 「閉じる」/「後でにする」 -->
+                <Button IsCancel="True" Click="OnCloseClick">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Content" Value="閉じる"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsUpdateComplete, Mode=OneWay}" Value="True">
+                                    <Setter Property="Content" Value="後でにする"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
 
-        </StackPanel>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

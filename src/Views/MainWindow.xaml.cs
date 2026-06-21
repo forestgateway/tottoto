@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using todochart.Services;
 using todochart.ViewModels;
 
 namespace todochart.Views;
@@ -67,17 +68,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         Loaded += OnLoaded;
 
-        // 起動 10 秒後に非同期で更新確認を開始
-        _ = CheckForUpdateDelayedAsync();
+        // 起動 10 秒後に非同期で更新確認を開始（設定が有効な場合のみ）
+        _ = CheckForUpdateDelayedAsync(AppSettings.Load());
 
         sw.Stop();
         System.Diagnostics.Debug.WriteLine($"[STARTUP] MainWindow 初期化完了: {sw.ElapsedMilliseconds}ms");
     }
 
-    private async Task CheckForUpdateDelayedAsync()
+    private async Task CheckForUpdateDelayedAsync(AppSettings settings)
     {
         try
         {
+            if (!settings.CheckForUpdatesOnStartup)
+                return;
+
             // 起動後 10 秒待つ
             await Task.Delay(TimeSpan.FromSeconds(10));
 
