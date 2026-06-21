@@ -1617,15 +1617,30 @@ public class MainViewModel : ViewModelBase
     // ──── 設定保存 ─────────────────────────────────────────────────────────
     public void SaveSettings()
     {
-        _settings.OpenFiles            = Schedules.Select(e => e.FilePath)
+        // Load persisted settings first and merge our runtime-only fields into it.
+        // This avoids clobbering values that might have been changed by other dialogs
+        // (e.g., the UpdateCheckWindow toggling CheckForUpdatesOnStartup).
+        var persisted = AppSettings.Load();
+
+        persisted.OpenFiles            = Schedules.Select(e => e.FilePath)
                                                    .Where(p => !string.IsNullOrEmpty(p))
                                                    .ToList();
-        _settings.LastFile             = _activeEntry?.FilePath ?? string.Empty;
-        _settings.ChartOffsetFromToday = (int)(_chartStart - Today).TotalDays;
-        _settings.WeekdayLevels        = Holidays.GetWeekdayLevels();
-        _settings.AlertCount           = Holidays.AlertCount;
-        _settings.DateCountLevel       = Holidays.DateCountLevel;
-        _settings.Save();
+        persisted.LastFile             = _activeEntry?.FilePath ?? string.Empty;
+        persisted.ChartOffsetFromToday = (int)(_chartStart - Today).TotalDays;
+        persisted.WeekdayLevels        = Holidays.GetWeekdayLevels();
+        persisted.AlertCount           = Holidays.AlertCount;
+        persisted.DateCountLevel       = Holidays.DateCountLevel;
+
+        // Save merged settings back to disk
+        persisted.Save();
+
+        // Update our in-memory settings fields so other code sees the persisted values
+        _settings.OpenFiles            = persisted.OpenFiles;
+        _settings.LastFile             = persisted.LastFile;
+        _settings.ChartOffsetFromToday = persisted.ChartOffsetFromToday;
+        _settings.WeekdayLevels        = persisted.WeekdayLevels;
+        _settings.AlertCount           = persisted.AlertCount;
+        _settings.DateCountLevel       = persisted.DateCountLevel;
     }
 
     /// <summary>タスクペイン幅を取得する。</summary>

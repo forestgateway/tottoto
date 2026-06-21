@@ -9,6 +9,7 @@ namespace todochart.ViewModels;
 /// </summary>
 public class UpdateCheckViewModel : ViewModelBase
 {
+    private readonly AppSettings _settings;
     private readonly UpdateCheckService _service = new();
 
     /// <summary>現在のアプリバージョン文字列（例: "1.0.0"）。</summary>
@@ -81,6 +82,24 @@ public class UpdateCheckViewModel : ViewModelBase
         private set => SetField(ref _isUpdateAvailable, value);
     }
 
+    private bool _checkForUpdatesOnStartup;
+    /// <summary>起動時に更新確認を行うかどうか。</summary>
+    public bool CheckForUpdatesOnStartup
+    {
+        get => _checkForUpdatesOnStartup;
+        set
+        {
+            if (SetField(ref _checkForUpdatesOnStartup, value))
+            {
+                PersistStartupCheckSetting();
+                OnPropertyChanged(nameof(CheckForUpdatesToggleLabel));
+            }
+        }
+    }
+
+    /// <summary>トグル表示用ラベル。</summary>
+    public string CheckForUpdatesToggleLabel => CheckForUpdatesOnStartup ? "ON" : "OFF";
+
     private double _progress;
     /// <summary>ダウンロード進捗 (0.0〜1.0)。</summary>
     public double Progress
@@ -98,8 +117,13 @@ public class UpdateCheckViewModel : ViewModelBase
     /// <summary>「今すぐ再起動して適用する」ボタンのコマンド。</summary>
     public ICommand RestartNowCommand { get; }
 
-    public UpdateCheckViewModel()
+    public UpdateCheckViewModel(AppSettings? settings = null)
     {
+        _settings = settings ?? AppSettings.Load();
+        _checkForUpdatesOnStartup = _settings.CheckForUpdatesOnStartup;
+        OnPropertyChanged(nameof(CheckForUpdatesOnStartup));
+        OnPropertyChanged(nameof(CheckForUpdatesToggleLabel));
+
         UpdateCommand = new RelayCommand(
             execute:    async () => await ExecuteUpdateAsync(),
             canExecute: ()    => IsUpdateAvailable && !IsUpdating);
@@ -112,6 +136,12 @@ public class UpdateCheckViewModel : ViewModelBase
     /// <summary>
     /// ダイアログ表示後に呼び出す。GitHub API でバージョンを確認する。
     /// </summary>
+    private void PersistStartupCheckSetting()
+    {
+        _settings.CheckForUpdatesOnStartup = CheckForUpdatesOnStartup;
+        _settings.Save();
+    }
+
     public async Task LoadAsync()
     {
         IsChecking    = true;

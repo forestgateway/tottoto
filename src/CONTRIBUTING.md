@@ -96,7 +96,7 @@ src/
 
 | クラス / 型 | ファイル | 役割 |
 |---|---|---|
-| `AppSettings` | `Services/AppSettings.cs` | アプリ設定（ウィンドウ位置・列幅など）の保存・読み込み（JSON） |
+| `AppSettings` | `Services/AppSettings.cs` | アプリ設定（ウィンドウ位置・列幅・起動時更新確認フラグなど）の保存・読み込み（JSON） |
 | `ScheduleFileService` | `Services/ScheduleFileService.cs` | スケジュールデータの JSON 形式での保存・読み込み |
 | `ArchiveService` | `Services/ArchiveService.cs` | アーカイブファイル（`*.archive`）の読み書き |
 | `HolidayService` | `Services/HolidayService.cs` | 祝日・休日判定ロジック |

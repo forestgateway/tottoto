@@ -1,4 +1,5 @@
 using System.Windows;
+using todochart.Services;
 
 namespace todochart.Views;
 
@@ -9,7 +10,8 @@ public partial class MainWindow
 
     private void OnCheckUpdateClick(object sender, RoutedEventArgs e)
     {
-        var vm  = new ViewModels.UpdateCheckViewModel();
+        var settings = AppSettings.Load();
+        var vm  = new ViewModels.UpdateCheckViewModel(settings);
         var win = new UpdateCheckWindow(vm) { Owner = this };
         win.ShowDialog();
     }
