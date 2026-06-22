@@ -73,26 +73,80 @@ public class GanttRowElement : FrameworkElement
         return new Size(count * CellWidth, 22);
     }
 
-    private static readonly Brush s_hoverBrush    = new SolidColorBrush(Color.FromArgb(0x1A, 0x00, 0x78, 0xD7));
-    private static readonly Brush s_selectedBrush = new SolidColorBrush(Color.FromArgb(0x7A, 0xAD, 0xD6, 0xFF));
-    private static readonly Pen   s_selectedPen   = new(new SolidColorBrush(Color.FromArgb(0xFF, 0xAD, 0xD6, 0xFF)), 1.0);
-    private static readonly Pen   s_weekPen       = new(new SolidColorBrush(Color.FromArgb(0x33, 0x99, 0x99, 0x99)), 1.0);
-    private static readonly Pen   s_rowPen        = new(new SolidColorBrush(Color.FromArgb(0x15, 0x00, 0x00, 0x00)), 1.0);
-    private static readonly Brush s_todayOverlay  = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x88, 0x88)); // 透明度80% = alpha 51(0x33)
+    private Brush _hoverBrush    = Brushes.Transparent;
+    private Brush _selectedBrush = Brushes.Transparent;
+    private Pen   _selectedPen   = new Pen(Brushes.Transparent, 1.0);
+    private Pen   _weekPen       = new Pen(Brushes.Transparent, 1.0);
+    private Pen   _rowPen        = new Pen(Brushes.Transparent, 1.0);
+    private Brush _todayOverlay  = Brushes.Transparent;
     private static readonly Brush s_calloutMarker = new SolidColorBrush(Color.FromRgb(0xFF, 0x00, 0x00));
 
-    static GanttRowElement()
+    public GanttRowElement()
     {
-        s_hoverBrush.Freeze();
-        s_selectedBrush.Freeze();
-        ((SolidColorBrush)s_selectedPen.Brush).Freeze();
-        s_selectedPen.Freeze();
-        ((SolidColorBrush)s_weekPen.Brush).Freeze();
-        s_weekPen.Freeze();
-        ((SolidColorBrush)s_rowPen.Brush).Freeze();
-        s_rowPen.Freeze();
-        ((SolidColorBrush)s_todayOverlay).Freeze();
-        s_calloutMarker.Freeze();
+        UpdateBrushesFromResources();
+        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateVisual(); };
+    }
+
+    private void UpdateBrushesFromResources()
+    {
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res is null) return;
+
+            Color accent = res["AccentColor"] is Color ac ? ac : Color.FromRgb(0x00, 0x78, 0xD7);
+            Color sub = res["SubText"] is Color sc ? sc : Color.FromRgb(0x3A, 0x3A, 0x3A);
+
+            // ブラシは可能ならテーマで定義されたブラシを利用する
+            if (res.Contains("AccentBrush") && res["AccentBrush"] is Brush ab)
+            {
+                _hoverBrush = new SolidColorBrush(((SolidColorBrush)ab).Color) { Opacity = 0.1 };
+                _selectedBrush = new SolidColorBrush(((SolidColorBrush)ab).Color) { Opacity = 0.48 };
+                _selectedPen = new Pen(ab, 1.0);
+            }
+            else
+            {
+                _hoverBrush    = new SolidColorBrush(Color.FromArgb(0x1A, accent.R, accent.G, accent.B));
+                _selectedBrush = new SolidColorBrush(Color.FromArgb(0x7A, (byte)Math.Min(accent.R + 0x4D, 255), (byte)Math.Min(accent.G + 0x5E, 255), (byte)Math.Min(accent.B + 0xFF, 255)));
+                _selectedPen   = new Pen(new SolidColorBrush(Color.FromArgb(0xFF, accent.R, accent.G, accent.B)), 1.0);
+            }
+
+            // 週境界線の色: テーマの WeekLine / WeekLineBrush を優先して使用する
+            if (res.Contains("WeekLine") && res["WeekLine"] is Color wl)
+            {
+                _weekPen = new Pen(new SolidColorBrush(wl), 1.0);
+            }
+            else if (res.Contains("WeekLineBrush") && res["WeekLineBrush"] is Brush wlbr)
+            {
+                _weekPen = new Pen(wlbr, 1.0);
+            }
+
+            // 行下線・副線の設定: GridLineBrush があれば優先し、なければ SubTextBrush を利用
+            if (res.Contains("GridLineBrush") && res["GridLineBrush"] is Brush glb)
+            {
+                _rowPen = new Pen(glb, 1.0);
+            }
+            else if (res.Contains("SubTextBrush") && res["SubTextBrush"] is Brush sb)
+            {
+                // SubTextBrush を行下線用に使う
+                _rowPen = new Pen(sb, 1.0);
+                // 未指定の場合のみ weekPen を SubTextBrush にフォールバック
+                if (_weekPen == null || (_weekPen.Brush is SolidColorBrush scb && scb.Color == default))
+                    _weekPen = new Pen(sb, 1.0);
+            }
+            else
+            {
+                // フォールバックカラー
+                _weekPen = _weekPen ?? new Pen(new SolidColorBrush(Color.FromArgb(0x33, sub.R, sub.G, sub.B)), 1.0);
+                _rowPen  = new Pen(new SolidColorBrush(Color.FromArgb(0x15, sub.R, sub.G, sub.B)), 1.0);
+            }
+
+            if (res.Contains("TodayOverlayBrush") && res["TodayOverlayBrush"] is Brush to)
+                _todayOverlay = to;
+            else
+                _todayOverlay  = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x88, 0x88));
+        }
+        catch { }
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -119,6 +173,7 @@ public class GanttRowElement : FrameworkElement
             // セル背景（横縞・土日）
             dc.DrawRectangle(c.Background, null, rect);
 
+
             // タスクバー：セルより上下3px・左右2px小さい正方形
             if (c.BarBrush is not null)
             {
@@ -128,17 +183,19 @@ public class GanttRowElement : FrameworkElement
                 dc.DrawRectangle(c.BarBrush, null, barRect);
             }
 
-            if (isSelected)
-                dc.DrawRectangle(s_selectedBrush, null, rect);
-            if (i == hoverCol)
-                dc.DrawRectangle(s_hoverBrush, null, rect);
-
             // 日曜と月曜の間に縦線（月曜セルの左端）
+            // 週境界線は選択色より下に描画するため、この位置で描画する。
             if (c.Date.DayOfWeek == DayOfWeek.Monday)
             {
                 double lx = x + snapOffset;
-                dc.DrawLine(s_weekPen, new Point(lx, 0), new Point(lx, h));
+                dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
             }
+
+            // 選択色・ホバー色は週線より上に重ねる（選択色レイヤを最前面にする）
+            if (isSelected)
+                dc.DrawRectangle(_selectedBrush, null, rect);
+            if (i == hoverCol)
+                dc.DrawRectangle(_hoverBrush, null, rect);
 
             if (!string.IsNullOrEmpty(c.Symbol))
             {
@@ -168,21 +225,21 @@ public class GanttRowElement : FrameworkElement
             x += cw;
         }
 
-        // 行下端に横線（タスクリストと同色）
+        // 行下端に横線（_rowPen: GridLineBrush またはフォールバック）
         double totalW = Cells.Count * cw;
         double ly = h - snapOffset;
-        dc.DrawLine(s_rowPen, new Point(0, ly), new Point(totalW, ly));
+        dc.DrawLine(_rowPen, new Point(0, ly), new Point(totalW, ly));
 
         // 今日列のオーバーレイを最後に重ねる（タスクバーの色を残しつつ薄い赤を載せる）
         if (todayX >= 0)
-            dc.DrawRectangle(s_todayOverlay, null, new Rect(todayX, 0, cw, h));
+            dc.DrawRectangle(_todayOverlay, null, new Rect(todayX, 0, cw, h));
 
         // 選択時に外枠線を描画（上下1px、完全不透明の選択色）
         if (isSelected)
         {
             double selW = Cells.Count * cw;
-            dc.DrawLine(s_selectedPen, new Point(0, snapOffset),     new Point(selW, snapOffset));
-            dc.DrawLine(s_selectedPen, new Point(0, h - snapOffset), new Point(selW, h - snapOffset));
+            dc.DrawLine(_selectedPen, new Point(0, snapOffset),     new Point(selW, snapOffset));
+            dc.DrawLine(_selectedPen, new Point(0, h - snapOffset), new Point(selW, h - snapOffset));
         }
     }
 

@@ -59,6 +59,9 @@ public class AppSettings
     // ── 起動時の更新確認 ─────────────────────────────────
     public bool CheckForUpdatesOnStartup { get; set; } = true;
 
+    // ── カラーテーマ名（Light / DarkCyan）
+    public string ThemeName { get; set; } = "Light";
+
     // ─────────────────────────────────────────────────────
     private static string SettingsPath =>
         Path.Combine(AppContext.BaseDirectory, "tottoto.json");

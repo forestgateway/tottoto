@@ -2,21 +2,20 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <!-- ── カラーパレット (Modern Light) ─────────────────── -->
-    <Color x:Key="AccentColor">#FF0070C0</Color>
-    <Color x:Key="PanelBg">#FFF0F0F0</Color>
-    <Color x:Key="HeaderBg">#FFE2E6EA</Color>
-    <Color x:Key="RowSelected">#99B8D9F5</Color>
-
-    <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
-    <SolidColorBrush x:Key="PanelBgBrush"      Color="{StaticResource PanelBg}"/>
-    <SolidColorBrush x:Key="HeaderBgBrush"     Color="{StaticResource HeaderBg}"/>
-    <SolidColorBrush x:Key="RowSelectedBrush"  Color="{StaticResource RowSelected}"/>
-    <SolidColorBrush x:Key="WindowBgBrush"     Color="#FFFFFFFF"/>
-    <SolidColorBrush x:Key="WindowFgBrush"     Color="#FF1A1A1A"/>
-    <SolidColorBrush x:Key="SubTextBrush"      Color="#FF3A3A3A"/>
-    <SolidColorBrush x:Key="BorderBrush"       Color="#FFD0D5DC"/>
-    <SolidColorBrush x:Key="ChartBgBrush"      Color="#FFFAFAFA"/>
+    <!-- カラーは各テーマの辞書 (Themes/Colors/*.xaml) で定義されます -->
+    <!-- BaseTheme はブラシのみを定義し、ブラシの Color はテーマ辞書の Color リソースを DynamicResource で参照します -->
+    <SolidColorBrush x:Key="AccentBrush"       Color="{DynamicResource AccentColor}"/>
+    <SolidColorBrush x:Key="PanelBgBrush"      Color="{DynamicResource PanelBg}"/>
+    <SolidColorBrush x:Key="HeaderBgBrush"     Color="{DynamicResource HeaderBg}"/>
+    <SolidColorBrush x:Key="RowSelectedBrush"  Color="{DynamicResource RowSelected}"/>
+    <SolidColorBrush x:Key="WindowBgBrush"     Color="{DynamicResource WindowBg}"/>
+    <SolidColorBrush x:Key="WindowFgBrush"     Color="{DynamicResource WindowFg}"/>
+    <SolidColorBrush x:Key="SubTextBrush"      Color="{DynamicResource SubText}"/>
+    <SolidColorBrush x:Key="BorderBrush"       Color="{DynamicResource Border}"/>
+    <SolidColorBrush x:Key="ChartBgBrush"      Color="{DynamicResource ChartBg}"/>
+    <SolidColorBrush x:Key="RowEvenBrush"      Color="{DynamicResource RowEven}"/>
+    <SolidColorBrush x:Key="RowOddBrush"       Color="{DynamicResource RowOdd}"/>
+    <SolidColorBrush x:Key="GridLineBrush"     Color="{DynamicResource GridLine}"/>
 
     <!-- ── 共通定数 ──────────────────────────────────── -->
     <sys:Double x:Key="RowHeight">24</sys:Double>
@@ -27,7 +26,7 @@
     <Style x:Key="ToolBarButtonStyle" TargetType="Button">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
-        <Setter Property="Foreground"   Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"   Value="{DynamicResource SubTextBrush}"/>
         <Setter Property="Padding"      Value="8,0"/>
         <Setter Property="FontSize"     Value="12"/>
         <Setter Property="FontFamily"   Value="Meiryo UI, Segoe UI, sans-serif"/>
@@ -48,7 +47,7 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="bd" Property="Background"   Value="#330070C0"/>
-                            <Setter TargetName="bd" Property="BorderBrush"  Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="bd" Property="BorderBrush"  Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="#FFBBBBBB"/>
@@ -112,7 +111,7 @@
     <Style x:Key="ToolBarToggleButtonStyle" TargetType="ToggleButton">
         <Setter Property="Background"   Value="Transparent"/>
         <Setter Property="BorderBrush"  Value="Transparent"/>
-        <Setter Property="Foreground"   Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"   Value="{DynamicResource SubTextBrush}"/>
         <Setter Property="Padding"      Value="8,4"/>
         <Setter Property="FontSize"     Value="13"/>
         <Setter Property="FontFamily"   Value="Meiryo UI, Segoe UI, sans-serif"/>
@@ -128,8 +127,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="bd" Property="Background"  Value="{StaticResource RowSelectedBrush}"/>
-                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="bd" Property="Background"  Value="{DynamicResource RowSelectedBrush}"/>
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="bd" Property="Background"   Value="#1A0070C0"/>
@@ -187,7 +186,7 @@
     <!-- ── ColumnHeader ─────────────────────────────── -->
     <Style x:Key="ColumnHeaderStyle" TargetType="TextBlock">
         <Setter Property="Background"          Value="Transparent"/>
-        <Setter Property="Foreground"          Value="{StaticResource SubTextBrush}"/>
+        <Setter Property="Foreground"          Value="{DynamicResource SubTextBrush}"/>
         <Setter Property="FontSize"            Value="12"/>
         <Setter Property="FontWeight"          Value="SemiBold"/>
         <Setter Property="VerticalAlignment"   Value="Center"/>

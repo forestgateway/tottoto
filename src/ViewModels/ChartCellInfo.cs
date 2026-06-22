@@ -17,4 +17,7 @@ public sealed class ChartCellInfo
 
     /// <summary>タスク期間内のセルに描画する小正方形の色。null = 描画しない。</summary>
     public Brush? BarBrush   { get; init; }
+
+    // Note: Background/Foreground は生成側（TaskRowViewModel）で明示設定されるため
+    // デフォルトは白/黒にしておく。
 }

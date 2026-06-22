@@ -5,6 +5,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Theme dictionary (will be replaced at startup) -->
+                <ResourceDictionary Source="Themes/Colors/ThemeLight.xaml"/>
                 <ResourceDictionary Source="Themes/BaseTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

@@ -289,10 +289,30 @@ public class TaskRowViewModel : ViewModelBase
     /// <summary>フォルダかつ全タスク完了のとき true。アイコン背景色切り替えに使用。</summary>
     public bool IsCompletedFolder => IsFolder && Item.Status == ItemStatus.Complete;
 
-    private static readonly Brush s_rowEven = Freeze(new SolidColorBrush(Colors.White));
-    private static readonly Brush s_rowOdd  = Freeze(new SolidColorBrush(Color.FromRgb(0xF8, 0xF8, 0xF8)));
+    // 行の背景色はテーマリソースから取得する（動的に変わる可能性があるためキャッシュしない）
+    private static Brush GetEvenRowBrush()
+    {
+        var res = Application.Current?.Resources;
+        if (res != null)
+        {
+            if (res.Contains("RowEvenBrush") && res["RowEvenBrush"] is Brush re) return re;
+            if (res.Contains("WindowBgBrush") && res["WindowBgBrush"] is Brush wb) return wb;
+        }
+        return new SolidColorBrush(Colors.White);
+    }
 
-    public Brush RowBackground => _rowIndex % 2 == 0 ? s_rowEven : s_rowOdd;
+    private static Brush GetOddRowBrush()
+    {
+        var res = Application.Current?.Resources;
+        if (res != null)
+        {
+            if (res.Contains("RowOddBrush") && res["RowOddBrush"] is Brush ro) return ro;
+            if (res.Contains("PanelBgBrush") && res["PanelBgBrush"] is Brush pb) return pb;
+        }
+        return new SolidColorBrush(Color.FromRgb(0xF8, 0xF8, 0xF8));
+    }
+
+    public Brush RowBackground => _rowIndex % 2 == 0 ? GetEvenRowBrush() : GetOddRowBrush();
 
     // ── チャートセル ─────────────────────────────────────
     private IReadOnlyList<ChartCellInfo> _chartCells = Array.Empty<ChartCellInfo>();
@@ -306,7 +326,7 @@ public class TaskRowViewModel : ViewModelBase
                                   int appDateCountLv)
     {
         var cells = new List<ChartCellInfo>(cellCount);
-        var rowBase = _rowIndex % 2 == 0 ? s_rowEven : s_rowOdd;
+        var rowBase = _rowIndex % 2 == 0 ? GetEvenRowBrush() : GetOddRowBrush();
 
         for (int i = 0; i < cellCount; i++)
         {

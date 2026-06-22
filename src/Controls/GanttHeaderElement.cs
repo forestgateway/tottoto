@@ -41,19 +41,124 @@ public class GanttHeaderElement : FrameworkElement
         return new Size(count * CellWidth, 32);
     }
 
-    private static readonly Pen s_gridPen  = new(Brushes.Gray, 0.5);
-    private static readonly Pen s_weekPen  = new(new SolidColorBrush(Color.FromArgb(0x33, 0x99, 0x99, 0x99)), 1.0);
-    private static readonly Brush s_todayBg   = new SolidColorBrush(Color.FromRgb(0xFF, 0xCC, 0x00));
-    private static readonly Brush s_holiday2  = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0xFF));
-    private static readonly Brush s_holiday1  = new SolidColorBrush(Color.FromRgb(0xBB, 0xBB, 0xFF));
-    private static readonly Brush s_normalBg  = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44));
-    private static readonly Brush s_monthBg   = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x22));
+    private Pen _gridPen  = new Pen(Brushes.Gray, 0.5);
+    private Pen _weekPen  = new Pen(Brushes.Transparent, 1.0);
+    private Brush _todayBg   = Brushes.Yellow;
+    private Brush _holiday2  = Brushes.LightBlue;
+    private Brush _holiday1  = Brushes.LightSteelBlue;
+    private Brush _normalBg  = Brushes.Gray;
+    private Brush _monthBg   = Brushes.DarkGray;
+    private Brush _monthTextBrush = Brushes.White;
+    private Brush _dayTextBrush = Brushes.White;
+    private Brush _todayTextBrush = Brushes.Black;
 
-    static GanttHeaderElement()
+    public GanttHeaderElement()
     {
-        s_gridPen.Freeze(); ((SolidColorBrush)s_weekPen.Brush).Freeze(); s_weekPen.Freeze();
-        s_todayBg.Freeze(); s_holiday2.Freeze();
-        s_holiday1.Freeze(); s_normalBg.Freeze(); s_monthBg.Freeze();
+        UpdateBrushesFromResources();
+        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateVisual(); };
+    }
+
+    private void UpdateBrushesFromResources()
+    {
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res is null) return;
+            // テーマ辞書は Color キーを持っているため、可能なら Color を使ってブラシを構築する。
+            var accent = res["AccentColor"] is Color ac ? ac : Colors.Gray;
+            var panel = res["PanelBg"] is Color pc ? pc : Colors.DarkGray;
+            // 枠線・週境界線: テーマの GridLineBrush があれば優先
+            if (res.Contains("GridLineBrush") && res["GridLineBrush"] is Brush glb)
+                _gridPen = new Pen(glb, 0.5);
+            else
+                _gridPen = new Pen(new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B)), 0.5);
+            // 週境界線の色: テーマの WeekLine を優先
+            if (res.Contains("WeekLine") && res["WeekLine"] is Color wl)
+                _weekPen = new Pen(new SolidColorBrush(wl), 1.0);
+            else if (res.Contains("WeekLineBrush") && res["WeekLineBrush"] is Brush wlbr)
+                _weekPen = new Pen(wlbr, 1.0);
+            else
+                _weekPen = new Pen(new SolidColorBrush(Color.FromArgb(0x33, accent.R, accent.G, accent.B)), 1.0);
+            // 日付セルの背景: 優先 CalendarDayBg -> ChartBgBrush -> PanelBgBrush -> 自動生成
+            if (res.Contains("CalendarDayBg") && res["CalendarDayBg"] is Color cdb)
+                _normalBg = new SolidColorBrush(cdb);
+            else if (res.Contains("ChartBgBrush") && res["ChartBgBrush"] is Brush chartBg)
+                _normalBg = chartBg;
+            else if (res.Contains("PanelBgBrush") && res["PanelBgBrush"] is Brush panelBrush)
+                _normalBg = panelBrush;
+            else
+                _normalBg = new SolidColorBrush(panel);
+
+            // カレンダー上部トップストリップ（優先: CalendarTopBg -> HeaderBgBrush -> 自動生成）
+            if (res.Contains("CalendarTopBg") && res["CalendarTopBg"] is Color ctb)
+                _monthBg = new SolidColorBrush(ctb);
+            else if (res.Contains("HeaderBgBrush") && res["HeaderBgBrush"] is Brush headerBrush)
+                _monthBg = headerBrush;
+            else
+                _monthBg = new SolidColorBrush(Color.FromRgb((byte)Math.Max(panel.R - 16,0), (byte)Math.Max(panel.G - 16,0), (byte)Math.Max(panel.B - 32,0)));
+
+            // 休日背景: 優先 CalendarHoliday2/1 (color) -> Holiday2Brush/Holiday1Brush -> 自動生成
+            if (res.Contains("CalendarHoliday2") && res["CalendarHoliday2"] is Color ch2)
+                _holiday2 = new SolidColorBrush(ch2);
+            else if (res.Contains("Holiday2Brush") && res["Holiday2Brush"] is Brush h2)
+                _holiday2 = h2;
+            else
+                _holiday2 = new SolidColorBrush(Color.FromRgb((byte)Math.Min(panel.R + 10,255), (byte)Math.Min(panel.G + 10,255), (byte)Math.Min(panel.B + 30,255)));
+
+            if (res.Contains("CalendarHoliday1") && res["CalendarHoliday1"] is Color ch1)
+                _holiday1 = new SolidColorBrush(ch1);
+            else if (res.Contains("Holiday1Brush") && res["Holiday1Brush"] is Brush h1)
+                _holiday1 = h1;
+            else
+                _holiday1 = new SolidColorBrush(Color.FromRgb((byte)Math.Max(panel.R - 8,0), (byte)Math.Max(panel.G - 8,0), (byte)Math.Min(panel.B + 20,255)));
+
+            // テキスト色の決定: 可能なら WindowFgBrush を優先し、なければ WindowBg の明度により白/黒を選択
+            // テキスト色: 優先 CalendarDayFg (日付) / CalendarTopFg (月見出し) -> WindowFgBrush -> 明度判定
+            if (res.Contains("CalendarTopFg") && res["CalendarTopFg"] is Color ctf)
+                _monthTextBrush = new SolidColorBrush(ctf);
+
+            if (res.Contains("CalendarDayFg") && res["CalendarDayFg"] is Color cdf)
+                _dayTextBrush = new SolidColorBrush(cdf);
+
+            if (_monthTextBrush == null || (_monthTextBrush is SolidColorBrush scm && scm.Color == default))
+            {
+                if (res.Contains("WindowFgBrush") && res["WindowFgBrush"] is Brush wf)
+                    _monthTextBrush = wf;
+                else if (res.Contains("WindowBg") && res["WindowBg"] is Color wb)
+                {
+                    var lum = (0.2126 * wb.R + 0.7152 * wb.G + 0.0722 * wb.B) / 255.0;
+                    _monthTextBrush = lum < 0.5 ? Brushes.White : Brushes.Black;
+                }
+            }
+
+            if (_dayTextBrush == null || (_dayTextBrush is SolidColorBrush scd && scd.Color == default))
+            {
+                if (res.Contains("WindowFgBrush") && res["WindowFgBrush"] is Brush wf2)
+                    _dayTextBrush = wf2;
+                else if (res.Contains("WindowBg") && res["WindowBg"] is Color wb2)
+                {
+                    var lum2 = (0.2126 * wb2.R + 0.7152 * wb2.G + 0.0722 * wb2.B) / 255.0;
+                    _dayTextBrush = lum2 < 0.5 ? Brushes.White : Brushes.Black;
+                }
+            }
+
+            // 今日の背景色がテーマで指定されていればそれを使い、テキストは背景との対比で決める
+            if (res.Contains("TodayOverlayBrush") && res["TodayOverlayBrush"] is Brush to)
+                _todayBg = to;
+            // _todayBg が SolidColorBrush なら色を取り出し、対比色を選ぶ
+            if (_todayBg is SolidColorBrush scb)
+            {
+                var c = scb.Color;
+                var lum = (0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B) / 255.0;
+                _todayTextBrush = lum < 0.5 ? Brushes.White : Brushes.Black;
+            }
+            else
+            {
+                // フォールバック
+                _todayTextBrush = Brushes.Black;
+            }
+        }
+        catch { }
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -82,13 +187,13 @@ public class GanttHeaderElement : FrameworkElement
 
             double monthW = monthCount * cw;
             var monthRect = new Rect(x, 0, monthW, topH);
-            dc.DrawRectangle(s_monthBg, null, monthRect);
-            dc.DrawRectangle(null, s_gridPen, monthRect);
+            dc.DrawRectangle(_monthBg, null, monthRect);
+            dc.DrawRectangle(null, _gridPen, monthRect);
 
             var monthText = new FormattedText(
                 d.Date.ToString("yyyy/M"),
                 CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface("Segoe UI"), 8, Brushes.White, dpi);
+                new Typeface("Segoe UI"), 8, (_monthTextBrush is SolidColorBrush mcb) ? mcb : Brushes.White, dpi);
             dc.DrawText(monthText, new Point(x + 2, (topH - monthText.Height) / 2));
 
             x     += monthW;
@@ -104,25 +209,27 @@ public class GanttHeaderElement : FrameworkElement
             var d    = Days[j];
             var rect = new Rect(x, topH, cw, botH);
 
-            Brush bg = d.IsToday ? s_todayBg
-                     : d.HolidayLv >= 2 ? s_holiday2
-                     : d.HolidayLv == 1 ? s_holiday1
-                     : s_normalBg;
+            Brush bg = d.IsToday ? _todayBg
+                     : d.HolidayLv >= 2 ? _holiday2
+                     : d.HolidayLv == 1 ? _holiday1
+                     : _normalBg;
 
             dc.DrawRectangle(bg, null, rect);
-            dc.DrawRectangle(null, s_gridPen, rect);
+            dc.DrawRectangle(null, _gridPen, rect);
 
             // 日曜と月曜の間に週境界線（ヘッダー全高）
-            if (d.Date.DayOfWeek == DayOfWeek.Monday)
-            {
-                double lx = x + snapOffset;
-                dc.DrawLine(s_weekPen, new Point(lx, 0), new Point(lx, h));
-            }
+            //if (d.Date.DayOfWeek == DayOfWeek.Monday)
+            //{
+            //    double lx = x + snapOffset;
+            //    dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
+            //}
 
-            Brush fg = d.IsToday ? Brushes.Black : Brushes.White;
+            // 日付テキストの色は年表示（month）と同じ前景色を使用する
+            // 本日は常に黒文字にする
+            var dayFg = d.IsToday ? Brushes.Black : ((_monthTextBrush is SolidColorBrush mcb) ? mcb : Brushes.White);
             var ft = new FormattedText(d.DayText,
                 CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface("Segoe UI"), cw >= 14 ? 9 : 7, fg, dpi);
+                new Typeface("Segoe UI"), cw >= 14 ? 9 : 7, dayFg, dpi);
             dc.DrawText(ft, new Point(x + (cw - ft.Width) / 2, topH + (botH - ft.Height) / 2));
 
             x += cw;

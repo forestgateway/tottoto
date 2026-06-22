@@ -265,6 +265,8 @@ public class MainViewModel : ViewModelBase
 
         _chartStart    = DateTime.Today.AddDays(_settings.ChartOffsetFromToday);
         _hideCompleted = _settings.HideCompleted;
+        // 現在のテーマ名を設定ファイルから読み込む
+        _currentTheme = ThemeService.IsValidTheme(_settings.ThemeName) ? _settings.ThemeName : "Light";
         RefreshChartDays();
 
         InitCommands();
@@ -498,6 +500,13 @@ public class MainViewModel : ViewModelBase
         {
             if (p is not string name) return;
             CurrentTheme = name;
+            try
+            {
+                ThemeService.ApplyTheme(name);
+                _settings.ThemeName = name;
+                _settings.Save();
+            }
+            catch { }
         });
 
         CopyItemCommand  = new RelayCommand(CopySelected,  () => Selected is not null);

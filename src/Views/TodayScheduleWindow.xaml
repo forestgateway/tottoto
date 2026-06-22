@@ -6,8 +6,8 @@
         xmlns:conv="clr-namespace:todochart.Converters"
         Title="&#20170;&#26085;&#12398;&#20104;&#23450;"
         Width="560" Height="480" MinWidth="360" MinHeight="200"
-        Background="{StaticResource WindowBgBrush}"
-        Foreground="{StaticResource WindowFgBrush}"
+        Background="{DynamicResource WindowBgBrush}"
+        Foreground="{DynamicResource WindowFgBrush}"
         FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
@@ -26,7 +26,7 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Height="{StaticResource HeaderHeight}"
-                Background="{StaticResource HeaderBgBrush}"
+                Background="{DynamicResource HeaderBgBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid x:Name="TaskHeaderGrid">
                 <Grid.ColumnDefinitions>
@@ -66,7 +66,7 @@
         <ListBox x:Name="TaskListBox" Grid.Row="1"
                  ItemsSource="{Binding TodayItems}"
                  SelectedItem="{Binding Selected, Mode=TwoWay}"
-                 Background="{StaticResource WindowBgBrush}" BorderThickness="0"
+                 Background="{DynamicResource WindowBgBrush}" BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel"
@@ -189,7 +189,7 @@
                                                 CornerRadius="8"
                                                 Width="16" Height="16"
                                                 Visibility="Collapsed">
-                                            <TextBlock Text="&#x2714;"
+                                        <TextBlock Text="&#x2714;"
                                                        Foreground="White"
                                                        FontSize="8"
                                                        FontFamily="Segoe UI, sans-serif"
@@ -213,7 +213,7 @@
                                     </Grid>
                                     <TextBlock x:Name="NameLabel"
                                                Text="{Binding Name}"
-                                               Foreground="{StaticResource WindowFgBrush}"
+                                               Foreground="{DynamicResource WindowFgBrush}"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis"
                                                Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolVis}}"/>
