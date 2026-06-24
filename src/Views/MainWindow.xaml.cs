@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Input;
 using System.Windows.Threading;
 using todochart.Services;
@@ -21,6 +22,44 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _columnWidths;
         private set { _columnWidths = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ColumnWidths))); }
+    }
+
+    private void Window_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+    {
+        // クリック元が操作可能なコントロール（ボタン等）の場合はドラッグを開始しない
+        if (e.OriginalSource is DependencyObject dep && IsControlInteractive(dep))
+            return;
+
+        // 背景やヘッダー領域をドラッグしてウィンドウを移動できるようにする
+        if (e.ButtonState == MouseButtonState.Pressed)
+        {
+            try
+            {
+                DragMove();
+            }
+            catch
+            {
+                // DragMove が失敗してもアプリを落とさない
+            }
+        }
+    }
+
+    private static bool IsControlInteractive(DependencyObject? dep)
+    {
+        while (dep != null)
+        {
+            if (dep is System.Windows.Controls.Primitives.ButtonBase
+                || dep is System.Windows.Controls.Primitives.TextBoxBase
+                || dep is System.Windows.Controls.Menu
+                || dep is System.Windows.Controls.MenuItem
+                || dep is System.Windows.Controls.Primitives.Thumb
+                || dep is System.Windows.Controls.Primitives.ScrollBar)
+            {
+                return true;
+            }
+            dep = VisualTreeHelper.GetParent(dep);
+        }
+        return false;
     }
 
     public MainWindow()
@@ -68,11 +107,71 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         Loaded += OnLoaded;
 
+        // ウィンドウ状態変更に応じて最大化ボタンの表示を更新
+        this.StateChanged += (s, e) => UpdateMaximizeIcon();
+        UpdateMaximizeIcon();
+
+        // 透過ウィンドウでタイトルバーがないため、ウィンドウのドラッグ移動を許可する
+        // Window_MouseLeftButtonDown イベントハンドラは XAML 側で指定しています
+
         // 起動 10 秒後に非同期で更新確認を開始（設定が有効な場合のみ）
         _ = CheckForUpdateDelayedAsync(AppSettings.Load());
 
         sw.Stop();
         System.Diagnostics.Debug.WriteLine($"[STARTUP] MainWindow 初期化完了: {sw.ElapsedMilliseconds}ms");
+    }
+
+    private void OnMinimizeClick(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e)
+    {
+        WindowState = (WindowState == WindowState.Maximized) ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void OnCloseClick(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // ダブルクリックで最大化/復元
+        if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
+        {
+            WindowState = (WindowState == WindowState.Maximized) ? WindowState.Normal : WindowState.Maximized;
+            e.Handled = true;
+            return;
+        }
+
+        // 単一クリックでドラッグ移動（ただしボタン等のインタラクティブ要素は除外）
+        if (e.ChangedButton == MouseButton.Left && e.ClickCount == 1)
+        {
+            if (!(e.OriginalSource is DependencyObject dep && IsControlInteractive(dep)))
+            {
+                try { DragMove(); }
+                catch { }
+                e.Handled = true;
+            }
+        }
+    }
+
+    private void UpdateMaximizeIcon()
+    {
+        try
+        {
+            if (BtnMax != null)
+            {
+                BtnMax.Content = (WindowState == WindowState.Maximized) ? "❐" : "▢";
+                BtnMax.ToolTip = (WindowState == WindowState.Maximized) ? "復元" : "最大化";
+            }
+        }
+        catch
+        {
+            // 無視
+        }
     }
 
     private async Task CheckForUpdateDelayedAsync(AppSettings settings)

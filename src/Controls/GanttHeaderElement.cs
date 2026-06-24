@@ -51,6 +51,7 @@ public class GanttHeaderElement : FrameworkElement
     private Brush _monthTextBrush = Brushes.White;
     private Brush _dayTextBrush = Brushes.White;
     private Brush _todayTextBrush = Brushes.Black;
+    private Brush _weekendBg = Brushes.LightBlue;
 
     public GanttHeaderElement()
     {
@@ -111,6 +112,14 @@ public class GanttHeaderElement : FrameworkElement
                 _holiday1 = h1;
             else
                 _holiday1 = new SolidColorBrush(Color.FromRgb((byte)Math.Max(panel.R - 8,0), (byte)Math.Max(panel.G - 8,0), (byte)Math.Min(panel.B + 20,255)));
+
+            // 週末専用ブラシ: テーマで WeekendBrush を指定可能。なければ Holiday2 / Holiday1 をフォールバックとして利用
+            if (res.Contains("WeekendBrush") && res["WeekendBrush"] is Brush wkb)
+                _weekendBg = wkb;
+            else if (res.Contains("CalendarHoliday2") && res["CalendarHoliday2"] is Color cw2)
+                _weekendBg = new SolidColorBrush(cw2);
+            else
+                _weekendBg = _holiday2 ?? _holiday1;
 
             // テキスト色の決定: 可能なら WindowFgBrush を優先し、なければ WindowBg の明度により白/黒を選択
             // テキスト色: 優先 CalendarDayFg (日付) / CalendarTopFg (月見出し) -> WindowFgBrush -> 明度判定
@@ -208,10 +217,12 @@ public class GanttHeaderElement : FrameworkElement
         {
             var d    = Days[j];
             var rect = new Rect(x, topH, cw, botH);
+            bool isWeekend = d.Date.DayOfWeek == DayOfWeek.Saturday || d.Date.DayOfWeek == DayOfWeek.Sunday;
 
             Brush bg = d.IsToday ? _todayBg
                      : d.HolidayLv >= 2 ? _holiday2
                      : d.HolidayLv == 1 ? _holiday1
+                     : isWeekend ? _weekendBg
                      : _normalBg;
 
             dc.DrawRectangle(bg, null, rect);

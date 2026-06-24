@@ -14,9 +14,24 @@
         Icon="/snowflake.ico"
         Background="{DynamicResource WindowBgBrush}"
         Foreground="{DynamicResource WindowFgBrush}"
-        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13">
+        AllowsTransparency="True"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        xmlns:win="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+
+    <!-- WindowChrome を設定して WindowStyle=None のままリサイズを可能にする -->
+    <win:WindowChrome.WindowChrome>
+        <win:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+    </win:WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <Style x:Key="TransparentWindowStyle" TargetType="Window">
+            <Setter Property="AllowsTransparency" Value="True"/>
+            <Setter Property="WindowStyle" Value="None"/>
+        </Style>
+
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolVis"/>
         <conv:IsEqualConverter x:Key="IsEqual"/>
@@ -47,96 +62,126 @@
         <KeyBinding Key="Down"   Modifiers="Ctrl"       Command="{Binding MoveDownCommand}"/>
     </Window.InputBindings>
 
+    <!-- 親グリッド: 上部にカスタムタイトルバーを配置し、既存の UI は下部に配置する -->
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="331*"/>
+            <ColumnDefinition Width="319*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- メニュー -->
-            <RowDefinition Height="Auto"/>
-            <!-- ツールバー -->
-            <RowDefinition Height="Auto"/>
-            <!-- スケジュールタブバー -->
             <RowDefinition Height="*"/>
-            <!-- コンテンツ -->
-            <RowDefinition Height="Auto"/>
-            <!-- ステータスバー -->
         </Grid.RowDefinitions>
 
-        <!-- ══ メニューバー + 更新ボタン（左寄せ） ══════════════════════════════════════ -->
-        <Grid Grid.Row="0" Background="{DynamicResource PanelBgBrush}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <!-- メニューの右側に 200px の余白カラムを挿入 -->
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <!-- カスタムタイトルバー -->
+        <Border Grid.Row="0" Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Height="25" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown" Grid.ColumnSpan="2">
+            <DockPanel LastChildFill="True">
+                <!-- 左: アイコン + タイトル -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="8,0,0,0">
+                    <Image Source="/snowflake.ico" Width="16" Height="16" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding WindowTitle}" VerticalAlignment="Center" Foreground="{DynamicResource WindowFgBrush}" FontSize="13"/>
+                </StackPanel>
 
-            <Menu x:Name="MainMenu" Grid.Column="0" Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource WindowFgBrush}">
-                <MenuItem Header="ファイル(_F)" Foreground="{DynamicResource WindowFgBrush}">
-                    <MenuItem Header="新規作成(タスクリスト)(_N)" Command="{Binding NewCommand}"/>
-                    <MenuItem Header="新規作成(Issue Tracking)(_I)" Command="{Binding NewIssueTrackingCommand}"/>
-                    <MenuItem Header="開く(_O)..."       Command="{Binding OpenCommand}"   InputGestureText="Ctrl+O"/>
-                    <Separator/>
-                    <MenuItem Header="上書き保存(_S)"    Command="{Binding SaveCommand}"   InputGestureText="Ctrl+S"/>
-                    <MenuItem Header="名前を付けて保存(_A)..." Command="{Binding SaveAsCommand}"/>
-                    <Separator/>
-                    <MenuItem Header="このスケジュールを閉じる(_W)" Command="{Binding CloseScheduleCommand}"/>
-                    <Separator/>
-                    <MenuItem Header="終了(_X)" Click="OnExitClick"/>
-                </MenuItem>
-                <MenuItem Header="編集(_E)" Foreground="{DynamicResource WindowFgBrush}">
-                    <MenuItem Header="フォルダの新規作成(_F)" Command="{Binding NewFolderCommand}" InputGestureText="Ctrl+N"/>
-                    <MenuItem Header="タスクの新規作成(_T)"   Command="{Binding NewToDoCommand}"   InputGestureText="Ctrl+T"/>
-                    <Separator/>
-                    <MenuItem Header="コピー(_C)"     Command="{Binding CopyItemCommand}"  InputGestureText="Ctrl+C"/>
-                    <MenuItem Header="切り取り(_X)"   Command="{Binding CutItemCommand}"   InputGestureText="Ctrl+X"/>
-                    <MenuItem Header="貼り付け(_V)"   Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
-                    <Separator/>
-                    <MenuItem Header="プロパティ(_P)" Command="{Binding EditCommand}"         InputGestureText="Enter"/>
-                    <MenuItem Header="完了切替(_R)"   Command="{Binding ToggleCompleteCommand}" InputGestureText="Space"/>
-                    <Separator/>
-                    <MenuItem Header="削除(_D)" Command="{Binding DeleteCommand}" InputGestureText="Delete / Ctrl+D"/>
-                    <Separator/>
-                    <MenuItem Header="上へ移動(_U)" Command="{Binding MoveUpCommand}"   InputGestureText="Ctrl+↑"/>
-                    <MenuItem Header="下へ移動(_D)" Command="{Binding MoveDownCommand}" InputGestureText="Ctrl+↓"/>
-                    <Separator/>
-                    <MenuItem Header="アーカイブ(_A)" Command="{Binding ArchiveCommand}"/>
-                    <MenuItem Header="アーカイブ一覧(_V)..." Command="{Binding ShowArchiveListCommand}"/>
-                    <Separator/>
-                    <MenuItem Header="Issue Tracking 設定編集(_G)..." Command="{Binding EditIssueTrackingCommand}"/>
-                </MenuItem>
-                <MenuItem Header="チャート(_C)" Foreground="{DynamicResource WindowFgBrush}">
-                    <MenuItem Header="1日進む"     Command="{Binding ChartNextCommand}"  InputGestureText="Alt+→"/>
-                    <MenuItem Header="1日戻る"     Command="{Binding ChartPrevCommand}"  InputGestureText="Alt+←"/>
-                    <MenuItem Header="7日進む"     Command="{Binding ChartNext7Command}" InputGestureText="Alt+Shift+→"/>
-                    <MenuItem Header="7日戻る"     Command="{Binding ChartPrev7Command}" InputGestureText="Alt+Shift+←"/>
-                    <MenuItem Header="今日を表示"  Command="{Binding ChartTodayCommand}" InputGestureText="Alt+Home"/>
-                    <Separator/>
-                    <MenuItem Header="開始日を⊕1日" Command="{Binding ShiftBeginPlusCommand}"  InputGestureText="Shift+→"/>
-                    <MenuItem Header="開始日を⊖1日" Command="{Binding ShiftBeginMinusCommand}" InputGestureText="Shift+←"/>
-                    <MenuItem Header="終了日を⊕1日" Command="{Binding ShiftEndPlusCommand}"    InputGestureText="Ctrl+→"/>
-                    <MenuItem Header="終了日を⊖1日" Command="{Binding ShiftEndMinusCommand}"   InputGestureText="Ctrl+←"/>
-                </MenuItem>
-                <MenuItem Header="オプション(_O)" Foreground="{DynamicResource WindowFgBrush}">
-                    <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
-                    <Separator/>
-                    <MenuItem Header="テーマ変更(_T)">
-                        <MenuItem Header="ライト" IsCheckable="True"
+                <!-- 右: ウィンドウ操作ボタン -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Button x:Name="BtnMin" Click="OnMinimizeClick" Width="40" Height="24" Style="{StaticResource ToolBarButtonStyle}" ToolTip="最小化">▁</Button>
+                    <Button x:Name="BtnMax" Click="OnMaximizeRestoreClick" Width="40" Height="24" Style="{StaticResource ToolBarButtonStyle}" ToolTip="最大化">▢</Button>
+                    <Button x:Name="BtnClose" Click="OnCloseClick" Width="40" Height="24" Style="{StaticResource ToolBarButtonStyle}" ToolTip="閉じる">✕</Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 既存コンテンツ: もともとの Grid を下の行に移動 -->
+        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- メニュー -->
+                <RowDefinition Height="Auto"/>
+                <!-- ツールバー -->
+                <RowDefinition Height="Auto"/>
+                <!-- スケジュールタブバー -->
+                <RowDefinition Height="*"/>
+                <!-- コンテンツ -->
+                <RowDefinition Height="Auto"/>
+                <!-- ステータスバー -->
+            </Grid.RowDefinitions>
+
+            <!-- ══ メニューバー + 更新ボタン（左寄せ） ══════════════════════════════════════ -->
+            <Grid Grid.Row="0" Background="{DynamicResource PanelBgBrush}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <!-- メニューの右側に 200px の余白カラムを挿入 -->
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Menu x:Name="MainMenu" Grid.Column="0" Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource WindowFgBrush}">
+                    <MenuItem Header="ファイル(_F)" Foreground="{DynamicResource WindowFgBrush}">
+                        <MenuItem Header="新規作成(タスクリスト)(_N)" Command="{Binding NewCommand}"/>
+                        <MenuItem Header="新規作成(Issue Tracking)(_I)" Command="{Binding NewIssueTrackingCommand}"/>
+                        <MenuItem Header="開く(_O)..."       Command="{Binding OpenCommand}"   InputGestureText="Ctrl+O"/>
+                        <Separator/>
+                        <MenuItem Header="上書き保存(_S)"    Command="{Binding SaveCommand}"   InputGestureText="Ctrl+S"/>
+                        <MenuItem Header="名前を付けて保存(_A)..." Command="{Binding SaveAsCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="このスケジュールを閉じる(_W)" Command="{Binding CloseScheduleCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="終了(_X)" Click="OnExitClick"/>
+                    </MenuItem>
+                    <MenuItem Header="編集(_E)" Foreground="{DynamicResource WindowFgBrush}">
+                        <MenuItem Header="フォルダの新規作成(_F)" Command="{Binding NewFolderCommand}" InputGestureText="Ctrl+N"/>
+                        <MenuItem Header="タスクの新規作成(_T)"   Command="{Binding NewToDoCommand}"   InputGestureText="Ctrl+T"/>
+                        <Separator/>
+                        <MenuItem Header="コピー(_C)"     Command="{Binding CopyItemCommand}"  InputGestureText="Ctrl+C"/>
+                        <MenuItem Header="切り取り(_X)"   Command="{Binding CutItemCommand}"   InputGestureText="Ctrl+X"/>
+                        <MenuItem Header="貼り付け(_V)"   Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
+                        <Separator/>
+                        <MenuItem Header="プロパティ(_P)" Command="{Binding EditCommand}"         InputGestureText="Enter"/>
+                        <MenuItem Header="完了切替(_R)"   Command="{Binding ToggleCompleteCommand}" InputGestureText="Space"/>
+                        <Separator/>
+                        <MenuItem Header="削除(_D)" Command="{Binding DeleteCommand}" InputGestureText="Delete / Ctrl+D"/>
+                        <Separator/>
+                        <MenuItem Header="上へ移動(_U)" Command="{Binding MoveUpCommand}"   InputGestureText="Ctrl+↑"/>
+                        <MenuItem Header="下へ移動(_D)" Command="{Binding MoveDownCommand}" InputGestureText="Ctrl+↓"/>
+                        <Separator/>
+                        <MenuItem Header="アーカイブ(_A)" Command="{Binding ArchiveCommand}"/>
+                        <MenuItem Header="アーカイブ一覧(_V)..." Command="{Binding ShowArchiveListCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="Issue Tracking 設定編集(_G)..." Command="{Binding EditIssueTrackingCommand}"/>
+                    </MenuItem>
+                    <MenuItem Header="チャート(_C)" Foreground="{DynamicResource WindowFgBrush}">
+                        <MenuItem Header="1日進む"     Command="{Binding ChartNextCommand}"  InputGestureText="Alt+→"/>
+                        <MenuItem Header="1日戻る"     Command="{Binding ChartPrevCommand}"  InputGestureText="Alt+←"/>
+                        <MenuItem Header="7日進む"     Command="{Binding ChartNext7Command}" InputGestureText="Alt+Shift+→"/>
+                        <MenuItem Header="7日戻る"     Command="{Binding ChartPrev7Command}" InputGestureText="Alt+Shift+←"/>
+                        <MenuItem Header="今日を表示"  Command="{Binding ChartTodayCommand}" InputGestureText="Alt+Home"/>
+                        <Separator/>
+                        <MenuItem Header="開始日を⊕1日" Command="{Binding ShiftBeginPlusCommand}"  InputGestureText="Shift+→"/>
+                        <MenuItem Header="開始日を⊖1日" Command="{Binding ShiftBeginMinusCommand}" InputGestureText="Shift+←"/>
+                        <MenuItem Header="終了日を⊕1日" Command="{Binding ShiftEndPlusCommand}"    InputGestureText="Ctrl+→"/>
+                        <MenuItem Header="終了日を⊖1日" Command="{Binding ShiftEndMinusCommand}"   InputGestureText="Ctrl+←"/>
+                    </MenuItem>
+                    <MenuItem Header="オプション(_O)" Foreground="{DynamicResource WindowFgBrush}">
+                        <MenuItem Header="休日設定(_H)..." Command="{Binding ShowHolidaySettingsCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="テーマ変更(_T)">
+                            <MenuItem Header="ライト" IsCheckable="True"
                                   IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=Light, Mode=OneWay}"
                                   Command="{Binding ChangeThemeCommand}" CommandParameter="Light"/>
-                        <MenuItem Header="ダーク（シアン）" IsCheckable="True"
+                            <MenuItem Header="ダーク（シアン）" IsCheckable="True"
                                   IsChecked="{Binding CurrentTheme, Converter={StaticResource IsEqualToParam}, ConverterParameter=DarkCyan, Mode=OneWay}"
                                   Command="{Binding ChangeThemeCommand}" CommandParameter="DarkCyan"/>
+                        </MenuItem>
                     </MenuItem>
-                </MenuItem>
-                <MenuItem Header="ヘルプ(_H)" Foreground="{DynamicResource WindowFgBrush}">
-                    <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>
-                    <Separator/>
-                    <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
-                </MenuItem>
-            </Menu>
+                    <MenuItem Header="ヘルプ(_H)" Foreground="{DynamicResource WindowFgBrush}">
+                        <MenuItem Header="バージョン更新確認(_U)..." Click="OnCheckUpdateClick"/>
+                        <Separator/>
+                        <MenuItem Header="バージョン情報(_A)..." Click="OnAboutClick"/>
+                    </MenuItem>
+                </Menu>
 
-            <Border Grid.Column="2" Background="{DynamicResource PanelBgBrush}" HorizontalAlignment="Center" Width="Auto">
-                <Button x:Name="UpdateAvailableButton"
+                <Border Grid.Column="2" Background="{DynamicResource PanelBgBrush}" HorizontalAlignment="Center" Width="Auto">
+                    <Button x:Name="UpdateAvailableButton"
                         Content="更新"
                         Click="OnCheckUpdateClick"
                         Style="{StaticResource UpdateButtonStyle}"
@@ -144,92 +189,92 @@
                         Visibility="Collapsed"
                         Height="{Binding ActualHeight, ElementName=MainMenu}"
                         Margin="0,0,0,0"/>
-            </Border>
-        </Grid>
+                </Border>
+            </Grid>
 
-        <!-- ══ ツールバー ═══════════════════════════════════════ -->
-        <ToolBar Grid.Row="1"
+            <!-- ══ ツールバー ═══════════════════════════════════════ -->
+            <ToolBar Grid.Row="1"
                  Background="{DynamicResource PanelBgBrush}"
                  Foreground="{DynamicResource SubTextBrush}"
                  ToolBarTray.IsLocked="True">
-            <!-- ファイル操作 -->
-            <Button Content="📄 新規"         Command="{Binding NewCommand}"     Style="{StaticResource ToolBarButtonStyle}" ToolTip="タスクリストを新規作成"/>
-            <Button Content="🔗 新規(Issue)"  Command="{Binding NewIssueTrackingCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Issue Tracking を新規作成"/>
-            <Button Content="📂 開く"         Command="{Binding OpenCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="ファイルを開く"/>
-            <Button Content="💾 保存"         Command="{Binding SaveCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="上書き保存"/>
-            <Separator/>
-            <!-- Issue 更新ボタン (アクティブタブが Issue Tracking のときのみ有効) -->
-            <Button Content="🔄 Update"
+                <!-- ファイル操作 -->
+                <Button Content="📄 新規"         Command="{Binding NewCommand}"     Style="{StaticResource ToolBarButtonStyle}" ToolTip="タスクリストを新規作成"/>
+                <Button Content="🔗 新規(Issue)"  Command="{Binding NewIssueTrackingCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Issue Tracking を新規作成"/>
+                <Button Content="📂 開く"         Command="{Binding OpenCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="ファイルを開く"/>
+                <Button Content="💾 保存"         Command="{Binding SaveCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="上書き保存"/>
+                <Separator/>
+                <!-- Issue 更新ボタン (アクティブタブが Issue Tracking のときのみ有効) -->
+                <Button Content="🔄 Update"
                     Command="{Binding UpdateIssueTrackingCommand}"
                     Style="{StaticResource ToolBarButtonStyle}"
                     ToolTip="Issue 一覧を最新に更新する"
                     Visibility="{Binding ActiveEntry.IsIssueTracking, Converter={StaticResource BoolVis}}"/>
-            <Separator/>
-            <!-- アイテム操作 -->
-            <Button Content="📁＋ フォルダ"   Command="{Binding NewFolderCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="フォルダを追加"/>
-            <Button Content="☐＋ タスク"      Command="{Binding NewToDoCommand}"   Style="{StaticResource ToolBarButtonStyle}" ToolTip="タスクを追加"/>
-            <Button Content="✏ 編集"          Command="{Binding EditCommand}"      Style="{StaticResource ToolBarButtonStyle}" ToolTip="プロパティを編集"/>
-            <Button Content="🗑 削除"          Command="{Binding DeleteCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="削除"/>
-            <Separator/>
-            <!-- 順序 -->
-            <Button Content="↑"  Command="{Binding MoveUpCommand}"   Style="{StaticResource ToolBarButtonStyle}" ToolTip="上へ移動"/>
-            <Button Content="↓"  Command="{Binding MoveDownCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="下へ移動"/>
-            <Separator/>
-            <!-- チャート移動 -->
-            <Button Content="◀◀" Command="{Binding ChartPrev7Command}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="7日前"/>
-            <Button Content="◀"  Command="{Binding ChartPrevCommand}"  Style="{StaticResource ToolBarButtonStyle}" ToolTip="1日前"/>
-            <Button Content="今日" Command="{Binding ChartTodayCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="今日を中心に表示"/>
-            <Button Content="▶"  Command="{Binding ChartNextCommand}"  Style="{StaticResource ToolBarButtonStyle}" ToolTip="1日後"/>
-            <Button Content="▶▶" Command="{Binding ChartNext7Command}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="7日後"/>
-            <Separator/>
-            <!-- 日付シフト -->
-            <Button Content="⬅開始" Command="{Binding ShiftBeginMinusCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="開始日を1日前へ"/>
-            <Button Content="開始➡" Command="{Binding ShiftBeginPlusCommand}"  Style="{StaticResource ToolBarButtonStyle}" ToolTip="開始日を1日後へ"/>
-            <Button Content="⬅終了" Command="{Binding ShiftEndMinusCommand}"   Style="{StaticResource ToolBarButtonStyle}" ToolTip="終了日を1日前へ"/>
-            <Button Content="終了➡" Command="{Binding ShiftEndPlusCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="終了日を1日後へ"/>
-            <Separator/>
-            <!-- 完了タスク非表示 -->
-            <ToggleButton Content="☑ 完了を隠す"
+                <Separator/>
+                <!-- アイテム操作 -->
+                <Button Content="📁＋ フォルダ"   Command="{Binding NewFolderCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="フォルダを追加"/>
+                <Button Content="☐＋ タスク"      Command="{Binding NewToDoCommand}"   Style="{StaticResource ToolBarButtonStyle}" ToolTip="タスクを追加"/>
+                <Button Content="✏ 編集"          Command="{Binding EditCommand}"      Style="{StaticResource ToolBarButtonStyle}" ToolTip="プロパティを編集"/>
+                <Button Content="🗑 削除"          Command="{Binding DeleteCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="削除"/>
+                <Separator/>
+                <!-- 順序 -->
+                <Button Content="↑"  Command="{Binding MoveUpCommand}"   Style="{StaticResource ToolBarButtonStyle}" ToolTip="上へ移動"/>
+                <Button Content="↓"  Command="{Binding MoveDownCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="下へ移動"/>
+                <Separator/>
+                <!-- チャート移動 -->
+                <Button Content="◀◀" Command="{Binding ChartPrev7Command}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="7日前"/>
+                <Button Content="◀"  Command="{Binding ChartPrevCommand}"  Style="{StaticResource ToolBarButtonStyle}" ToolTip="1日前"/>
+                <Button Content="今日" Command="{Binding ChartTodayCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="今日を中心に表示"/>
+                <Button Content="▶"  Command="{Binding ChartNextCommand}"  Style="{StaticResource ToolBarButtonStyle}" ToolTip="1日後"/>
+                <Button Content="▶▶" Command="{Binding ChartNext7Command}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="7日後"/>
+                <Separator/>
+                <!-- 日付シフト -->
+                <Button Content="⬅開始" Command="{Binding ShiftBeginMinusCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="開始日を1日前へ"/>
+                <Button Content="開始➡" Command="{Binding ShiftBeginPlusCommand}"  Style="{StaticResource ToolBarButtonStyle}" ToolTip="開始日を1日後へ"/>
+                <Button Content="⬅終了" Command="{Binding ShiftEndMinusCommand}"   Style="{StaticResource ToolBarButtonStyle}" ToolTip="終了日を1日前へ"/>
+                <Button Content="終了➡" Command="{Binding ShiftEndPlusCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="終了日を1日後へ"/>
+                <Separator/>
+                <!-- 完了タスク非表示 -->
+                <ToggleButton Content="☑ 完了を隠す"
                           IsChecked="{Binding HideCompleted, Mode=TwoWay}"
                           Style="{StaticResource ToolBarToggleButtonStyle}"
                           ToolTip="完了済みタスクを一覧から隠す"/>
-            <Separator/>
-            <Button Content="📅 今日の予定"
+                <Separator/>
+                <Button Content="📅 今日の予定"
                     Command="{Binding ShowTodayScheduleCommand}"
                     Style="{StaticResource ToolBarButtonStyle}"
                     ToolTip="今日の日付が含まれるタスクを別ウィンドウで表示"/>
-        </ToolBar>
+            </ToolBar>
 
-        <!-- ══ スケジュールタブバー ══════════════════════════════ -->
-        <Border Grid.Row="2"
+            <!-- ══ スケジュールタブバー ══════════════════════════════ -->
+            <Border Grid.Row="2"
                 Background="{DynamicResource PanelBgBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
-            <DockPanel>
-                <!-- 左右移動ボタン -->
-                <Button DockPanel.Dock="Right"
+                <DockPanel>
+                    <!-- 左右移動ボタン -->
+                    <Button DockPanel.Dock="Right"
                         Content="▶"
                         Command="{Binding MoveScheduleRightCommand}"
                         Style="{StaticResource ToolBarButtonStyle}"
                         ToolTip="スケジュールを右へ移動"
                         Padding="4,2"/>
-                <Button DockPanel.Dock="Right"
+                    <Button DockPanel.Dock="Right"
                         Content="◀"
                         Command="{Binding MoveScheduleLeftCommand}"
                         Style="{StaticResource ToolBarButtonStyle}"
                         ToolTip="スケジュールを左へ移動"
                         Padding="4,2"/>
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Schedules}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:ScheduleEntry}">
-                                <Border x:Name="TabBorder"
+                        <ItemsControl ItemsSource="{Binding Schedules}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ScheduleEntry}">
+                                    <Border x:Name="TabBorder"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1,1,1,0"
                                         Margin="2,3,0,0"
@@ -242,66 +287,66 @@
                                         DragOver="OnScheduleTabDragOver"
                                         DragLeave="OnScheduleTabDragLeave"
                                         Drop="OnScheduleTabDrop">
-                                    <Border.ContextMenu>
-                                        <ContextMenu>
-                                            <MenuItem Header="タブを閉じる(_W)"
+                                        <Border.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="タブを閉じる(_W)"
                                                       Click="OnScheduleTabClose"/>
-                                        </ContextMenu>
-                                    </Border.ContextMenu>
-                                    <TextBlock Text="{Binding TabTitle}"
+                                            </ContextMenu>
+                                        </Border.ContextMenu>
+                                        <TextBlock Text="{Binding TabTitle}"
                                                FontSize="13"
                                                Foreground="{DynamicResource WindowFgBrush}"
                                                VerticalAlignment="Center"/>
-                                </Border>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Value="True">
-                                        <DataTrigger.Binding>
-                                            <MultiBinding Converter="{StaticResource IsEqual}">
-                                                <Binding Path="DataContext.ActiveEntry" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
-                                                <Binding/>
-                                            </MultiBinding>
-                                        </DataTrigger.Binding>
-                                        <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource HeaderBgBrush}"/>
-                                        <Setter TargetName="TabBorder" Property="BorderThickness" Value="1,2,1,0"/>
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
+                                    </Border>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource IsEqual}">
+                                                    <Binding Path="DataContext.ActiveEntry" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                                                    <Binding/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource HeaderBgBrush}"/>
+                                            <Setter TargetName="TabBorder" Property="BorderThickness" Value="1,2,1,0"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
 
-        <!-- ══ コンテンツ（タスクリスト ＋ ガントチャート） ═══════ -->
-        <Grid Grid.Row="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="440" MinWidth="200" x:Name="LeftColDef"/>
-                <ColumnDefinition Width="1"/>
-                <ColumnDefinition Width="*" MinWidth="200"/>
-            </Grid.ColumnDefinitions>
+            <!-- ══ コンテンツ（タスクリスト ＋ ガントチャート） ═══════ -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="440" MinWidth="200" x:Name="LeftColDef"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="*" MinWidth="200"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- ┌── 左ペイン（タスクリスト） ───────────────────┐ -->
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                <!-- ┌── 左ペイン（タスクリスト） ───────────────────┐ -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- 列ヘッダー -->
+                        <RowDefinition Height="*"/>
+                        <!-- アイテムリスト -->
+                    </Grid.RowDefinitions>
+
                     <!-- 列ヘッダー -->
-                    <RowDefinition Height="*"/>
-                    <!-- アイテムリスト -->
-                </Grid.RowDefinitions>
-
-                <!-- 列ヘッダー -->
-                <Border Grid.Row="0" Height="{DynamicResource HeaderHeight}" Background="{DynamicResource HeaderBgBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <Grid x:Name="TaskHeaderGrid">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition x:Name="ColMark"   Width="36" MinWidth="28"/>
-                            <ColumnDefinition x:Name="ColName"   Width="*"  MinWidth="100"/>
-                            <ColumnDefinition Width="4"/>
-                            <ColumnDefinition x:Name="ColStatus" Width="80" MinWidth="40"/>
-                            <ColumnDefinition Width="4"/>
-                            <ColumnDefinition x:Name="ColML"     Width="36" MinWidth="28"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="1" Text="タスク名" Style="{StaticResource ColumnHeaderStyle}"/>
-                        <Button Grid.Column="0"
+                    <Border Grid.Row="0" Height="{DynamicResource HeaderHeight}" Background="{DynamicResource HeaderBgBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid x:Name="TaskHeaderGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="ColMark"   Width="36" MinWidth="28"/>
+                                <ColumnDefinition x:Name="ColName"   Width="*"  MinWidth="100"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition x:Name="ColStatus" Width="80" MinWidth="40"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition x:Name="ColML"     Width="36" MinWidth="28"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="1" Text="タスク名" Style="{StaticResource ColumnHeaderStyle}"/>
+                            <Button Grid.Column="0"
                                 Command="{Binding ToggleStarFilterCommand}"
                                 ToolTip="{Binding StarFilterTooltip}"
                                 Background="Transparent"
@@ -309,30 +354,30 @@
                                 HorizontalAlignment="Center"
                                 Padding="0"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
+                                <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
                                        Foreground="{Binding StarFilterBrush, Mode=OneWay}"/>
-                        </Button>
-                        <GridSplitter Grid.Column="2"
+                            </Button>
+                            <GridSplitter Grid.Column="2"
                                       Width="4"
                                       HorizontalAlignment="Stretch"
                                       Background="Transparent"
                                       Cursor="SizeWE"
                                       ResizeBehavior="PreviousAndNext"
                                       ResizeDirection="Columns"/>
-                        <TextBlock Grid.Column="3" Text="状態"    Style="{StaticResource ColumnHeaderStyle}"/>
-                        <GridSplitter Grid.Column="4"
+                            <TextBlock Grid.Column="3" Text="状態"    Style="{StaticResource ColumnHeaderStyle}"/>
+                            <GridSplitter Grid.Column="4"
                                       Width="4"
                                       HorizontalAlignment="Stretch"
                                       Background="Transparent"
                                       Cursor="SizeWE"
                                       ResizeBehavior="PreviousAndNext"
                                       ResizeDirection="Columns"/>
-                        <TextBlock Grid.Column="5" Text="ML"      Style="{StaticResource ColumnHeaderStyle}"/>
-                    </Grid>
-                </Border>
+                            <TextBlock Grid.Column="5" Text="ML"      Style="{StaticResource ColumnHeaderStyle}"/>
+                        </Grid>
+                    </Border>
 
-                <!-- タスクリスト本体 -->
-                <ListBox x:Name="TaskListBox"
+                    <!-- タスクリスト本体 -->
+                    <ListBox x:Name="TaskListBox"
                          Grid.Row="1"
                          ItemsSource="{Binding FlatItems}"
                          SelectedItem="{Binding Selected, Mode=TwoWay}"
@@ -351,182 +396,182 @@
                          DragLeave="OnTaskListDragLeave"
                          Drop="OnTaskListDrop"
                          PreviewKeyDown="OnTaskListPreviewKeyDown">
-                    <ListBox.InputBindings>
-                        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
-                        <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
-                        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteItemCommand}"/>
-                        <KeyBinding Key="Space" Modifiers="Ctrl" Command="{Binding ToggleMarkSelectedCommand}"/>
-                        <KeyBinding Key="M" Modifiers="Control" Command="{Binding EditOnMemoCommand}"/>
-                        <KeyBinding Key="L" Modifiers="Control" Command="{Binding Selected.OpenLinkCommand}"/>
-                        <KeyBinding Key="OemSemicolon" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
-                        <!-- 代替キー：英語/日本語キーボード差分やテンキー対応 -->
-                        <KeyBinding Key="Oem1" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
-                        <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
-                        <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
-                        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
-                        <KeyBinding Key="F" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
-                        <KeyBinding Key="B" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
-                        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ShiftEndPlusCommand}"/>
-                        <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding ShiftEndMinusCommand}"/>
-                    </ListBox.InputBindings>
-                    <ListBox.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="{Binding ContextCompleteHeader}"
+                        <ListBox.InputBindings>
+                            <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
+                            <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
+                            <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteItemCommand}"/>
+                            <KeyBinding Key="Space" Modifiers="Ctrl" Command="{Binding ToggleMarkSelectedCommand}"/>
+                            <KeyBinding Key="M" Modifiers="Control" Command="{Binding EditOnMemoCommand}"/>
+                            <KeyBinding Key="L" Modifiers="Control" Command="{Binding Selected.OpenLinkCommand}"/>
+                            <KeyBinding Key="OemSemicolon" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                            <!-- 代替キー：英語/日本語キーボード差分やテンキー対応 -->
+                            <KeyBinding Key="Oem1" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                            <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                            <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                            <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                            <KeyBinding Key="F" Modifiers="Control" Command="{Binding IncreaseProgressCommand}"/>
+                            <KeyBinding Key="B" Modifiers="Control" Command="{Binding DecreaseProgressCommand}"/>
+                            <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ShiftEndPlusCommand}"/>
+                            <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding ShiftEndMinusCommand}"/>
+                        </ListBox.InputBindings>
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{Binding ContextCompleteHeader}"
                                       Command="{Binding ToggleCompleteCommand}"
                                       IsEnabled="{Binding IsContextCompleteEnabled}"/>
-                            <MenuItem Header="{Binding ContextWaitHeader}"
+                                <MenuItem Header="{Binding ContextWaitHeader}"
                                       Command="{Binding ToggleWaitCommand}"
                                       IsEnabled="{Binding IsContextWaitEnabled}"/>
-                            <MenuItem Header="進捗率(_P)"
+                                <MenuItem Header="進捗率(_P)"
                                       IsEnabled="{Binding IsContextProgressEnabled}">
-                                <MenuItem Header="0%"   Command="{Binding SetProgressCommand}" CommandParameter="0"
+                                    <MenuItem Header="0%"   Command="{Binding SetProgressCommand}" CommandParameter="0"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=0, Mode=OneWay}"/>
-                                <MenuItem Header="10%"  Command="{Binding SetProgressCommand}" CommandParameter="10"
+                                    <MenuItem Header="10%"  Command="{Binding SetProgressCommand}" CommandParameter="10"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=10, Mode=OneWay}"/>
-                                <MenuItem Header="20%"  Command="{Binding SetProgressCommand}" CommandParameter="20"
+                                    <MenuItem Header="20%"  Command="{Binding SetProgressCommand}" CommandParameter="20"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=20, Mode=OneWay}"/>
-                                <MenuItem Header="30%"  Command="{Binding SetProgressCommand}" CommandParameter="30"
+                                    <MenuItem Header="30%"  Command="{Binding SetProgressCommand}" CommandParameter="30"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=30, Mode=OneWay}"/>
-                                <MenuItem Header="40%"  Command="{Binding SetProgressCommand}" CommandParameter="40"
+                                    <MenuItem Header="40%"  Command="{Binding SetProgressCommand}" CommandParameter="40"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=40, Mode=OneWay}"/>
-                                <MenuItem Header="50%"  Command="{Binding SetProgressCommand}" CommandParameter="50"
+                                    <MenuItem Header="50%"  Command="{Binding SetProgressCommand}" CommandParameter="50"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=50, Mode=OneWay}"/>
-                                <MenuItem Header="60%"  Command="{Binding SetProgressCommand}" CommandParameter="60"
+                                    <MenuItem Header="60%"  Command="{Binding SetProgressCommand}" CommandParameter="60"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=60, Mode=OneWay}"/>
-                                <MenuItem Header="70%"  Command="{Binding SetProgressCommand}" CommandParameter="70"
+                                    <MenuItem Header="70%"  Command="{Binding SetProgressCommand}" CommandParameter="70"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=70, Mode=OneWay}"/>
-                                <MenuItem Header="80%"  Command="{Binding SetProgressCommand}" CommandParameter="80"
+                                    <MenuItem Header="80%"  Command="{Binding SetProgressCommand}" CommandParameter="80"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=80, Mode=OneWay}"/>
-                                <MenuItem Header="90%"  Command="{Binding SetProgressCommand}" CommandParameter="90"
+                                    <MenuItem Header="90%"  Command="{Binding SetProgressCommand}" CommandParameter="90"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=90, Mode=OneWay}"/>
-                                <MenuItem Header="100%" Command="{Binding SetProgressCommand}" CommandParameter="100"
+                                    <MenuItem Header="100%" Command="{Binding SetProgressCommand}" CommandParameter="100"
                                           IsChecked="{Binding ContextProgressValue, Converter={StaticResource IsEqualToParam}, ConverterParameter=100, Mode=OneWay}"/>
-                            </MenuItem>
-                            <Separator/>
-                            <MenuItem Header="新規タスク(_T)"
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="新規タスク(_T)"
                                       Command="{Binding NewToDoCommand}"/>
-                            <MenuItem Header="新規フォルダ(_F)"
+                                <MenuItem Header="新規フォルダ(_F)"
                                       Command="{Binding NewFolderCommand}"/>
-                            <Separator/>
-                            <MenuItem Header="コピー(_C)"     Command="{Binding CopyItemCommand}"  InputGestureText="Ctrl+C"/>
-                            <MenuItem Header="切り取り(_X)"   Command="{Binding CutItemCommand}"   InputGestureText="Ctrl+X"/>
-                            <MenuItem Header="貼り付け(_V)"   Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
-                            <Separator/>
-                            <MenuItem Header="削除(_D)"
+                                <Separator/>
+                                <MenuItem Header="コピー(_C)"     Command="{Binding CopyItemCommand}"  InputGestureText="Ctrl+C"/>
+                                <MenuItem Header="切り取り(_X)"   Command="{Binding CutItemCommand}"   InputGestureText="Ctrl+X"/>
+                                <MenuItem Header="貼り付け(_V)"   Command="{Binding PasteItemCommand}" InputGestureText="Ctrl+V"/>
+                                <Separator/>
+                                <MenuItem Header="削除(_D)"
                                       Command="{Binding DeleteCommand}"/>
-                            <Separator/>
-                            <MenuItem Header="アーカイブ(_A)"
+                                <Separator/>
+                                <MenuItem Header="アーカイブ(_A)"
                                       Command="{Binding ArchiveCommand}"/>
-                        </ContextMenu>
-                    </ListBox.ContextMenu>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
-                            <Border Background="{Binding RowBackground}"
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
+                                <Border Background="{Binding RowBackground}"
                                     BorderBrush="#15000000" BorderThickness="0,0,0,1">
-                                <Grid>
-                                    <!-- 選択色オーバーレイ (ヒットテスト無効にして下の操作を妨げない) -->
-                                    <Border Background="{StaticResource RowSelectedBrush}"
+                                    <Grid>
+                                        <!-- 選択色オーバーレイ (ヒットテスト無効にして下の操作を妨げない) -->
+                                        <Border Background="{StaticResource RowSelectedBrush}"
                                             BorderBrush="#FFADD6FF"
                                             BorderThickness="0,1,0,1"
                                             Visibility="{Binding IsSelected, Converter={StaticResource BoolVis}}"
                                             IsHitTestVisible="False"/>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="{Binding ElementName=ColMark,   Path=Width}"/>
-                                            <ColumnDefinition Width="{Binding ElementName=ColName,   Path=Width}"/>
-                                            <ColumnDefinition Width="4"/>
-                                            <ColumnDefinition Width="{Binding ElementName=ColStatus, Path=Width}"/>
-                                            <ColumnDefinition Width="4"/>
-                                            <ColumnDefinition Width="{Binding ElementName=ColML,     Path=Width}"/>
-                                        </Grid.ColumnDefinitions>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="{Binding ElementName=ColMark,   Path=Width}"/>
+                                                <ColumnDefinition Width="{Binding ElementName=ColName,   Path=Width}"/>
+                                                <ColumnDefinition Width="4"/>
+                                                <ColumnDefinition Width="{Binding ElementName=ColStatus, Path=Width}"/>
+                                                <ColumnDefinition Width="4"/>
+                                                <ColumnDefinition Width="{Binding ElementName=ColML,     Path=Width}"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <!-- マーク列 -->
-                                        <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Button Command="{Binding ToggleMarkCommand}"
+                                            <!-- マーク列 -->
+                                            <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Command="{Binding ToggleMarkCommand}"
                                                     Width="24" Height="24"
                                                     Padding="0"
                                                     Style="{StaticResource ToolBarButtonStyle}"
                                                     ToolTip="マークを切り替え">
-                                                <TextBlock x:Name="StarText"
+                                                    <TextBlock x:Name="StarText"
                                                            Text="★"
                                                            FontSize="16"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            Foreground="{Binding MarkBrush}"/>
-                                            </Button>
-                                        </Grid>
+                                                </Button>
+                                            </Grid>
 
-                                        <!-- タスク名（罫線 ＋ 展開ボタン ＋ アイコン ＋ テキスト） -->
-                                        <Grid Grid.Column="1">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <!-- tree lines -->
-                                                <ColumnDefinition Width="16"/>
-                                                <!-- toggle -->
-                                                <ColumnDefinition Width="*"/>
-                                                <!-- icon + name -->
-                                            </Grid.ColumnDefinitions>
+                                            <!-- タスク名（罫線 ＋ 展開ボタン ＋ アイコン ＋ テキスト） -->
+                                            <Grid Grid.Column="1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <!-- tree lines -->
+                                                    <ColumnDefinition Width="16"/>
+                                                    <!-- toggle -->
+                                                    <ColumnDefinition Width="*"/>
+                                                    <!-- icon + name -->
+                                                </Grid.ColumnDefinitions>
 
-                                            <!-- ツリー罫線 -->
-                                            <ctrl:TreeLinesElement Grid.Column="0"
+                                                <!-- ツリー罫線 -->
+                                                <ctrl:TreeLinesElement Grid.Column="0"
                                                                    Segments="{Binding TreeLineSegments}"
                                                                    CellWidth="16"
                                                                    VerticalAlignment="Stretch"/>
 
-                                            <Button Grid.Column="1"
+                                                <Button Grid.Column="1"
                                                     Content="{Binding ExpandGlyph}"
                                                     Visibility="{Binding ToggleVisibility}"
                                                     Command="{Binding ToggleExpandCommand}"
                                                     Style="{StaticResource ExpandToggleStyle}"
                                                     Foreground="#FF666666"/>
 
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                                <!-- ステータスアイコン -->
-                                                <Grid x:Name="StatusIconGrid"
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                    <!-- ステータスアイコン -->
+                                                    <Grid x:Name="StatusIconGrid"
                                                       Background="Transparent"
                                                       VerticalAlignment="Center" Margin="2,0,4,0"
                                                       Width="16" Height="16">
-                                                    <TextBlock x:Name="IconText"
+                                                        <TextBlock x:Name="IconText"
                                                                Text="{Binding StatusIcon}"
                                                                Foreground="{Binding StatusBrush}"
                                                                FontSize="12"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"/>
-                                                    <!-- 完了タスク用：緑丸 + 白✔ -->
-                                                    <Border x:Name="CheckBadge"
+                                                        <!-- 完了タスク用：緑丸 + 白✔ -->
+                                                        <Border x:Name="CheckBadge"
                                                             Background="#FF22AA44"
                                                             CornerRadius="8"
                                                             Width="16" Height="16"
                                                             Visibility="Collapsed">
-                                                        <TextBlock Text="&#x2714;"
+                                                            <TextBlock Text="&#x2714;"
                                                                    Foreground="White"
                                                                    FontSize="8"
                                                                    FontFamily="Segoe UI, sans-serif"
                                                                    FontWeight="Bold"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <!-- 完了フォルダ用：緑四角背景 + 白フォルダ -->
-                                                    <Border x:Name="FolderBadge"
+                                                        </Border>
+                                                        <!-- 完了フォルダ用：緑四角背景 + 白フォルダ -->
+                                                        <Border x:Name="FolderBadge"
                                                             Background="#FF22AA44"
                                                             CornerRadius="3"
                                                             Width="16" Height="16"
                                                             Visibility="Collapsed">
-                                                        <TextBlock Text="&#xE8B7;"
+                                                            <TextBlock Text="&#xE8B7;"
                                                                    Foreground="White"
                                                                    FontSize="10"
                                                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </Grid>
-                                                <TextBlock x:Name="NameLabel"
+                                                        </Border>
+                                                    </Grid>
+                                                    <TextBlock x:Name="NameLabel"
                                                            Text="{Binding Name}"
                                                            Foreground="{DynamicResource WindowFgBrush}"
                                                            VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"
                                                            Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolVis}}"/>
-                                                <TextBox x:Name="NameEditor"
+                                                    <TextBox x:Name="NameEditor"
                                                          Text="{Binding EditingName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                          Visibility="{Binding IsEditing, Converter={StaticResource BoolVis}}"
                                                          BorderThickness="1"
@@ -536,23 +581,23 @@
                                                          IsVisibleChanged="OnNameEditorIsVisibleChanged"
                                                          KeyDown="OnNameEditorKeyDown"
                                                          LostFocus="OnNameEditorLostFocus"/>
-                                            </StackPanel>
-                                        </Grid>
+                                                </StackPanel>
+                                            </Grid>
 
-                                        <!-- 状態 -->
-                                        <TextBlock Grid.Column="3"
+                                            <!-- 状態 -->
+                                            <TextBlock Grid.Column="3"
                                                    Text="{Binding DaysText}"
                                                    Foreground="{StaticResource SubTextBrush}"
                                                    FontSize="12"
                                                    VerticalAlignment="Center"
                                                    HorizontalAlignment="Right"
                                                    Padding="2,0"/>
-                                        <!-- メモ / リンク アイコン -->
-                                        <StackPanel Grid.Column="5"
+                                            <!-- メモ / リンク アイコン -->
+                                            <StackPanel Grid.Column="5"
                                                     Orientation="Horizontal"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center">
-                                            <Button Content="📝"
+                                                <Button Content="📝"
                                                     FontSize="12"
                                                     Padding="1,0"
                                                     Margin="0,0,1,0"
@@ -562,7 +607,7 @@
                                                     Visibility="{Binding HasMemo, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenMemoCommand}"
                                                     ToolTip="メモを表示"/>
-                                            <Button Content="🔗"
+                                                <Button Content="🔗"
                                                     FontSize="12"
                                                     Padding="1,0"
                                                     BorderThickness="0"
@@ -571,68 +616,68 @@
                                                     Visibility="{Binding HasLink, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenLinkCommand}"
                                                     ToolTip="{Binding Item.Link}"/>
-                                        </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
                                     </Grid>
-                                </Grid>
-                            </Border>
-                            <DataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding Item.Completed}" Value="True">
-                                    <Setter TargetName="IconText"   Property="Visibility" Value="Collapsed"/>
-                                    <Setter TargetName="CheckBadge" Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsCompletedFolder}" Value="True">
-                                    <Setter TargetName="FolderBadge" Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                                <!-- 黄色★のとき黒縁取り -->
-                                <DataTrigger Binding="{Binding MarkLevel}" Value="1">
-                                    <Setter TargetName="StarText" Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect Color="Black"
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Item.Completed}" Value="True">
+                                        <Setter TargetName="IconText"   Property="Visibility" Value="Collapsed"/>
+                                        <Setter TargetName="CheckBadge" Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCompletedFolder}" Value="True">
+                                        <Setter TargetName="FolderBadge" Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <!-- 黄色★のとき黒縁取り -->
+                                    <DataTrigger Binding="{Binding MarkLevel}" Value="1">
+                                        <Setter TargetName="StarText" Property="Effect">
+                                            <Setter.Value>
+                                                <DropShadowEffect Color="Black"
                                                               ShadowDepth="0"
                                                               BlurRadius="2"
                                                               Opacity="1"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
 
-            <!-- ── スプリッター ─────────────────────────────── -->
-            <GridSplitter Grid.Column="1"
+                <!-- ── スプリッター ─────────────────────────────── -->
+                <GridSplitter Grid.Column="1"
                           Width="1"
                           HorizontalAlignment="Stretch"
                           Background="{StaticResource BorderBrush}"
                           Cursor="SizeWE"/>
 
-            <!-- ┌── 右ペイン（ガントチャート） ─────────────────┐ -->
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <!-- チャートヘッダー -->
-                    <RowDefinition Height="*"/>
-                    <!-- チャート本体 -->
-                </Grid.RowDefinitions>
+                <!-- ┌── 右ペイン（ガントチャート） ─────────────────┐ -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- チャートヘッダー -->
+                        <RowDefinition Height="*"/>
+                        <!-- チャート本体 -->
+                    </Grid.RowDefinitions>
 
-                <!-- チャートヘッダー（日付ラベル） -->
-                <ScrollViewer x:Name="ChartHeaderScroll"
+                    <!-- チャートヘッダー（日付ラベル） -->
+                    <ScrollViewer x:Name="ChartHeaderScroll"
                               Grid.Row="0"
                               HorizontalScrollBarVisibility="Hidden"
                               VerticalScrollBarVisibility="Disabled"
                               Background="{DynamicResource HeaderBgBrush}"
                               Visibility="{Binding IsChartReady, Converter={StaticResource BoolVis}}">
-                    <ctrl:GanttHeaderElement x:Name="GanttHeader"
+                        <ctrl:GanttHeaderElement x:Name="GanttHeader"
                                              Days="{Binding ChartDays}"
                                              CellWidth="{StaticResource CellWidth}"
                                              Height="{StaticResource HeaderHeight}"/>
-                </ScrollViewer>
+                    </ScrollViewer>
 
-                <!-- チャート本体 + 読み込み中オーバーレイ -->
-                <Grid Grid.Row="1" ClipToBounds="True">
-                    <!-- チャート本体（ガントバー行） -->
-                    <ScrollViewer x:Name="ChartBodyScroll"
+                    <!-- チャート本体 + 読み込み中オーバーレイ -->
+                    <Grid Grid.Row="1" ClipToBounds="True">
+                        <!-- チャート本体（ガントバー行） -->
+                        <ScrollViewer x:Name="ChartBodyScroll"
                                   HorizontalScrollBarVisibility="Hidden"
                                   VerticalScrollBarVisibility="Hidden"
                                   Background="{DynamicResource ChartBgBrush}"
@@ -643,32 +688,32 @@
                                   MouseLeave="OnChartMouseLeave"
                                   MouseRightButtonUp="OnChartMouseRightButtonUp"
                                   Visibility="{Binding IsChartReady, Converter={StaticResource BoolVis}}">
-                        <ItemsControl x:Name="ChartRowsControl"
+                            <ItemsControl x:Name="ChartRowsControl"
                                       ItemsSource="{Binding FlatItems}"
                                       VirtualizingPanel.IsVirtualizing="False"
                                       SizeChanged="OnChartRowsControlSizeChanged">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
-                                    <Grid Height="{StaticResource RowHeight}">
-                                        <ctrl:GanttRowElement Cells="{Binding ChartCells}"
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
+                                        <Grid Height="{StaticResource RowHeight}">
+                                            <ctrl:GanttRowElement Cells="{Binding ChartCells}"
                                                               CellWidth="{StaticResource CellWidth}"
                                                               Height="{StaticResource RowHeight}"
                                                               IsSelected="{Binding IsSelected}"
                                                               CalloutTexts="{Binding CalloutTexts}"
                                                               HoveredColumnIndex="{Binding DataContext.HoveredColumnIndex, ElementName=ChartRowsControl}"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Vertical"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
 
-                    <!-- 吹き出しオーバーレイ（全行・クリップなし） -->
-                    <ctrl:CalloutOverlayControl x:Name="ChartCalloutOverlay"
+                        <!-- 吹き出しオーバーレイ（全行・クリップなし） -->
+                        <ctrl:CalloutOverlayControl x:Name="ChartCalloutOverlay"
                                                DataContext="{Binding}"
                                                IsHitTestVisible="True"
                                                ClipToBounds="False"
@@ -677,36 +722,44 @@
                                                Visibility="{Binding IsChartReady, Converter={StaticResource BoolVis}}"
                                                Panel.ZIndex="10"/>
 
-                    <!-- 読み込み中オーバーレイ -->
-                    <Border Background="{StaticResource ChartBgBrush}"
+                        <!-- 読み込み中オーバーレイ -->
+                        <Border Background="{StaticResource ChartBgBrush}"
                             Visibility="{Binding IsChartReady, Converter={StaticResource InverseBoolVis}}">
-                        <StackPanel HorizontalAlignment="Center"
+                            <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
-                            <TextBlock Text="⏳"
+                                <TextBlock Text="⏳"
                                        FontSize="32"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock Text="チャート読み込み中..."
+                                <TextBlock Text="チャート読み込み中..."
                                        FontSize="13"
                                        Foreground="{StaticResource SubTextBrush}"
                                        Margin="0,8,0,0"
                                        HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
             </Grid>
-        </Grid>
 
-        <!-- ══ ステータスバー ════════════════════════════════════ -->
-        <StatusBar Grid.Row="4" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource SubTextBrush}">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusText}" FontSize="12"/>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock x:Name="TodayLabel"
+            <!-- ══ ステータスバー ════════════════════════════════════ -->
+            <StatusBar Grid.Row="4" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource SubTextBrush}">
+                <StatusBarItem>
+                    <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+                </StatusBarItem>
+                <Separator/>
+                <StatusBarItem HorizontalAlignment="Right">
+                    <TextBlock x:Name="TodayLabel"
                            FontSize="12"
                            Foreground="{StaticResource AccentBrush}"/>
-            </StatusBarItem>
-        </StatusBar>
+                </StatusBarItem>
+            </StatusBar>
+        </Grid>
+
+        <!-- 外枠を最前面に表示（クリックを邪魔しないよう IsHitTestVisible=false） -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
+                BorderThickness="2" BorderBrush="{DynamicResource BorderBrush}"
+                IsHitTestVisible="False" SnapsToDevicePixels="True" Panel.ZIndex="999"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
     </Grid>
 </Window>

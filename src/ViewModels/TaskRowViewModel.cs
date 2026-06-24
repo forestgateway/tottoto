@@ -398,7 +398,8 @@ public class TaskRowViewModel : ViewModelBase
     }
 
     // ── セル背景ブラシのキャッシュ ────────────────────────
-    private static readonly Brush s_bgWeekend  = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xFF)));
+    // 既定の週末ブラシ（テーマ未設定時のフォールバック）
+    private static readonly Brush s_bgWeekendFallback  = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xFF)));
 
     // ── バー（小正方形）ブラシのキャッシュ ───────────────
     private static readonly Brush s_barSkip     = Freeze(new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)));
@@ -411,9 +412,45 @@ public class TaskRowViewModel : ViewModelBase
 
     private static Brush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
 
-    private static Brush CellBackground(int cellStatus, int hlv, DateTime date, Brush rowBase)
+    private Brush CellBackground(int cellStatus, int hlv, DateTime date, Brush rowBase)
     {
-        if (hlv >= 1) return s_bgWeekend;
+        var res = Application.Current?.Resources;
+
+        // タスク行用の休日ブラシはテーマ内で TaskHoliday2 / TaskHoliday2Brush / TaskHoliday1 / TaskHoliday1Brush
+        // また土日専用は TaskWeekendBrush を参照する。ヘッダー用のキーとは分離しているため、
+        // ここでは CalendarHoliday* や WeekendBrush を参照しない。
+        if (res != null)
+        {
+            if (hlv >= 2)
+            {
+                if (res.Contains("TaskHoliday2") && res["TaskHoliday2"] is Color tch2)
+                    return new SolidColorBrush(tch2);
+                if (res.Contains("TaskHoliday2Brush") && res["TaskHoliday2Brush"] is Brush th2b)
+                    return th2b;
+                // フォールバック: TaskWeekendBrush
+                if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb)
+                    return twb;
+            }
+
+            if (hlv == 1)
+            {
+                if (res.Contains("TaskHoliday1") && res["TaskHoliday1"] is Color tch1)
+                    return new SolidColorBrush(tch1);
+                if (res.Contains("TaskHoliday1Brush") && res["TaskHoliday1Brush"] is Brush th1b)
+                    return th1b;
+                if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb1)
+                    return twb1;
+            }
+
+            // 祝日扱いでないが土日の場合、タスク行はテーマの TaskWeekendBrush があれば使用する
+            if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+            {
+                if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb2)
+                    return twb2;
+            }
+        }
+
+        // デフォルトは行背景を使用（従来の動作）
         return rowBase;
     }
 

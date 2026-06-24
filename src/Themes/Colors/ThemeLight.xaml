@@ -29,4 +29,9 @@
     <Color x:Key="CalendarHoliday1">#FF8888FF</Color>
     <Color x:Key="CalendarHoliday2">#FF8888FF</Color>
 
+    <!-- ガントチャートの週末／祝日用ブラシ（Light テーマで以前の薄青色を維持する） -->
+    <SolidColorBrush x:Key="WeekendBrush">#2FE8E8FF</SolidColorBrush>
+    <!-- タスク行用の週末ブラシ（従来の薄青系を維持） -->
+    <SolidColorBrush x:Key="TaskWeekendBrush">#FFE8E8FF</SolidColorBrush>
+
 </ResourceDictionary>

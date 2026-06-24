@@ -3,15 +3,15 @@
 
     <!-- Dark Cyan theme colors -->
     <Color x:Key="AccentColor">#FF00C8FF</Color>
-    <Color x:Key="PanelBg">#D90D1B2A</Color>
+    <Color x:Key="PanelBg">#A90D1B2A</Color>       <!-- メニュー -->
     <Color x:Key="HeaderBg">#D91E3050</Color>
     <Color x:Key="RowSelected">#6600C8FF</Color>
 
-    <Color x:Key="WindowBg">#D90D1B2A</Color>
+    <Color x:Key="WindowBg">#A90D1B2A</Color>      <!-- タスクリスト -->
     <Color x:Key="WindowFg">#FFD0E8FF</Color>
     <Color x:Key="SubText">#FFAABBCC</Color>
     <Color x:Key="Border">#CC1E3050</Color>
-    <Color x:Key="ChartBg">#D90F1E30</Color>
+    <Color x:Key="ChartBg">#A90F1E30</Color>
 
     <!-- Row / grid colors for dark cyan theme (approximate to light scheme but dark) -->
     <Color x:Key="RowEven">#0A0D1218</Color>
@@ -24,4 +24,22 @@
     <Color x:Key="CalendarTopBg">#FF12171B</Color>
     <Color x:Key="CalendarTopFg">#FFD0E8FF</Color>
 
+    <!-- Window 用のブラシ（テーマ内で使いやすいように用意） -->
+    <SolidColorBrush x:Key="WindowBgBrush" Color="{StaticResource WindowBg}" />
+
+    <!--
+    透過を有効化するための Window 用スタイル（明示的に適用してください）。
+    使用方法:
+      <Window Style="{StaticResource TransparentWindowStyle}" ...>
+    注意:
+      - このスタイルは WindowStyle=None と AllowsTransparency=True を設定します。
+        したがって OS の標準フレーム（タイトルバー・ボーダー）は無効になります。
+      - カスタムのタイトルバーやウィンドウ枠の描画を用意する必要があります。
+      - AllowsTransparency=True は一部のパフォーマンス影響があるため必要な場合のみ使用してください。
+  -->
+    <Style x:Key="TransparentWindowStyle" TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource WindowBgBrush}" />
+        <Setter Property="WindowStyle" Value="None" />
+        <Setter Property="AllowsTransparency" Value="True" />
+    </Style>
 </ResourceDictionary>
