@@ -38,7 +38,14 @@ public class GanttHeaderElement : FrameworkElement
     protected override Size MeasureOverride(Size availableSize)
     {
         int count = Days?.Count ?? 0;
-        return new Size(count * CellWidth, 32);
+        double headerH = 32;
+        try
+        {
+            var val = TryFindResource("HeaderHeight");
+            if (val is double hh) headerH = hh;
+        }
+        catch { }
+        return new Size(count * CellWidth, headerH);
     }
 
     private Pen _gridPen  = new Pen(Brushes.Gray, 0.5);
@@ -56,7 +63,7 @@ public class GanttHeaderElement : FrameworkElement
     public GanttHeaderElement()
     {
         UpdateBrushesFromResources();
-        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateVisual(); };
+        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateMeasure(); InvalidateVisual(); };
     }
 
     private void UpdateBrushesFromResources()

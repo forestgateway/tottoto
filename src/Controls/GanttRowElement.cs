@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -43,6 +44,16 @@ public class GanttRowElement : FrameworkElement
         set => SetValue(CellsProperty, value);
     }
 
+    private static bool BrushesEqual(Brush? a, Brush? b)
+    {
+        if (ReferenceEquals(a, b)) return true;
+        if (a is null || b is null) return false;
+        if (a is SolidColorBrush sa && b is SolidColorBrush sb)
+            return sa.Color == sb.Color;
+        // Fallback: compare string representations (Brush.ToString includes color for solid brushes)
+        return string.Equals(a.ToString(), b.ToString(), StringComparison.Ordinal);
+    }
+
     public double CellWidth
     {
         get => (double)GetValue(CellWidthProperty);
@@ -70,7 +81,14 @@ public class GanttRowElement : FrameworkElement
     protected override Size MeasureOverride(Size availableSize)
     {
         int count = Cells?.Count ?? 0;
-        return new Size(count * CellWidth, 22);
+        double rowH = 22;
+        try
+        {
+            var val = TryFindResource("RowHeight");
+            if (val is double rh) rowH = rh;
+        }
+        catch { }
+        return new Size(count * CellWidth, rowH);
     }
 
     private Brush _hoverBrush    = Brushes.Transparent;
@@ -84,7 +102,7 @@ public class GanttRowElement : FrameworkElement
     public GanttRowElement()
     {
         UpdateBrushesFromResources();
-        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateVisual(); };
+        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateMeasure(); InvalidateVisual(); };
     }
 
     private void UpdateBrushesFromResources()
@@ -156,7 +174,15 @@ public class GanttRowElement : FrameworkElement
         var calloutTexts = CalloutTexts;
         double x = 0;
         double cw = CellWidth;
-        double h = ActualHeight > 0 ? ActualHeight : 22;
+        double defaultH = 22;
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null && res.Contains("RowHeight") && res["RowHeight"] is double rh2)
+                defaultH = rh2;
+        }
+        catch { }
+        double h = ActualHeight > 0 ? ActualHeight : defaultH;
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         int hoverCol = HoveredColumnIndex;
         bool isSelected = IsSelected;
@@ -165,33 +191,162 @@ public class GanttRowElement : FrameworkElement
 
         double todayX = -1;
 
-        for (int i = 0; i < Cells.Count; i++)
+
+        // ガントバーの描画: 隣接する同色のセルをまとめて 1 つの角丸矩形で描画します。
+        // これによりセル間の微小な隙間を防ぎ、角丸・高さをテーマリソースで制御できます。
+        double defaultBarHeight = Math.Max(0, h - 4.0);
+        double cornerRadius = 3.0;
+        double horizontalGap = 0.0; // セル間の横マージン (0 にすれば隙間なし)
+        try
+        {
+            var val1 = TryFindResource("GanttProgressBarHeight");
+            if (val1 is double bh) defaultBarHeight = bh;
+            var val2 = TryFindResource("GanttProgressCornerRadius");
+            if (val2 is double cr) cornerRadius = cr;
+            var val3 = TryFindResource("GanttProgressHorizontalGap");
+            if (val3 is double hg) horizontalGap = hg;
+        }
+        catch { }
+
+        // Draw row base (striped background) first so overlays (weekend/holiday) can be drawn above it.
+        double totalW = Cells.Count * cw;
+        if (Cells.Count > 0)
+        {
+            var first = Cells[0];
+            if (first.RowBase is not null)
+                dc.DrawRectangle(first.RowBase, null, new Rect(0, 0, totalW, h));
+        }
+
+        int i = 0;
+        while (i < Cells.Count)
         {
             var c = Cells[i];
             var rect = new Rect(x, 0, cw, h);
 
-            // セル背景（横縞・土日）
-            dc.DrawRectangle(c.Background, null, rect);
-
-
-            // タスクバー：セルより上下3px・左右2px小さい正方形
-            if (c.BarBrush is not null)
+            // オーバーレイ（週末・祝日の色）は行ベースの縞の上に描画する
+            if (c.OverlayBrush is not null)
             {
-                const double marginX = 0.6;
-                const double marginY = 2.0;
-                var barRect = new Rect(x + marginX, marginY, cw - marginX * 2, h - marginY * 2);
-                dc.DrawRectangle(c.BarBrush, null, barRect);
+                dc.DrawRectangle(c.OverlayBrush, null, rect);
             }
 
-            // 日曜と月曜の間に縦線（月曜セルの左端）
-            // 週境界線は選択色より下に描画するため、この位置で描画する。
+            if (c.BarBrush is not null)
+            {
+                // 連続する同一色のセルをまとめる
+                int j = i + 1;
+                while (j < Cells.Count && BrushesEqual(Cells[j].BarBrush, c.BarBrush)) j++;
+
+                double startXAbs = x; // セグメントの先頭セルの x
+                double startX = startXAbs + horizontalGap / 2.0;
+                double segmentWidth = (j - i) * cw - horizontalGap;
+                double barHeight = Math.Min(defaultBarHeight, h);
+                double marginY = Math.Max(0, (h - barHeight) / 2.0);
+
+                // セグメントにまたがるセルのオーバーレイ（週末・祝日）を各セルごとに描画する
+                for (int m = i; m < j; m++)
+                {
+                    var oc = Cells[m];
+                    if (oc.OverlayBrush is not null)
+                    {
+                        double cellX = startXAbs + (m - i) * cw;
+                        dc.DrawRectangle(oc.OverlayBrush, null, new Rect(cellX, 0, cw, h));
+                    }
+                }
+
+                var barRect = new Rect(startX, marginY, segmentWidth, barHeight);
+                // 角丸: 開始セルと終了セルのみ角丸にする。ChartCellInfo の IsTaskStart/IsTaskEnd を参照。
+                // セグメント単位で開始・終了判定を行い、部分的に角丸を描画する。
+                bool segStartRounded = Cells[i].IsTaskStart;
+                bool segEndRounded = Cells[j - 1].IsTaskEnd;
+
+                double capRadius = Math.Max(0.0, cornerRadius);
+                double maxCap = barHeight / 2.0;
+                if (capRadius > maxCap) capRadius = maxCap;
+                if (segmentWidth < capRadius * 2.0) capRadius = segmentWidth / 2.0;
+
+                // 中央矩形幅
+                double coreWidth = Math.Max(0.0, segmentWidth - capRadius * 2.0);
+                double leftCap = segStartRounded ? capRadius : 0.0;
+                double rightCap = segEndRounded ? capRadius : 0.0;
+
+                double coreX = startX + leftCap;
+                double coreW = Math.Max(0.0, segmentWidth - leftCap - rightCap);
+                if (coreW > 0)
+                    dc.DrawRectangle(c.BarBrush, null, new Rect(coreX, marginY, coreW, barHeight));
+
+                // 左キャップ（丸める場合）
+                if (segStartRounded)
+                {
+                    var leftCenter = new Point(startX + capRadius, marginY + barHeight / 2.0);
+                    dc.DrawEllipse(c.BarBrush, null, leftCenter, capRadius, barHeight / 2.0);
+                }
+                else if (leftCap == 0 && capRadius > 0 && coreW == segmentWidth)
+                {
+                    // 角丸無効時でも端が欠けないようコーナーを埋める（何もしない）
+                }
+
+                // 右キャップ（丸める場合）
+                if (segEndRounded)
+                {
+                    var rightCenter = new Point(startX + segmentWidth - capRadius, marginY + barHeight / 2.0);
+                    dc.DrawEllipse(c.BarBrush, null, rightCenter, capRadius, barHeight / 2.0);
+                }
+
+                // セグメント内の各セルに対して週境界線・選択・ホバー・シンボル・Today マーカー・吹き出しを描画
+                for (int k = i; k < j; k++)
+                {
+                    var ck = Cells[k];
+                    double cellX = startXAbs + (k - i) * cw;
+                    var cellRect = new Rect(cellX, 0, cw, h);
+
+                    if (ck.Date.DayOfWeek == DayOfWeek.Monday)
+                    {
+                        double lx = cellX + snapOffset;
+                        dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
+                    }
+
+                    if (isSelected)
+                        dc.DrawRectangle(_selectedBrush, null, cellRect);
+                    if (k == hoverCol)
+                        dc.DrawRectangle(_hoverBrush, null, cellRect);
+
+                    if (!string.IsNullOrEmpty(ck.Symbol))
+                    {
+                        var ft = new FormattedText(ck.Symbol,
+                            System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                            new Typeface("Segoe UI"), 9, ck.Foreground, dpi);
+                        dc.DrawText(ft, new Point(cellX + (cw - ft.Width) / 2, (h - ft.Height) / 2));
+                    }
+
+                    if (ck.IsToday) todayX = cellX;
+
+                    if (calloutTexts is not null && calloutTexts.ContainsKey(k))
+                    {
+                        const double ts = 5.0;
+                        var geo = new StreamGeometry();
+                        using (var ctx = geo.Open())
+                        {
+                            ctx.BeginFigure(new Point(cellX + cw - ts, 0), isFilled: true, isClosed: true);
+                            ctx.LineTo(new Point(cellX + cw, 0), isStroked: false, isSmoothJoin: false);
+                            ctx.LineTo(new Point(cellX + cw, ts), isStroked: false, isSmoothJoin: false);
+                        }
+                        geo.Freeze();
+                        dc.DrawGeometry(s_calloutMarker, null, geo);
+                    }
+                }
+
+                // advance i and x by the merged segment
+                x += (j - i) * cw;
+                i = j;
+                continue; // skip the usual single-step x += cw below
+            }
+
+            // バーが無いセルはそのまま処理（週線・選択・ホバー・シンボル等）
             if (c.Date.DayOfWeek == DayOfWeek.Monday)
             {
                 double lx = x + snapOffset;
                 dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
             }
 
-            // 選択色・ホバー色は週線より上に重ねる（選択色レイヤを最前面にする）
             if (isSelected)
                 dc.DrawRectangle(_selectedBrush, null, rect);
             if (i == hoverCol)
@@ -223,10 +378,11 @@ public class GanttRowElement : FrameworkElement
             }
 
             x += cw;
+            i++;
         }
 
         // 行下端に横線（_rowPen: GridLineBrush またはフォールバック）
-        double totalW = Cells.Count * cw;
+        // totalW はループ前に計算済み
         double ly = h - snapOffset;
         dc.DrawLine(_rowPen, new Point(0, ly), new Point(totalW, ly));
 

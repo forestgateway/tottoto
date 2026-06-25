@@ -29,8 +29,12 @@ public static class ThemeService
         var dict = new ResourceDictionary { Source = uri };
 
         var merged = Application.Current.Resources.MergedDictionaries;
-        if (merged.Count > 0)
-            merged[0] = dict;
+        // Expect BaseTheme to be at index 0 and theme dictionary at index 1.
+        // Replace theme dictionary if present, otherwise insert after BaseTheme when possible.
+        if (merged.Count > 1)
+            merged[1] = dict;
+        else if (merged.Count == 1)
+            merged.Insert(1, dict);
         else
             merged.Insert(0, dict);
 

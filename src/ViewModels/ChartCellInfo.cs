@@ -14,9 +14,15 @@ public sealed class ChartCellInfo
     public Brush  Background { get; init; } = Brushes.White;
     public Brush  Foreground { get; init; } = Brushes.Black;
     public string Symbol     { get; init; } = string.Empty;
+    // Row base brush (striped background). OverlayBrush is used for weekend/holiday shading
+    // which should be drawn on top of the row base to avoid being covered by other layers.
+    public Brush RowBase { get; init; } = Brushes.Transparent;
+    public Brush? OverlayBrush { get; init; }
 
     /// <summary>タスク期間内のセルに描画する小正方形の色。null = 描画しない。</summary>
     public Brush? BarBrush   { get; init; }
+    public bool IsTaskStart { get; init; }
+    public bool IsTaskEnd   { get; init; }
 
     // Note: Background/Foreground は生成側（TaskRowViewModel）で明示設定されるため
     // デフォルトは白/黒にしておく。

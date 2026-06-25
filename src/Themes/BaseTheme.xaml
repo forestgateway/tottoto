@@ -22,6 +22,15 @@
     <sys:Double x:Key="CellWidth">22</sys:Double>
     <sys:Double x:Key="HeaderHeight">36</sys:Double>
 
+    <!-- ガントチャートの進行表示（進捗線）関連のデフォルト設定
+         - GanttProgressBarHeight: 進行バーの高さ（ピクセル）。行高さに応じて調整されます。
+         - GanttProgressCornerRadius: 角丸半径（ピクセル）。
+         - GanttProgressHorizontalGap: セル間の水平ギャップ（通常は 0 にして隙間を無くす）
+         これらは各テーマファイルで上書き可能です -->
+    <sys:Double x:Key="GanttProgressBarHeight">18</sys:Double>
+    <sys:Double x:Key="GanttProgressCornerRadius">0</sys:Double>
+    <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
+
     <!-- ── ToolBar ボタン ─────────────────────────────── -->
     <Style x:Key="ToolBarButtonStyle" TargetType="Button">
         <Setter Property="Background"   Value="Transparent"/>
@@ -203,7 +212,7 @@
     <Style x:Key="TaskRowContainerStyle" TargetType="ListBoxItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Padding"         Value="0"/>
-        <Setter Property="Height"          Value="{StaticResource RowHeight}"/>
+        <Setter Property="Height"          Value="{DynamicResource RowHeight}"/>
         <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="BorderBrush"     Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>

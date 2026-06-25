@@ -335,6 +335,55 @@ public class TaskRowViewModel : ViewModelBase
             var isToday = date.Date == today.Date;
 
             int cellStatus = ComputeCellStatus(date, today, appDateCountLv, hlv, holidays);
+            // Determine overlay (holiday/weekend) brush without replacing the row base.
+            Brush? overlay = null;
+            try
+            {
+                var res = Application.Current?.Resources;
+                if (res != null)
+                {
+                    if (hlv >= 2)
+                    {
+                        if (res.Contains("TaskHoliday2") && res["TaskHoliday2"] is Color tch2)
+                            overlay = new SolidColorBrush(tch2);
+                        else if (res.Contains("TaskHoliday2Brush") && res["TaskHoliday2Brush"] is Brush th2b)
+                            overlay = th2b;
+                        else if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb)
+                            overlay = twb;
+                    }
+                    else if (hlv == 1)
+                    {
+                        if (res.Contains("TaskHoliday1") && res["TaskHoliday1"] is Color tch1)
+                            overlay = new SolidColorBrush(tch1);
+                        else if (res.Contains("TaskHoliday1Brush") && res["TaskHoliday1Brush"] is Brush th1b)
+                            overlay = th1b;
+                        else if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb1)
+                            overlay = twb1;
+                    }
+                    else
+                    {
+                        // Non-holiday but weekend
+                        if ((date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+                            && res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb2)
+                        {
+                            overlay = twb2;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // IsTaskStart/IsTaskEnd は隣接セルの BarBrush を見て決める（開始・終了のみ角丸にするため）
+            bool isStart = false, isEnd = false;
+            if (cellStatus >= 0)
+            {
+                // 前のセルが存在しないかバーが続いていなければ開始
+                if (i == 0 || ComputeCellStatus(chartStart.AddDays(i - 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i - 1)), holidays) < 0)
+                    isStart = true;
+                // 次のセルが存在しないかバーが続いていなければ終了
+                if (i == cellCount - 1 || ComputeCellStatus(chartStart.AddDays(i + 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i + 1)), holidays) < 0)
+                    isEnd = true;
+            }
 
             cells.Add(new ChartCellInfo
             {
@@ -342,9 +391,13 @@ public class TaskRowViewModel : ViewModelBase
                 Status     = (ItemStatus)cellStatus,
                 IsToday    = isToday,
                 HolidayLv  = hlv,
-                Background = CellBackground(cellStatus, hlv, date, rowBase),
+                Background = rowBase,
+                RowBase    = rowBase,
+                OverlayBrush = overlay,
                 Symbol     = CellSymbol(cellStatus, isToday),
                 BarBrush   = cellStatus >= 0 ? BarBrush(cellStatus) : null,
+                IsTaskStart = isStart,
+                IsTaskEnd   = isEnd,
             });
         }
 
@@ -454,17 +507,49 @@ public class TaskRowViewModel : ViewModelBase
         return rowBase;
     }
 
-    private static Brush? BarBrush(int cellStatus) => ((ItemStatus)cellStatus) switch
+    private static Brush? BarBrush(int cellStatus)
     {
-        ItemStatus.Skip     => s_barSkip,
-        ItemStatus.Complete => s_barComplete,
-        ItemStatus.Wait     => s_barWait,
-        ItemStatus.Progress => s_barProgress,
-        ItemStatus.Warning  => s_barWarning,
-        ItemStatus.Error    => s_barError,
-        ItemStatus.Over     => s_barOver,
-        _                   => null,
-    };
+        // テーマリソースで上書き可能: GanttBar{Status}Brush (例: GanttBarProgressBrush)
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null)
+            {
+                var status = (ItemStatus)cellStatus;
+                string key = status switch
+                {
+                    ItemStatus.Skip     => "GanttBarSkipBrush",
+                    ItemStatus.Complete => "GanttBarCompleteBrush",
+                    ItemStatus.Wait     => "GanttBarWaitBrush",
+                    ItemStatus.Progress => "GanttBarProgressBrush",
+                    ItemStatus.Warning  => "GanttBarWarningBrush",
+                    ItemStatus.Error    => "GanttBarErrorBrush",
+                    ItemStatus.Over     => "GanttBarOverBrush",
+                    _                   => null,
+                };
+
+                if (key != null && res.Contains(key) && res[key] is Brush b)
+                    return b;
+
+                // 汎用キー
+                if (res.Contains("GanttBarBrush") && res["GanttBarBrush"] is Brush gb)
+                    return gb;
+            }
+        }
+        catch { }
+
+        return ((ItemStatus)cellStatus) switch
+        {
+            ItemStatus.Skip     => s_barSkip,
+            ItemStatus.Complete => s_barComplete,
+            ItemStatus.Wait     => s_barWait,
+            ItemStatus.Progress => s_barProgress,
+            ItemStatus.Warning  => s_barWarning,
+            ItemStatus.Error    => s_barError,
+            ItemStatus.Over     => s_barOver,
+            _                   => null,
+        };
+    }
 
     private static string CellSymbol(int cellStatus, bool isToday)
     {

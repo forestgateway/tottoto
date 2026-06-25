@@ -25,7 +25,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Height="{StaticResource HeaderHeight}"
+        <Border Grid.Row="0" Height="{DynamicResource HeaderHeight}"
                 Background="{DynamicResource HeaderBgBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid x:Name="TaskHeaderGrid">
@@ -124,7 +124,7 @@
                 <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
                     <Border Background="{Binding RowBackground}"
                             BorderBrush="#15000000" BorderThickness="0,0,0,1"
-                            Height="{StaticResource RowHeight}">
+                            Height="{DynamicResource RowHeight}">
                         <Grid>
                             <!-- 選択色オーバーレイ（ヒットテスト無効にして下の操作を妨げない） -->
                             <Border Background="{StaticResource RowSelectedBrush}"
@@ -249,7 +249,7 @@
                         </Grid>
                     </Border>
                     <DataTemplate.Triggers>
-                        <DataTrigger Binding="{Binding Item.Completed}" Value="True">
+                    <DataTrigger Binding="{Binding Item, Converter={StaticResource ItemCompletedConverter}}" Value="True">
                             <Setter TargetName="IconText"   Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="CheckBadge" Property="Visibility" Value="Visible"/>
                         </DataTrigger>

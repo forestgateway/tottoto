@@ -3,12 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
-        <ResourceDictionary>
+        <ResourceDictionary xmlns:conv="clr-namespace:todochart.Converters">
             <ResourceDictionary.MergedDictionaries>
-                <!-- Theme dictionary (will be replaced at startup) -->
-                <ResourceDictionary Source="Themes/Colors/ThemeLight.xaml"/>
+                <!-- BaseTheme first, then theme dictionary so theme can override base defaults -->
                 <ResourceDictionary Source="Themes/BaseTheme.xaml"/>
+                <ResourceDictionary Source="Themes/Colors/ThemeLight.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <!-- Converters -->
+            <conv:ItemCompletedConverter x:Key="ItemCompletedConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

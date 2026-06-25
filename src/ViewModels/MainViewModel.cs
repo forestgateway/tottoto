@@ -1234,6 +1234,49 @@ public class MainViewModel : ViewModelBase
         Selected?.Refresh();
     }
 
+    /// <summary>
+    /// 軽量プレビュー移動: マウスドラッグ中にモデルの開始/終了日を移動して
+    /// 該当行のみ再描画する。UpdateAllStatuses/RefreshFlatList/MarkModified は行わない。
+    /// </summary>
+    public void ShiftSelectedPreviewBy(int deltaDays)
+    {
+        if (deltaDays == 0 || Selected is null) return;
+        var item = Selected.Item;
+        var beginDate = item.BeginDate;
+        var endDate = item.EndDate;
+
+        if (beginDate.HasValue && endDate.HasValue)
+        {
+            item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+        else
+        {
+            if (beginDate.HasValue)
+                item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            if (endDate.HasValue)
+                item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+
+        // Recompute only this row's chart cells and related UI
+        Selected.RefreshChartCells(_chartStart, CellCount, Today, Holidays, _settings.DateCountLevel);
+        Selected.Refresh();
+    }
+
+    /// <summary>
+    /// ドラッグ操作のコミット: プレビューで更新済みのモデル状態を確定し
+    /// 全体のステータス更新・フラットリスト再構築・変更フラグ設定を行う。
+    /// </summary>
+    public void CommitShiftSelectedPreview()
+    {
+        if (Selected is null) return;
+        var item = Selected.Item;
+        UpdateAllStatuses();
+        RefreshFlatList();
+        MarkModifiedForItem(item);
+        Selected.Refresh();
+    }
+
     private void ShiftDate(int deltaBegin, int deltaEnd)
     {
         if (Selected is null) return;

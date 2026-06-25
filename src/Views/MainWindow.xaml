@@ -621,7 +621,7 @@
                                     </Grid>
                                 </Border>
                                 <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding Item.Completed}" Value="True">
+                                    <DataTrigger Binding="{Binding Item, Converter={StaticResource ItemCompletedConverter}}" Value="True">
                                         <Setter TargetName="IconText"   Property="Visibility" Value="Collapsed"/>
                                         <Setter TargetName="CheckBadge" Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
@@ -670,8 +670,8 @@
                               Visibility="{Binding IsChartReady, Converter={StaticResource BoolVis}}">
                         <ctrl:GanttHeaderElement x:Name="GanttHeader"
                                              Days="{Binding ChartDays}"
-                                             CellWidth="{StaticResource CellWidth}"
-                                             Height="{StaticResource HeaderHeight}"/>
+                                             CellWidth="{DynamicResource CellWidth}"
+                                             Height="{DynamicResource HeaderHeight}"/>
                     </ScrollViewer>
 
                     <!-- チャート本体 + 読み込み中オーバーレイ -->
@@ -694,10 +694,10 @@
                                       SizeChanged="OnChartRowsControlSizeChanged">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
-                                        <Grid Height="{StaticResource RowHeight}">
+                                        <Grid Height="{DynamicResource RowHeight}">
                                             <ctrl:GanttRowElement Cells="{Binding ChartCells}"
-                                                              CellWidth="{StaticResource CellWidth}"
-                                                              Height="{StaticResource RowHeight}"
+                                                              CellWidth="{DynamicResource CellWidth}"
+                                                              Height="{DynamicResource RowHeight}"
                                                               IsSelected="{Binding IsSelected}"
                                                               CalloutTexts="{Binding CalloutTexts}"
                                                               HoveredColumnIndex="{Binding DataContext.HoveredColumnIndex, ElementName=ChartRowsControl}"/>

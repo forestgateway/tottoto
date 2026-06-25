@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Input;
 using todochart.Models;
 
@@ -182,8 +183,36 @@ public class CalloutViewModel : ViewModelBase
     }
 
     // ── チャート列インデックス（表示位置） ─────────────────────
-    public const double CellWidth          = 22.0;
-    public const double RowHeight          = 24.0;
+    // テーマリソースがあればそちらを優先して使用する
+    public static double CellWidth
+    {
+        get
+        {
+            try
+            {
+                var res = Application.Current?.Resources;
+                if (res != null && res.Contains("CellWidth") && res["CellWidth"] is double cw)
+                    return cw;
+            }
+            catch { }
+            return 22.0;
+        }
+    }
+
+    public static double RowHeight
+    {
+        get
+        {
+            try
+            {
+                var res = Application.Current?.Resources;
+                if (res != null && res.Contains("RowHeight") && res["RowHeight"] is double rh)
+                    return rh;
+            }
+            catch { }
+            return 24.0;
+        }
+    }
     public const double CalloutBubbleWidth = 160.0;
 
     // ── BubbleLine レイアウト定数 ──────────────────────────────

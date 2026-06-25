@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- Light theme colors -->
     <Color x:Key="AccentColor">#BBB8D9F5</Color>
@@ -29,9 +30,17 @@
     <Color x:Key="CalendarHoliday1">#FF8888FF</Color>
     <Color x:Key="CalendarHoliday2">#FF8888FF</Color>
 
-    <!-- ガントチャートの週末／祝日用ブラシ（Light テーマで以前の薄青色を維持する） -->
+    <!-- ガントチャートの週末／祝日用ブラシ（Light テーマで以前の薄青色を維持する）参照されていないぽい -->
     <SolidColorBrush x:Key="WeekendBrush">#2FE8E8FF</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="TaskHoliday2Brush">#FFEEEEFF</SolidColorBrush>  <!-- これが優先有効 -->
     <!-- タスク行用の週末ブラシ（従来の薄青系を維持） -->
     <SolidColorBrush x:Key="TaskWeekendBrush">#FFE8E8FF</SolidColorBrush>
 
+    <!-- ガント進捗ライン設定（テーマごとに上書き可能） -->
+    <sys:Double x:Key="GanttProgressBarHeight">14</sys:Double>
+    <sys:Double x:Key="GanttProgressCornerRadius">1</sys:Double>
+    <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
+
+    
 </ResourceDictionary>
