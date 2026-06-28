@@ -111,9 +111,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         this.StateChanged += (s, e) => UpdateMaximizeIcon();
         UpdateMaximizeIcon();
 
-        // 透過ウィンドウでタイトルバーがないため、ウィンドウのドラッグ移動を許可する
-        // Window_MouseLeftButtonDown イベントハンドラは XAML 側で指定しています
-
         // 起動 10 秒後に非同期で更新確認を開始（設定が有効な場合のみ）
         _ = CheckForUpdateDelayedAsync(AppSettings.Load());
 

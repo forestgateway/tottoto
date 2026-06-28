@@ -269,6 +269,9 @@ public class MainViewModel : ViewModelBase
         _currentTheme = ThemeService.IsValidTheme(_settings.ThemeName) ? _settings.ThemeName : "Light";
         RefreshChartDays();
 
+        // テーマ切替時にチャートセル（行背景・オーバーレイ色）を再計算する
+        ThemeService.ThemeChanged += () => Application.Current?.Dispatcher.BeginInvoke(new Action(RefreshAllChartCells));
+
         InitCommands();
 
         ToggleStarFilterCommand = new RelayCommand(() =>

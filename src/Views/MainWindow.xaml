@@ -84,9 +84,9 @@
 
                 <!-- 右: ウィンドウ操作ボタン -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-                    <Button x:Name="BtnMin" Click="OnMinimizeClick" Width="40" Height="24" Style="{StaticResource ToolBarButtonStyle}" ToolTip="最小化">▁</Button>
-                    <Button x:Name="BtnMax" Click="OnMaximizeRestoreClick" Width="40" Height="24" Style="{StaticResource ToolBarButtonStyle}" ToolTip="最大化">▢</Button>
-                    <Button x:Name="BtnClose" Click="OnCloseClick" Width="40" Height="24" Style="{StaticResource ToolBarButtonStyle}" ToolTip="閉じる">✕</Button>
+                    <Button x:Name="BtnMin" Click="OnMinimizeClick" Width="40" Height="24" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="最小化">▁</Button>
+                    <Button x:Name="BtnMax" Click="OnMaximizeRestoreClick" Width="40" Height="24" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="最大化">▢</Button>
+                    <Button x:Name="BtnClose" Click="OnCloseClick" Width="40" Height="24" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="閉じる">✕</Button>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -198,10 +198,10 @@
                  Foreground="{DynamicResource SubTextBrush}"
                  ToolBarTray.IsLocked="True">
                 <!-- ファイル操作 -->
-                <Button Content="📄 新規"         Command="{Binding NewCommand}"     Style="{StaticResource ToolBarButtonStyle}" ToolTip="タスクリストを新規作成"/>
-                <Button Content="🔗 新規(Issue)"  Command="{Binding NewIssueTrackingCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Issue Tracking を新規作成"/>
-                <Button Content="📂 開く"         Command="{Binding OpenCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="ファイルを開く"/>
-                <Button Content="💾 保存"         Command="{Binding SaveCommand}"    Style="{StaticResource ToolBarButtonStyle}" ToolTip="上書き保存"/>
+                <Button Content="📄 新規"         Command="{Binding NewCommand}"     Style="{DynamicResource ToolBarButtonStyle}" ToolTip="タスクリストを新規作成"/>
+                <Button Content="🔗 新規(Issue)"  Command="{Binding NewIssueTrackingCommand}" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="Issue Tracking を新規作成"/>
+                <Button Content="📂 開く"         Command="{Binding OpenCommand}"    Style="{DynamicResource ToolBarButtonStyle}" ToolTip="ファイルを開く"/>
+                <Button Content="💾 保存"         Command="{Binding SaveCommand}"    Style="{DynamicResource ToolBarButtonStyle}" ToolTip="上書き保存"/>
                 <Separator/>
                 <!-- Issue 更新ボタン (アクティブタブが Issue Tracking のときのみ有効) -->
                 <Button Content="🔄 Update"
@@ -236,7 +236,7 @@
                 <!-- 完了タスク非表示 -->
                 <ToggleButton Content="☑ 完了を隠す"
                           IsChecked="{Binding HideCompleted, Mode=TwoWay}"
-                          Style="{StaticResource ToolBarToggleButtonStyle}"
+                          Style="{DynamicResource ToolBarToggleButtonStyle}"
                           ToolTip="完了済みタスクを一覧から隠す"/>
                 <Separator/>
                 <Button Content="📅 今日の予定"
@@ -345,7 +345,7 @@
                                 <ColumnDefinition Width="4"/>
                                 <ColumnDefinition x:Name="ColML"     Width="36" MinWidth="28"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="1" Text="タスク名" Style="{StaticResource ColumnHeaderStyle}"/>
+                            <TextBlock Grid.Column="1" Text="タスク名" Style="{DynamicResource ColumnHeaderStyle}"/>
                             <Button Grid.Column="0"
                                 Command="{Binding ToggleStarFilterCommand}"
                                 ToolTip="{Binding StarFilterTooltip}"
@@ -354,7 +354,7 @@
                                 HorizontalAlignment="Center"
                                 Padding="0"
                                 VerticalAlignment="Center">
-                                <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
+                                <TextBlock Text="{Binding StarFilterGlyph}" Style="{DynamicResource ColumnHeaderStyle}" HorizontalAlignment="Center"
                                        Foreground="{Binding StarFilterBrush, Mode=OneWay}"/>
                             </Button>
                             <GridSplitter Grid.Column="2"
@@ -364,7 +364,7 @@
                                       Cursor="SizeWE"
                                       ResizeBehavior="PreviousAndNext"
                                       ResizeDirection="Columns"/>
-                            <TextBlock Grid.Column="3" Text="状態"    Style="{StaticResource ColumnHeaderStyle}"/>
+                            <TextBlock Grid.Column="3" Text="状態"    Style="{DynamicResource ColumnHeaderStyle}"/>
                             <GridSplitter Grid.Column="4"
                                       Width="4"
                                       HorizontalAlignment="Stretch"
@@ -372,7 +372,7 @@
                                       Cursor="SizeWE"
                                       ResizeBehavior="PreviousAndNext"
                                       ResizeDirection="Columns"/>
-                            <TextBlock Grid.Column="5" Text="ML"      Style="{StaticResource ColumnHeaderStyle}"/>
+                            <TextBlock Grid.Column="5" Text="ML"      Style="{DynamicResource ColumnHeaderStyle}"/>
                         </Grid>
                     </Border>
 
@@ -603,6 +603,7 @@
                                                     Margin="0,0,1,0"
                                                     BorderThickness="0"
                                                     Background="Transparent"
+                                                    Foreground="{StaticResource WindowFgBrush}"
                                                     Cursor="Hand"
                                                     Visibility="{Binding HasMemo, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenMemoCommand}"
@@ -612,6 +613,7 @@
                                                     Padding="1,0"
                                                     BorderThickness="0"
                                                     Background="Transparent"
+                                                    Foreground="{StaticResource WindowFgBrush}"
                                                     Cursor="Hand"
                                                     Visibility="{Binding HasLink, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenLinkCommand}"

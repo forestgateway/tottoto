@@ -97,7 +97,7 @@ public class GanttRowElement : FrameworkElement
     private Pen   _weekPen       = new Pen(Brushes.Transparent, 1.0);
     private Pen   _rowPen        = new Pen(Brushes.Transparent, 1.0);
     private Brush _todayOverlay  = Brushes.Transparent;
-    private static readonly Brush s_calloutMarker = new SolidColorBrush(Color.FromRgb(0xFF, 0x00, 0x00));
+    private Brush _calloutMarker = Brushes.Red;
 
     public GanttRowElement()
     {
@@ -163,6 +163,16 @@ public class GanttRowElement : FrameworkElement
                 _todayOverlay = to;
             else
                 _todayOverlay  = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x88, 0x88));
+
+            // 吹き出しマーカー色: AccentBrush を使用する（テーマで変えられるように）
+            if (res.Contains("AccentBrush") && res["AccentBrush"] is Brush calloutB)
+            {
+                _calloutMarker = calloutB;
+            }
+            else if (res.Contains("AccentColor") && res["AccentColor"] is Color accentColor)
+            {
+                _calloutMarker = new SolidColorBrush(accentColor);
+            }
         }
         catch { }
     }
@@ -250,59 +260,60 @@ public class GanttRowElement : FrameworkElement
                         double cellX = startXAbs + (m - i) * cw;
                         dc.DrawRectangle(oc.OverlayBrush, null, new Rect(cellX, 0, cw, h));
                     }
+ 
+                   // セグメント内の週境界線を進捗バーの前に描画する（縞背景->オーバーレイ->週境界線->進捗バー の順序を確保）
+                    if (oc.Date.DayOfWeek == DayOfWeek.Monday)
+                    {
+                        double cellX = startXAbs + (m - i) * cw;
+                        double lx = cellX + snapOffset;
+                        dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
+                    }
                 }
 
-                var barRect = new Rect(startX, marginY, segmentWidth, barHeight);
-                // 角丸: 開始セルと終了セルのみ角丸にする。ChartCellInfo の IsTaskStart/IsTaskEnd を参照。
-                // セグメント単位で開始・終了判定を行い、部分的に角丸を描画する。
+                // 各日毎に水平ギャップを適用するため、セグメント全体を1つの矩形で描くのではなく
+                // セルごとに内側幅 (cw - horizontalGap) の矩形を描画する。
+                // ただし開始・終了は角丸キャップを描く。
                 bool segStartRounded = Cells[i].IsTaskStart;
                 bool segEndRounded = Cells[j - 1].IsTaskEnd;
 
+                double envelopeWidth = Math.Max(0.0, (j - i) * cw - horizontalGap);
                 double capRadius = Math.Max(0.0, cornerRadius);
                 double maxCap = barHeight / 2.0;
                 if (capRadius > maxCap) capRadius = maxCap;
-                if (segmentWidth < capRadius * 2.0) capRadius = segmentWidth / 2.0;
+                if (capRadius > envelopeWidth / 2.0) capRadius = envelopeWidth / 2.0;
 
-                // 中央矩形幅
-                double coreWidth = Math.Max(0.0, segmentWidth - capRadius * 2.0);
-                double leftCap = segStartRounded ? capRadius : 0.0;
-                double rightCap = segEndRounded ? capRadius : 0.0;
+                double innerCellWidth = Math.Max(0.0, cw - horizontalGap);
+                double firstCellInnerX = startXAbs + horizontalGap / 2.0;
 
-                double coreX = startX + leftCap;
-                double coreW = Math.Max(0.0, segmentWidth - leftCap - rightCap);
-                if (coreW > 0)
-                    dc.DrawRectangle(c.BarBrush, null, new Rect(coreX, marginY, coreW, barHeight));
-
-                // 左キャップ（丸める場合）
-                if (segStartRounded)
+                // 各セルごとに矩形を描画してセル間に horizontalGap を確保する
+                for (int m = i; m < j; m++)
                 {
-                    var leftCenter = new Point(startX + capRadius, marginY + barHeight / 2.0);
+                    double cellInnerX = startXAbs + (m - i) * cw + horizontalGap / 2.0;
+                    if (innerCellWidth > 0)
+                        dc.DrawRectangle(c.BarBrush, null, new Rect(cellInnerX, marginY, innerCellWidth, barHeight));
+                }
+
+                // 左キャップ（丸める場合）: 最初のセルの内側矩形の左端に合わせて描画
+                if (segStartRounded && capRadius > 0)
+                {
+                    var leftCenter = new Point(firstCellInnerX + capRadius, marginY + barHeight / 2.0);
                     dc.DrawEllipse(c.BarBrush, null, leftCenter, capRadius, barHeight / 2.0);
                 }
-                else if (leftCap == 0 && capRadius > 0 && coreW == segmentWidth)
-                {
-                    // 角丸無効時でも端が欠けないようコーナーを埋める（何もしない）
-                }
 
-                // 右キャップ（丸める場合）
-                if (segEndRounded)
+                // 右キャップ（丸める場合）: 最後のセルの内側矩形の右端に合わせて描画
+                if (segEndRounded && capRadius > 0)
                 {
-                    var rightCenter = new Point(startX + segmentWidth - capRadius, marginY + barHeight / 2.0);
+                    double lastCellInnerX = startXAbs + (j - 1 - i) * cw + horizontalGap / 2.0;
+                    var rightCenter = new Point(lastCellInnerX + innerCellWidth - capRadius, marginY + barHeight / 2.0);
                     dc.DrawEllipse(c.BarBrush, null, rightCenter, capRadius, barHeight / 2.0);
                 }
 
-                // セグメント内の各セルに対して週境界線・選択・ホバー・シンボル・Today マーカー・吹き出しを描画
+                // セグメント内の各セルに対して選択・ホバー・シンボル・Today マーカー・吹き出しを描画
                 for (int k = i; k < j; k++)
                 {
                     var ck = Cells[k];
                     double cellX = startXAbs + (k - i) * cw;
                     var cellRect = new Rect(cellX, 0, cw, h);
-
-                    if (ck.Date.DayOfWeek == DayOfWeek.Monday)
-                    {
-                        double lx = cellX + snapOffset;
-                        dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
-                    }
 
                     if (isSelected)
                         dc.DrawRectangle(_selectedBrush, null, cellRect);
@@ -330,7 +341,7 @@ public class GanttRowElement : FrameworkElement
                             ctx.LineTo(new Point(cellX + cw, ts), isStroked: false, isSmoothJoin: false);
                         }
                         geo.Freeze();
-                        dc.DrawGeometry(s_calloutMarker, null, geo);
+                        dc.DrawGeometry(_calloutMarker, null, geo);
                     }
                 }
 
@@ -374,7 +385,7 @@ public class GanttRowElement : FrameworkElement
                     ctx.LineTo(new Point(x + cw, ts), isStroked: false, isSmoothJoin: false);
                 }
                 geo.Freeze();
-                dc.DrawGeometry(s_calloutMarker, null, geo);
+                        dc.DrawGeometry(_calloutMarker, null, geo);
             }
 
             x += cw;

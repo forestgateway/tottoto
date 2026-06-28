@@ -122,7 +122,7 @@ ClipToBounds="False">
                             </ContextMenu>
                         </Grid.ContextMenu>
                         <ContentControl Content="{Binding}"
-                                        ContentTemplate="{StaticResource BubbleLineTemplate}"/>
+                                        ContentTemplate="{DynamicResource BubbleLineTemplate}"/>
                     </Grid>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

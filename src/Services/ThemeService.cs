@@ -29,14 +29,44 @@ public static class ThemeService
         var dict = new ResourceDictionary { Source = uri };
 
         var merged = Application.Current.Resources.MergedDictionaries;
-        // Expect BaseTheme to be at index 0 and theme dictionary at index 1.
-        // Replace theme dictionary if present, otherwise insert after BaseTheme when possible.
-        if (merged.Count > 1)
-            merged[1] = dict;
-        else if (merged.Count == 1)
-            merged.Insert(1, dict);
+        // Remove any existing theme dictionaries (Themes/Colors/*.xaml) to avoid duplicates or stale resources
+        var removeIndices = new List<int>();
+        for (int i = 0; i < merged.Count; i++)
+        {
+            try
+            {
+                var src = merged[i].Source;
+                if (src != null && src.OriginalString.IndexOf("Themes/Colors/", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    removeIndices.Add(i);
+                }
+            }
+            catch { }
+        }
+
+        // Remove from end to keep indices valid
+        for (int i = removeIndices.Count - 1; i >= 0; i--)
+            merged.RemoveAt(removeIndices[i]);
+
+        // Insert new theme dictionary after BaseTheme if present, otherwise append
+        int baseIndex = -1;
+        for (int i = 0; i < merged.Count; i++)
+        {
+            try
+            {
+                if (merged[i].Source != null && merged[i].Source.OriginalString.IndexOf("Themes/BaseTheme.xaml", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    baseIndex = i;
+                    break;
+                }
+            }
+            catch { }
+        }
+
+        if (baseIndex >= 0)
+            merged.Insert(baseIndex + 1, dict);
         else
-            merged.Insert(0, dict);
+            merged.Add(dict);
 
         ThemeChanged?.Invoke();
     }

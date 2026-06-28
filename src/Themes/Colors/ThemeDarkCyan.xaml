@@ -35,14 +35,17 @@
 
     <!-- ガントチャートのテーマ設定: 列幅・行高・ヘッダー高さ・バーの色 -->
     <!-- 値は他のテーマファイルでも同じキーで上書きできます -->
+<!--
     <sys:Double x:Key="CellWidth">22</sys:Double>
     <sys:Double x:Key="RowHeight">24</sys:Double>
     <sys:Double x:Key="HeaderHeight">34</sys:Double>
-
+-->
+    <!-- ガント進捗ライン設定（テーマごとに上書き可能） -->
+    <sys:Double x:Key="GanttProgressBarHeight">14</sys:Double>
+    <sys:Double x:Key="GanttProgressCornerRadius">1</sys:Double>
+    <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
+    
     <!-- ガントバーの既定色（テーマで一括変更したい場合に利用） -->
-    <!--
-    <SolidColorBrush x:Key="GanttBarBrush" Color="{StaticResource AccentColor}" />
-    -->
     <SolidColorBrush x:Key="GanttBarBrush" Color="#5F838383" />
     <!-- ステータス別の上書きも可能 -->
     <SolidColorBrush x:Key="GanttBarCompleteBrush" Color="#FFD4A0D4" />
@@ -52,10 +55,14 @@
     <SolidColorBrush x:Key="GanttBarErrorBrush"    Color="#FFA0A0FF" />
     <SolidColorBrush x:Key="GanttBarOverBrush"     Color="#FF7070DD" />
 
-    <!-- ガント進捗ライン設定（テーマごとに上書き可能） -->
-    <sys:Double x:Key="GanttProgressBarHeight">12</sys:Double>
-    <sys:Double x:Key="GanttProgressCornerRadius">1</sys:Double>
-    <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
+
+    <!-- ステータス色（UI の他パーツでも使用可） -->
+    <SolidColorBrush x:Key="StatusCompleteBrush" Color="#FFD4A0D4" />
+    <SolidColorBrush x:Key="StatusWaitBrush"     Color="#FFFFB3B3" />
+    <SolidColorBrush x:Key="StatusProgressBrush" Color="#FF90EE90" />
+    <SolidColorBrush x:Key="StatusWarningBrush"  Color="#FF90E0E0" />
+    <SolidColorBrush x:Key="StatusErrorBrush"    Color="#FFA0A0FF" />
+    <SolidColorBrush x:Key="StatusOverBrush"     Color="#FF7070DD" />
 
     <!--
     透過を有効化するための Window 用スタイル（明示的に適用してください）。

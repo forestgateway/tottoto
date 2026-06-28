@@ -255,17 +255,46 @@ public class TaskRowViewModel : ViewModelBase
 
     // ── ステータス別アイコン・色 ──────────────────────────
     public Brush StatusBrush => StatusToBrush(Item.Status);
-
-    public static Brush StatusToBrush(ItemStatus status) => status switch
+    public static Brush StatusToBrush(ItemStatus status)
     {
-        ItemStatus.Complete => new SolidColorBrush(Color.FromRgb(0xBB, 0x44, 0xBB)),
-        ItemStatus.Wait     => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
-        ItemStatus.Progress => new SolidColorBrush(Color.FromRgb(0x22, 0xBB, 0x22)),
-        ItemStatus.Warning  => new SolidColorBrush(Color.FromRgb(0xFF, 0xAA, 0x00)),
-        ItemStatus.Error    => new SolidColorBrush(Color.FromRgb(0xFF, 0x33, 0x33)),
-        ItemStatus.Over     => new SolidColorBrush(Color.FromRgb(0x99, 0x00, 0x00)),
-        _                   => new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
-    };
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null)
+            {
+                string key = status switch
+                {
+                    ItemStatus.Complete => "StatusCompleteBrush",
+                    ItemStatus.Wait     => "StatusWaitBrush",
+                    ItemStatus.Progress => "StatusProgressBrush",
+                    ItemStatus.Warning  => "StatusWarningBrush",
+                    ItemStatus.Error    => "StatusErrorBrush",
+                    ItemStatus.Over     => "StatusOverBrush",
+                    _                   => null,
+                };
+
+                if (key != null && res.Contains(key) && res[key] is Brush b)
+                    return b;
+
+                // Color キーも考慮
+                string colorKey = key?.Replace("Brush", "");
+                if (colorKey != null && res.Contains(colorKey) && res[colorKey] is Color c)
+                    return new SolidColorBrush(c);
+            }
+        }
+        catch { }
+
+        return status switch
+        {
+            ItemStatus.Complete => new SolidColorBrush(Color.FromRgb(0xBB, 0x44, 0xBB)),
+            ItemStatus.Wait     => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
+            ItemStatus.Progress => new SolidColorBrush(Color.FromRgb(0x22, 0xBB, 0x22)),
+            ItemStatus.Warning  => new SolidColorBrush(Color.FromRgb(0xFF, 0xAA, 0x00)),
+            ItemStatus.Error    => new SolidColorBrush(Color.FromRgb(0xFF, 0x33, 0x33)),
+            ItemStatus.Over     => new SolidColorBrush(Color.FromRgb(0x99, 0x00, 0x00)),
+            _                   => new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
+        };
+    }
 
     public string StatusIcon
     {

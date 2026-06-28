@@ -34,13 +34,40 @@
     <SolidColorBrush x:Key="WeekendBrush">#2FE8E8FF</SolidColorBrush>
     
     <SolidColorBrush x:Key="TaskHoliday2Brush">#FFEEEEFF</SolidColorBrush>  <!-- これが優先有効 -->
+    <SolidColorBrush x:Key="WindowBgBrush" Color="{StaticResource WindowBg}" />
     <!-- タスク行用の週末ブラシ（従来の薄青系を維持） -->
     <SolidColorBrush x:Key="TaskWeekendBrush">#FFE8E8FF</SolidColorBrush>
 
     <!-- ガント進捗ライン設定（テーマごとに上書き可能） -->
-    <sys:Double x:Key="GanttProgressBarHeight">14</sys:Double>
-    <sys:Double x:Key="GanttProgressCornerRadius">1</sys:Double>
-    <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
+    <sys:Double x:Key="GanttProgressBarHeight">16</sys:Double>
+    <sys:Double x:Key="GanttProgressCornerRadius">0</sys:Double>
+    <sys:Double x:Key="GanttProgressHorizontalGap">1</sys:Double>
+
+    <!-- ガントバーの既定色（テーマで上書き可能） -->
+    <SolidColorBrush x:Key="GanttBarBrush" Color="#5F838383" />
+    <!-- ステータス別の上書きも可能 -->
+    <SolidColorBrush x:Key="GanttBarCompleteBrush" Color="#FFD4A0D4" />
+    <SolidColorBrush x:Key="GanttBarWaitBrush"     Color="#FFFFB3B3" />
+    <SolidColorBrush x:Key="GanttBarProgressBrush" Color="#FF90EE90" />
+    <SolidColorBrush x:Key="GanttBarWarningBrush"  Color="#FF90E0E0" />
+    <SolidColorBrush x:Key="GanttBarErrorBrush"    Color="#FFA0A0FF" />
+    <SolidColorBrush x:Key="GanttBarOverBrush"     Color="#FF7070DD" />
+
+    <!-- ステータス色（UI の他パーツでも使用可） -->
+    <SolidColorBrush x:Key="StatusCompleteBrush" Color="#FFBB44BB" />
+    <SolidColorBrush x:Key="StatusWaitBrush"     Color="#FF4488FF" />
+    <SolidColorBrush x:Key="StatusProgressBrush" Color="#FF22BB22" />
+    <SolidColorBrush x:Key="StatusWarningBrush"  Color="#FFFFAA00" />
+    <SolidColorBrush x:Key="StatusErrorBrush"    Color="#FFFF3333" />
+    <SolidColorBrush x:Key="StatusOverBrush"     Color="#FF990000" />
+
+    <!-- Window 透過スタイル: ライトではデフォルトの枠付きウィンドウにする -->
+    <Style x:Key="TransparentWindowStyle" TargetType="Window">
+        <Setter Property="Background" Value="{DynamicResource WindowBgBrush}" />
+        <Setter Property="WindowStyle" Value="None" />
+        <!-- <Setter Property="WindowStyle" Value="SingleBorderWindow" />  -->
+        <Setter Property="AllowsTransparency" Value="False" />
+    </Style>
 
     
 </ResourceDictionary>
