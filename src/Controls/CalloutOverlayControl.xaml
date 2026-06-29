@@ -93,7 +93,10 @@ ClipToBounds="False">
                 <DataTemplate DataType="{x:Type vm:CalloutViewModel}">
                     <Grid MouseLeftButtonDown="OnCalloutMouseDown"
                           MouseMove="OnCalloutMouseMove"
-                          MouseLeftButtonUp="OnCalloutMouseUp">
+                          MouseLeftButtonUp="OnCalloutMouseUp"
+                          MouseEnter="OnCalloutMouseEnter"
+                          MouseLeave="OnCalloutMouseLeave"
+                          Background="Transparent">
                         <Grid.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="テキスト編集(_E)"

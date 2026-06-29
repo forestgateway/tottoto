@@ -37,7 +37,20 @@
     <SolidColorBrush x:Key="WindowBgBrush" Color="{StaticResource WindowBg}" />
     <!-- タスク行用の週末ブラシ（従来の薄青系を維持） -->
     <SolidColorBrush x:Key="TaskWeekendBrush">#FFE8E8FF</SolidColorBrush>
-
+    <!-- テーマ切替を確実にするため、ブラシは各テーマ辞書で具体色のキーから直接生成する -->
+    <SolidColorBrush x:Key="AccentBrush"      Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="PanelBgBrush"     Color="{StaticResource PanelBg}" />
+    <SolidColorBrush x:Key="HeaderBgBrush"    Color="{StaticResource HeaderBg}" />
+    <SolidColorBrush x:Key="RowSelectedBrush" Color="{StaticResource RowSelected}" />
+    <SolidColorBrush x:Key="WindowFgBrush"    Color="{StaticResource WindowFg}" />
+    <SolidColorBrush x:Key="SubTextBrush"     Color="{StaticResource SubText}" />
+    <SolidColorBrush x:Key="BorderBrush"      Color="{StaticResource Border}" />
+    <SolidColorBrush x:Key="ChartBgBrush"     Color="{StaticResource ChartBg}" />
+    <SolidColorBrush x:Key="RowEvenBrush"     Color="{StaticResource RowEven}" />
+    <SolidColorBrush x:Key="RowOddBrush"      Color="{StaticResource RowOdd}" />
+    <SolidColorBrush x:Key="GridLineBrush"    Color="{StaticResource GridLine}" />
+    <!-- 黒★マーク色: ライト背景では黒に近い青 -->
+    <SolidColorBrush x:Key="MarkBlackBrush"   Color="#FF0A1633" />
     <!-- ガント進捗ライン設定（テーマごとに上書き可能） -->
     <sys:Double x:Key="GanttProgressBarHeight">16</sys:Double>
     <sys:Double x:Key="GanttProgressCornerRadius">0</sys:Double>

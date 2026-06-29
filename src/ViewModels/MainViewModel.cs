@@ -85,7 +85,7 @@ public class MainViewModel : ViewModelBase
             return StarFilterState switch
             {
                 1 => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
-                2 => System.Windows.Media.Brushes.Black,
+                2 => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("MarkBlackBrush"),
                 _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SubTextBrush")
             };
         }
@@ -270,7 +270,11 @@ public class MainViewModel : ViewModelBase
         RefreshChartDays();
 
         // テーマ切替時にチャートセル（行背景・オーバーレイ色）を再計算する
-        ThemeService.ThemeChanged += () => Application.Current?.Dispatcher.BeginInvoke(new Action(RefreshAllChartCells));
+        ThemeService.ThemeChanged += () => Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            RefreshAllChartCells();
+            OnPropertyChanged(nameof(StarFilterBrush));
+        }));
 
         InitCommands();
 
@@ -1429,8 +1433,12 @@ public class MainViewModel : ViewModelBase
     {
         RefreshChartDays();
         foreach (var row in FlatItems)
+        {
             row.RefreshChartCells(_chartStart, CellCount, Today, Holidays,
                                   _settings.DateCountLevel);
+            // テーマ切替で行背景色などのブラシも更新されるよう再通知する
+            row.Refresh();
+        }
         RefreshAllCalloutColumns();
     }
 
@@ -1634,7 +1642,7 @@ public class MainViewModel : ViewModelBase
 
         // 先頭の非空行を取り出す
         var firstLine = text
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Trim())
             .FirstOrDefault(l => l.Length > 0)
             ?? text.Trim();

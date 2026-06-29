@@ -177,7 +177,7 @@ public partial class MainWindow
             var text = data.GetData(DataFormats.UnicodeText) as string;
             if (!string.IsNullOrEmpty(text))
             {
-                var first = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+                var first = text.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
                 if (IsUrl(first)) return first;
             }
         }

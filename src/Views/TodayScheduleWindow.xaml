@@ -59,7 +59,7 @@
 
         <Border Grid.Row="1" Height="{DynamicResource HeaderHeight}"
                 Background="{DynamicResource HeaderBgBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid x:Name="TaskHeaderGrid">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="ColMark"   Width="36" MinWidth="28"/>
@@ -159,7 +159,7 @@
                             Height="{DynamicResource RowHeight}">
                         <Grid>
                             <!-- 選択色オーバーレイ（ヒットテスト無効にして下の操作を妨げない） -->
-                            <Border Background="{StaticResource RowSelectedBrush}"
+                            <Border Background="{DynamicResource RowSelectedBrush}"
                                     BorderBrush="#FFADD6FF"
                                     BorderThickness="0,1,0,1"
                                     Visibility="{Binding IsSelected, Converter={StaticResource BoolVis}}"
@@ -267,14 +267,14 @@
                                 <Button Content="&#128221;"
                                         FontSize="11" Padding="1,0" Margin="0,0,1,0"
                                         BorderThickness="0" Background="Transparent"
-                                        Foreground="{StaticResource WindowFgBrush}" Cursor="Hand"
+                                        Foreground="{DynamicResource WindowFgBrush}" Cursor="Hand"
                                         Visibility="{Binding HasMemo, Converter={StaticResource BoolVis}}"
                                         Command="{Binding OpenMemoCommand}"
                                         ToolTip="&#12513;&#12514;&#12434;&#34920;&#31034;"/>
                                 <Button Content="&#128279;"
                                         FontSize="11" Padding="1,0"
                                         BorderThickness="0" Background="Transparent"
-                                        Foreground="{StaticResource WindowFgBrush}" Cursor="Hand"
+                                        Foreground="{DynamicResource WindowFgBrush}" Cursor="Hand"
                                         Visibility="{Binding HasLink, Converter={StaticResource BoolVis}}"
                                         Command="{Binding OpenLinkCommand}"
                                         ToolTip="{Binding Item.Link}"/>

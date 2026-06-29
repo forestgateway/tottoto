@@ -167,9 +167,16 @@ public class TaskRowViewModel : ViewModelBase
 
     private static readonly Brush s_markNone  = Brushes.Transparent;
     private static readonly Brush s_markYellow = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00)));
-    private static readonly Brush s_markBlack  = Freeze(new SolidColorBrush(Colors.Black));
 
-    public Brush MarkBrush => MarkLevel == 0 ? s_markNone : (MarkLevel == 1 ? s_markYellow : s_markBlack);
+    // 黒★は背景と反転する青（テーマの MarkBlackBrush）を使用する
+    private static Brush MarkBlackBrush()
+    {
+        if (Application.Current?.Resources is { } res && res.Contains("MarkBlackBrush") && res["MarkBlackBrush"] is Brush b)
+            return b;
+        return Brushes.Black;
+    }
+
+    public Brush MarkBrush => MarkLevel == 0 ? s_markNone : (MarkLevel == 1 ? s_markYellow : MarkBlackBrush());
 
     public ICommand ToggleMarkCommand { get; }
 
@@ -262,7 +269,7 @@ public class TaskRowViewModel : ViewModelBase
             var res = Application.Current?.Resources;
             if (res != null)
             {
-                string key = status switch
+                string? key = status switch
                 {
                     ItemStatus.Complete => "StatusCompleteBrush",
                     ItemStatus.Wait     => "StatusWaitBrush",
@@ -277,7 +284,7 @@ public class TaskRowViewModel : ViewModelBase
                     return b;
 
                 // Color キーも考慮
-                string colorKey = key?.Replace("Brush", "");
+                string? colorKey = key?.Replace("Brush", "");
                 if (colorKey != null && res.Contains(colorKey) && res[colorKey] is Color c)
                     return new SolidColorBrush(c);
             }
@@ -545,7 +552,7 @@ public class TaskRowViewModel : ViewModelBase
             if (res != null)
             {
                 var status = (ItemStatus)cellStatus;
-                string key = status switch
+                string? key = status switch
                 {
                     ItemStatus.Skip     => "GanttBarSkipBrush",
                     ItemStatus.Complete => "GanttBarCompleteBrush",
@@ -640,6 +647,7 @@ public class TaskRowViewModel : ViewModelBase
         OnPropertyChanged(nameof(StatusIcon));
         OnPropertyChanged(nameof(IsCompletedFolder));
         OnPropertyChanged(nameof(RowBackground));
+        OnPropertyChanged(nameof(MarkBrush));
         OnPropertyChanged(nameof(HasMemo));
         OnPropertyChanged(nameof(HasLink));
         OnPropertyChanged(nameof(ExpandGlyph));

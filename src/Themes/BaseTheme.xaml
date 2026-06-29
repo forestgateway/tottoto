@@ -2,20 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <!-- カラーは各テーマの辞書 (Themes/Colors/*.xaml) で定義されます -->
-    <!-- BaseTheme はブラシのみを定義し、ブラシの Color はテーマ辞書の Color リソースを DynamicResource で参照します -->
-    <SolidColorBrush x:Key="AccentBrush"       Color="{DynamicResource AccentColor}"/>
-    <SolidColorBrush x:Key="PanelBgBrush"      Color="{DynamicResource PanelBg}"/>
-    <SolidColorBrush x:Key="HeaderBgBrush"     Color="{DynamicResource HeaderBg}"/>
-    <SolidColorBrush x:Key="RowSelectedBrush"  Color="{DynamicResource RowSelected}"/>
-    <SolidColorBrush x:Key="WindowBgBrush"     Color="{DynamicResource WindowBg}"/>
-    <SolidColorBrush x:Key="WindowFgBrush"     Color="{DynamicResource WindowFg}"/>
-    <SolidColorBrush x:Key="SubTextBrush"      Color="{DynamicResource SubText}"/>
-    <SolidColorBrush x:Key="BorderBrush"       Color="{DynamicResource Border}"/>
-    <SolidColorBrush x:Key="ChartBgBrush"      Color="{DynamicResource ChartBg}"/>
-    <SolidColorBrush x:Key="RowEvenBrush"      Color="{DynamicResource RowEven}"/>
-    <SolidColorBrush x:Key="RowOddBrush"       Color="{DynamicResource RowOdd}"/>
-    <SolidColorBrush x:Key="GridLineBrush"     Color="{DynamicResource GridLine}"/>
+    <!-- カラー・ブラシは各テーマ辞書 (Themes/Colors/*.xaml) で定義されます。 -->
+    <!-- テーマ切替で辞書ごと差し替えるため、ブラシは BaseTheme に持たせません。 -->
 
     <!-- ── 共通定数 ──────────────────────────────────── -->
     <sys:Double x:Key="RowHeight">24</sys:Double>

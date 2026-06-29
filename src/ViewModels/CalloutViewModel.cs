@@ -63,7 +63,11 @@ public class CalloutViewModel : ViewModelBase
     public bool IsEditing
     {
         get => _isEditing;
-        private set => SetField(ref _isEditing, value);
+        private set
+        {
+            if (SetField(ref _isEditing, value))
+                OnPropertyChanged(nameof(IsVisible));
+        }
     }
 
     private string _editingText = string.Empty;
@@ -365,7 +369,20 @@ public class CalloutViewModel : ViewModelBase
     }
 
     public bool IsVisible =>
-        VisibilityMode == CalloutVisibilityMode.AlwaysVisible || _isTaskHovered || _isTaskSelected;
+        VisibilityMode == CalloutVisibilityMode.AlwaysVisible
+        || _isTaskHovered || _isTaskSelected || _isInteracting || _isEditing;
+
+    private bool _isInteracting;
+    /// <summary>吹き出し自身へのホバー・クリック・ドラッグ操作中は表示を維持する（チャートの MouseLeave で消えないようにする）。</summary>
+    public bool IsInteracting
+    {
+        get => _isInteracting;
+        set
+        {
+            if (SetField(ref _isInteracting, value))
+                OnPropertyChanged(nameof(IsVisible));
+        }
+    }
 
     // ── 日付移動（ドラッグ用） ────────────────────────────────
     /// <summary>

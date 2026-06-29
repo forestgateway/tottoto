@@ -4,7 +4,7 @@
 
     <!-- Dark Cyan theme colors -->
     <Color x:Key="AccentColor">#FF00C8FF</Color>
-    <Color x:Key="PanelBg">#A90D1B2A</Color>       <!-- メニュー -->
+    <Color x:Key="PanelBg">#FF0D1B2A</Color>       <!-- メニュー -->
     <Color x:Key="HeaderBg">#D91E3050</Color>
     <Color x:Key="RowSelected">#6600C8FF</Color>
 
@@ -32,6 +32,21 @@
     <SolidColorBrush x:Key="TaskHoliday2Brush">#193333FF</SolidColorBrush>
     <!-- Window 用のブラシ（テーマ内で使いやすいように用意） -->
     <SolidColorBrush x:Key="WindowBgBrush" Color="{StaticResource WindowBg}" />
+
+    <!-- テーマ切替を確実にするため、ブラシは各テーマ辞書で具体色のキーから直接生成する -->
+    <SolidColorBrush x:Key="AccentBrush"      Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="PanelBgBrush"     Color="{StaticResource PanelBg}" />
+    <SolidColorBrush x:Key="HeaderBgBrush"    Color="{StaticResource HeaderBg}" />
+    <SolidColorBrush x:Key="RowSelectedBrush" Color="{StaticResource RowSelected}" />
+    <SolidColorBrush x:Key="WindowFgBrush"    Color="{StaticResource WindowFg}" />
+    <SolidColorBrush x:Key="SubTextBrush"     Color="{StaticResource SubText}" />
+    <SolidColorBrush x:Key="BorderBrush"      Color="{StaticResource Border}" />
+    <SolidColorBrush x:Key="ChartBgBrush"     Color="{StaticResource ChartBg}" />
+    <SolidColorBrush x:Key="RowEvenBrush"     Color="{StaticResource RowEven}" />
+    <SolidColorBrush x:Key="RowOddBrush"      Color="{StaticResource RowOdd}" />
+    <SolidColorBrush x:Key="GridLineBrush"    Color="{StaticResource GridLine}" />
+    <!-- 黒★マーク色: ダーク背景では白に近い青 -->
+    <SolidColorBrush x:Key="MarkBlackBrush"   Color="#FFD8ECFF" />
 
     <!-- ガントチャートのテーマ設定: 列幅・行高・ヘッダー高さ・バーの色 -->
     <!-- 値は他のテーマファイルでも同じキーで上書きできます -->
@@ -75,7 +90,7 @@
       - AllowsTransparency=True は一部のパフォーマンス影響があるため必要な場合のみ使用してください。
   -->
     <Style x:Key="TransparentWindowStyle" TargetType="Window">
-        <Setter Property="Background" Value="{StaticResource WindowBgBrush}" />
+        <Setter Property="Background" Value="{DynamicResource WindowBgBrush}" />
         <Setter Property="WindowStyle" Value="None" />
         <Setter Property="AllowsTransparency" Value="True" />
     </Style>

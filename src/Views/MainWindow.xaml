@@ -470,7 +470,7 @@
                                     BorderBrush="#15000000" BorderThickness="0,0,0,1">
                                     <Grid>
                                         <!-- 選択色オーバーレイ (ヒットテスト無効にして下の操作を妨げない) -->
-                                        <Border Background="{StaticResource RowSelectedBrush}"
+                                        <Border Background="{DynamicResource RowSelectedBrush}"
                                             BorderBrush="#FFADD6FF"
                                             BorderThickness="0,1,0,1"
                                             Visibility="{Binding IsSelected, Converter={StaticResource BoolVis}}"
@@ -587,7 +587,7 @@
                                             <!-- 状態 -->
                                             <TextBlock Grid.Column="3"
                                                    Text="{Binding DaysText}"
-                                                   Foreground="{StaticResource SubTextBrush}"
+                                                   Foreground="{DynamicResource SubTextBrush}"
                                                    FontSize="12"
                                                    VerticalAlignment="Center"
                                                    HorizontalAlignment="Right"
@@ -603,7 +603,7 @@
                                                     Margin="0,0,1,0"
                                                     BorderThickness="0"
                                                     Background="Transparent"
-                                                    Foreground="{StaticResource WindowFgBrush}"
+                                                    Foreground="{DynamicResource WindowFgBrush}"
                                                     Cursor="Hand"
                                                     Visibility="{Binding HasMemo, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenMemoCommand}"
@@ -613,7 +613,7 @@
                                                     Padding="1,0"
                                                     BorderThickness="0"
                                                     Background="Transparent"
-                                                    Foreground="{StaticResource WindowFgBrush}"
+                                                    Foreground="{DynamicResource WindowFgBrush}"
                                                     Cursor="Hand"
                                                     Visibility="{Binding HasLink, Converter={StaticResource BoolVis}}"
                                                     Command="{Binding OpenLinkCommand}"
@@ -651,7 +651,7 @@
                 <GridSplitter Grid.Column="1"
                           Width="1"
                           HorizontalAlignment="Stretch"
-                          Background="{StaticResource BorderBrush}"
+                          Background="{DynamicResource BorderBrush}"
                           Cursor="SizeWE"/>
 
                 <!-- ┌── 右ペイン（ガントチャート） ─────────────────┐ -->
@@ -725,7 +725,7 @@
                                                Panel.ZIndex="10"/>
 
                         <!-- 読み込み中オーバーレイ -->
-                        <Border Background="{StaticResource ChartBgBrush}"
+                        <Border Background="{DynamicResource ChartBgBrush}"
                             Visibility="{Binding IsChartReady, Converter={StaticResource InverseBoolVis}}">
                             <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
@@ -734,7 +734,7 @@
                                        HorizontalAlignment="Center"/>
                                 <TextBlock Text="チャート読み込み中..."
                                        FontSize="13"
-                                       Foreground="{StaticResource SubTextBrush}"
+                                       Foreground="{DynamicResource SubTextBrush}"
                                        Margin="0,8,0,0"
                                        HorizontalAlignment="Center"/>
                             </StackPanel>
@@ -744,7 +744,7 @@
             </Grid>
 
             <!-- ══ ステータスバー ════════════════════════════════════ -->
-            <StatusBar Grid.Row="4" Background="{StaticResource PanelBgBrush}" Foreground="{StaticResource SubTextBrush}">
+            <StatusBar Grid.Row="4" Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource SubTextBrush}">
                 <StatusBarItem>
                     <TextBlock Text="{Binding StatusText}" FontSize="12"/>
                 </StatusBarItem>
@@ -752,7 +752,7 @@
                 <StatusBarItem HorizontalAlignment="Right">
                     <TextBlock x:Name="TodayLabel"
                            FontSize="12"
-                           Foreground="{StaticResource AccentBrush}"/>
+                           Foreground="{DynamicResource AccentBrush}"/>
                 </StatusBarItem>
             </StatusBar>
         </Grid>
