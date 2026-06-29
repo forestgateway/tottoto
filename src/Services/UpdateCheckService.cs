@@ -16,6 +16,12 @@ public class UpdateCheckService
     private const string ApiUrl =
         "https://api.github.com/repos/forestgateway/tottoto/releases";
 
+    private static readonly HttpClient s_httpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30),
+        DefaultRequestHeaders = { { "User-Agent", "tottoto-updater/1.0" } },
+    };
+
     /// <summary>現在の実行バージョンを返す（例: "1.0.0"）。</summary>
     public static string CurrentVersion
     {
@@ -31,8 +37,7 @@ public class UpdateCheckService
     /// </summary>
     public async Task<ReleaseInfo> CheckAsync(CancellationToken ct = default)
     {
-        using var client = BuildClient();
-        var dtos = await client.GetFromJsonAsync<List<ReleaseDto>>(ApiUrl, ct)
+        var dtos = await s_httpClient.GetFromJsonAsync<List<ReleaseDto>>(ApiUrl, ct)
                    ?? throw new InvalidOperationException("GitHub API からのレスポンスが空です。");
 
         if (dtos.Count == 0)
@@ -90,8 +95,7 @@ public class UpdateCheckService
             Directory.Delete(tempDir, recursive: true);
         Directory.CreateDirectory(unzipDir);
 
-        using var client = BuildClient();
-        using var resp   = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
+        using var resp = await s_httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
         resp.EnsureSuccessStatusCode();
 
         var total = resp.Content.Headers.ContentLength ?? -1L;
@@ -151,14 +155,6 @@ public class UpdateCheckService
             WindowStyle     = System.Diagnostics.ProcessWindowStyle.Hidden,
         });
         Application.Current.Dispatcher.Invoke(Application.Current.Shutdown);
-    }
-
-    private static HttpClient BuildClient()
-    {
-        var c = new HttpClient();
-        c.DefaultRequestHeaders.UserAgent.ParseAdd("tottoto-updater/1.0");
-        c.Timeout = TimeSpan.FromSeconds(30);
-        return c;
     }
 
     private sealed class ReleaseDto

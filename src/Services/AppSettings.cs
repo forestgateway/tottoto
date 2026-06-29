@@ -69,18 +69,24 @@ public class AppSettings
     private static readonly JsonSerializerOptions s_opts =
         new() { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.Never };
 
+    // 起動時の二重ロードを防ぐインメモリキャッシュ
+    private static AppSettings? _cache;
+
     public static AppSettings Load()
     {
+        if (_cache is not null) return _cache;
         try
         {
             if (File.Exists(SettingsPath))
             {
                 var json = File.ReadAllText(SettingsPath);
-                return JsonSerializer.Deserialize<AppSettings>(json, s_opts) ?? new AppSettings();
+                _cache = JsonSerializer.Deserialize<AppSettings>(json, s_opts) ?? new AppSettings();
+                return _cache;
             }
         }
         catch { /* 読み込み失敗時はデフォルト値で起動 */ }
-        return new AppSettings();
+        _cache = new AppSettings();
+        return _cache;
     }
 
     public void Save()
@@ -88,6 +94,7 @@ public class AppSettings
         try
         {
             File.WriteAllText(SettingsPath, JsonSerializer.Serialize(this, s_opts));
+            _cache = this;
         }
         catch { /* 保存失敗は無視 */ }
     }

@@ -177,7 +177,7 @@
                      Minimum="0" Maximum="1"
                      Value="{Binding Progress, Mode=OneWay}"
                      IsIndeterminate="{Binding IsChecking, Mode=OneWay}"
-                     Visibility="{Binding IsUpdating, Mode=OneWay, Converter={DynamicResource BoolVis}}"/>
+                     Visibility="{Binding IsUpdating, Mode=OneWay, Converter={StaticResource BoolVis}}"/>
 
         <!-- ステータスメッセージ -->
         <TextBlock Grid.Row="5"

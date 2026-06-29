@@ -745,19 +745,28 @@ public class MainViewModel : ViewModelBase
 
     private void DoSave(ScheduleEntry entry, string path)
     {
+        var tmpPath = path + ".tmp";
         try
         {
-            if (File.Exists(path))
-                File.Copy(path, path + "~", overwrite: true);
-
-            _fileService.Save(path, entry.Root, _settings.AutoSave,
+            // まず一時ファイルへ書き込む（書き込み途中で失敗しても元ファイルを壊さない）
+            _fileService.Save(tmpPath, entry.Root, _settings.AutoSave,
                               issueSettings: entry.IssueSettings,
                               issueCache:    entry.IssueCache.Count > 0 ? entry.IssueCache : null);
+
+            // 書き込み成功後にアトミックに置き換える
+            // File.Replace: tmp→本体、旧本体→バックアップ
+            if (File.Exists(path))
+                File.Replace(tmpPath, path, path + "~");
+            else
+                File.Move(tmpPath, path);
+
             entry.IsModified = false;
             StatusText = $"保存: {DateTime.Now:HH:mm:ss}";
         }
         catch (Exception ex)
         {
+            // 一時ファイルが残っていれば削除
+            try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
             MessageBox.Show($"保存に失敗しました。\n{ex.Message}",
                             "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
         }

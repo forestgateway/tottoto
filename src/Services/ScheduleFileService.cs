@@ -14,6 +14,9 @@ public class ScheduleFileService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    private static readonly System.Text.Encoding s_utf8NoBom =
+        new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
     // ── 保存（JSON形式） ──────────────────────────────────
     public void Save(string path, ScheduleItemBase root, bool autoSave,
                      DateTime? savedAt = null,
@@ -31,8 +34,7 @@ public class ScheduleFileService
         };
 
         var json = JsonSerializer.Serialize(dto, JsonOptions);
-        var enc  = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-        File.WriteAllText(path, json, enc);
+        File.WriteAllText(path, json, s_utf8NoBom);
     }
 
     private static List<ItemDto> SerializeChildren(ScheduleItemBase parent)
@@ -203,7 +205,7 @@ public class ScheduleFileService
 
     // ── ユーティリティ ────────────────────────────────────
     private static string ReadAllTextAuto(string path)
-        => File.ReadAllText(path, new UTF8Encoding(false));
+        => File.ReadAllText(path, s_utf8NoBom);
 
     // ── JSON DTO ─────────────────────────────────────────
     private class FileDto
