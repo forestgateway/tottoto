@@ -1,0 +1,97 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Dark Cyan theme colors -->
+    <Color x:Key="AccentColor">#FF00C8FF</Color>
+    <Color x:Key="PanelBg">#FF0D1B2A</Color>       <!-- メニュー -->
+    <Color x:Key="HeaderBg">#D91E3050</Color>
+    <Color x:Key="RowSelected">#6600C8FF</Color>
+
+    <Color x:Key="WindowBg">#A90D1B2A</Color>      <!-- タスクリスト -->
+    <Color x:Key="WindowFg">#FFD0E8FF</Color>
+    <Color x:Key="SubText">#FFAABBCC</Color>
+    <Color x:Key="Border">#CC1E3050</Color>
+    <Color x:Key="ChartBg">#A90F1E30</Color>
+
+    <!-- Row / grid colors for dark cyan theme (approximate to light scheme but dark) -->
+    <Color x:Key="RowEven">#1F0F141A</Color>
+    <Color x:Key="RowOdd">#1F0F141A</Color>
+    <Color x:Key="GridLine">#33202020</Color>
+    <Color x:Key="WeekLine">#33A0A0A0</Color>
+    <Color x:Key="CalendarDayFg">#FFD0E8FF</Color>
+
+    <!-- Calendar (month header) top strip for dark cyan theme -->
+    <Color x:Key="CalendarTopBg">#FF12171B</Color>
+    <Color x:Key="CalendarTopFg">#FFD0E8FF</Color>
+    <!-- Calendar day background and holiday shades -->
+    <Color x:Key="CalendarDayBg">#FF444444</Color>
+    <Color x:Key="CalendarHoliday1">#5F6666FF</Color>
+    <Color x:Key="CalendarHoliday2">#5F6666FF</Color>
+
+    <SolidColorBrush x:Key="TaskHoliday2Brush">#193333FF</SolidColorBrush>
+    <!-- Window 用のブラシ（テーマ内で使いやすいように用意） -->
+    <SolidColorBrush x:Key="WindowBgBrush" Color="{StaticResource WindowBg}" />
+
+    <!-- テーマ切替を確実にするため、ブラシは各テーマ辞書で具体色のキーから直接生成する -->
+    <SolidColorBrush x:Key="AccentBrush"      Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="PanelBgBrush"     Color="{StaticResource PanelBg}" />
+    <SolidColorBrush x:Key="HeaderBgBrush"    Color="{StaticResource HeaderBg}" />
+    <SolidColorBrush x:Key="RowSelectedBrush" Color="{StaticResource RowSelected}" />
+    <SolidColorBrush x:Key="WindowFgBrush"    Color="{StaticResource WindowFg}" />
+    <SolidColorBrush x:Key="SubTextBrush"     Color="{StaticResource SubText}" />
+    <SolidColorBrush x:Key="BorderBrush"      Color="{StaticResource Border}" />
+    <SolidColorBrush x:Key="ChartBgBrush"     Color="{StaticResource ChartBg}" />
+    <SolidColorBrush x:Key="RowEvenBrush"     Color="{StaticResource RowEven}" />
+    <SolidColorBrush x:Key="RowOddBrush"      Color="{StaticResource RowOdd}" />
+    <SolidColorBrush x:Key="GridLineBrush"    Color="{StaticResource GridLine}" />
+    <!-- 黒★マーク色: ダーク背景では白に近い青 -->
+    <SolidColorBrush x:Key="MarkBlackBrush"   Color="#FFD8ECFF" />
+
+    <!-- ガントチャートのテーマ設定: 列幅・行高・ヘッダー高さ・バーの色 -->
+    <!-- 値は他のテーマファイルでも同じキーで上書きできます -->
+<!--
+    <sys:Double x:Key="CellWidth">22</sys:Double>
+    <sys:Double x:Key="RowHeight">24</sys:Double>
+    <sys:Double x:Key="HeaderHeight">34</sys:Double>
+-->
+    <!-- ガント進捗ライン設定（テーマごとに上書き可能） -->
+    <sys:Double x:Key="GanttProgressBarHeight">14</sys:Double>
+    <sys:Double x:Key="GanttProgressCornerRadius">1</sys:Double>
+    <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
+    
+    <!-- ガントバーの既定色（テーマで一括変更したい場合に利用） -->
+    <SolidColorBrush x:Key="GanttBarBrush" Color="#5F838383" />
+    <!-- ステータス別の上書きも可能 -->
+    <SolidColorBrush x:Key="GanttBarCompleteBrush" Color="#FFD4A0D4" />
+    <SolidColorBrush x:Key="GanttBarWaitBrush"     Color="#FFFFB3B3" />
+    <SolidColorBrush x:Key="GanttBarProgressBrush" Color="#FF90EE90" />
+    <SolidColorBrush x:Key="GanttBarWarningBrush"  Color="#FF90E0E0" />
+    <SolidColorBrush x:Key="GanttBarErrorBrush"    Color="#FFA0A0FF" />
+    <SolidColorBrush x:Key="GanttBarOverBrush"     Color="#FF7070DD" />
+
+
+    <!-- ステータス色（UI の他パーツでも使用可） -->
+    <SolidColorBrush x:Key="StatusCompleteBrush" Color="#FFD4A0D4" />
+    <SolidColorBrush x:Key="StatusWaitBrush"     Color="#FFFFB3B3" />
+    <SolidColorBrush x:Key="StatusProgressBrush" Color="#FF90EE90" />
+    <SolidColorBrush x:Key="StatusWarningBrush"  Color="#FF90E0E0" />
+    <SolidColorBrush x:Key="StatusErrorBrush"    Color="#FFA0A0FF" />
+    <SolidColorBrush x:Key="StatusOverBrush"     Color="#FF7070DD" />
+
+    <!--
+    透過を有効化するための Window 用スタイル（明示的に適用してください）。
+    使用方法:
+      <Window Style="{StaticResource TransparentWindowStyle}" ...>
+    注意:
+      - このスタイルは WindowStyle=None と AllowsTransparency=True を設定します。
+        したがって OS の標準フレーム（タイトルバー・ボーダー）は無効になります。
+      - カスタムのタイトルバーやウィンドウ枠の描画を用意する必要があります。
+      - AllowsTransparency=True は一部のパフォーマンス影響があるため必要な場合のみ使用してください。
+  -->
+    <Style x:Key="TransparentWindowStyle" TargetType="Window">
+        <Setter Property="Background" Value="{DynamicResource WindowBgBrush}" />
+        <Setter Property="WindowStyle" Value="None" />
+        <Setter Property="AllowsTransparency" Value="True" />
+    </Style>
+</ResourceDictionary>

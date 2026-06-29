@@ -4,7 +4,9 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using todochart.ViewModels;
+using todochart.Services;
 
 namespace todochart.Views;
 
@@ -16,6 +18,12 @@ public partial class TodayScheduleWindow : Window
     {
         InitializeComponent();
         DataContext = vm;
+        // テーマに応じた Window スタイルを適用
+        ApplyThemeWindowStyle();
+        ThemeService.ThemeChanged += ApplyThemeWindowStyle;
+        // ウィンドウ状態変更で最大化ボタン表示を更新
+        this.StateChanged += (s, e) => UpdateMaximizeIcon();
+        UpdateMaximizeIcon();
         // XAML Title = "今日の予定"; append today's date here
         Title = Title + " - " + DateTime.Today.ToString("yyyy/MM/dd");
         // 選択変更時に ListBoxItem にフォーカスを移す
@@ -47,10 +55,121 @@ public partial class TodayScheduleWindow : Window
         };
     }
 
+    private void ApplyThemeWindowStyle()
+    {
+        // UI スレッドで実行
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            try
+            {
+                var styleObj = TryFindResource("TransparentWindowStyle");
+                if (styleObj is Style s)
+                {
+                    Style = s;
+                }
+                else
+                {
+                    // テーマが透明ウィンドウを提供していない場合は既定に戻す
+                    ClearValue(StyleProperty);
+                    // AllowsTransparency はスタイルに依存するため、強制的に設定しない
+                }
+            }
+            catch { }
+        }));
+    }
+
     private void OnListBoxMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (Vm.Selected is not null)
             Vm.EditCommand.Execute(null);
+    }
+
+    private void OnMinimizeClick(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e)
+    {
+        WindowState = (WindowState == WindowState.Maximized) ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void OnCloseClick(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // ダブルクリックで最大化/復元
+        if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
+        {
+            WindowState = (WindowState == WindowState.Maximized) ? WindowState.Normal : WindowState.Maximized;
+            e.Handled = true;
+            return;
+        }
+
+        // 単一クリックでドラッグ移動（ただしインタラクティブなコントロールは除外）
+        if (e.ChangedButton == MouseButton.Left && e.ClickCount == 1)
+        {
+            if (!(e.OriginalSource is DependencyObject dep && IsControlInteractive(dep)))
+            {
+                try { DragMove(); }
+                catch { }
+                e.Handled = true;
+            }
+        }
+    }
+
+    private void UpdateMaximizeIcon()
+    {
+        try
+        {
+            if (BtnMax != null)
+            {
+                BtnMax.Content = (WindowState == WindowState.Maximized) ? "❐" : "▢";
+                BtnMax.ToolTip = (WindowState == WindowState.Maximized) ? "復元" : "最大化";
+            }
+        }
+        catch { }
+    }
+
+    private static bool IsControlInteractive(DependencyObject? dep)
+    {
+        while (dep != null)
+        {
+            if (dep is System.Windows.Controls.Primitives.ButtonBase
+                || dep is System.Windows.Controls.Primitives.TextBoxBase
+                || dep is System.Windows.Controls.Menu
+                || dep is System.Windows.Controls.MenuItem
+                || dep is System.Windows.Controls.Primitives.Thumb
+                || dep is System.Windows.Controls.Primitives.ScrollBar)
+            {
+                return true;
+            }
+            dep = VisualTreeHelper.GetParent(dep);
+        }
+        return false;
+    }
+
+    private void Window_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+    {
+        // クリック元が操作可能なコントロール（ボタン等）の場合はドラッグを開始しない
+        if (e.OriginalSource is DependencyObject dep && IsControlInteractive(dep))
+            return;
+
+        // 背景やヘッダー領域をドラッグしてウィンドウを移動できるようにする
+        if (e.ButtonState == MouseButtonState.Pressed)
+        {
+            try
+            {
+                DragMove();
+            }
+            catch
+            {
+                // DragMove が失敗してもアプリを落とさない
+            }
+        }
     }
 
     private void OnNameEditorIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -109,6 +228,7 @@ public partial class TodayScheduleWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         Vm.Detach();
+        ThemeService.ThemeChanged -= ApplyThemeWindowStyle;
         base.OnClosed(e);
     }
 }

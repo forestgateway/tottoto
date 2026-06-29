@@ -4,15 +4,31 @@
         xmlns:vm="clr-namespace:todochart.ViewModels"
         xmlns:ctrl="clr-namespace:todochart.Controls"
         xmlns:conv="clr-namespace:todochart.Converters"
+        xmlns:win="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="&#20170;&#26085;&#12398;&#20104;&#23450;"
         Width="560" Height="480" MinWidth="360" MinHeight="200"
-        Background="{StaticResource WindowBgBrush}"
-        Foreground="{StaticResource WindowFgBrush}"
-        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13">
+        Background="{DynamicResource WindowBgBrush}"
+        Foreground="{DynamicResource WindowFgBrush}"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        FontFamily="Meiryo UI, Segoe UI, sans-serif" FontSize="13"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    <!-- WindowChrome を設定して WindowStyle=None のままリサイズを可能にする -->
+    <win:WindowChrome.WindowChrome>
+        <win:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+    </win:WindowChrome.WindowChrome>
+
     <Window.Resources>
+        <Style x:Key="TransparentWindowStyle" TargetType="Window">
+            <Setter Property="AllowsTransparency" Value="True"/>
+            <Setter Property="WindowStyle" Value="None"/>
+        </Style>
+
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolVis"/>
     </Window.Resources>
+
     <Window.InputBindings>
         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyItemCommand}"/>
         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutItemCommand}"/>
@@ -22,12 +38,28 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Height="{StaticResource HeaderHeight}"
-                Background="{StaticResource HeaderBgBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+        <!-- カスタムタイトルバー -->
+        <Border Grid.Row="0" Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Height="25" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown">
+            <DockPanel LastChildFill="True">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="8,0,0,0">
+                    <Image Source="/snowflake.ico" Width="16" Height="16" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" VerticalAlignment="Center" Foreground="{DynamicResource WindowFgBrush}" FontSize="13"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Button x:Name="BtnMin" Click="OnMinimizeClick" Width="40" Height="24" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="最小化">▁</Button>
+                    <Button x:Name="BtnMax" Click="OnMaximizeRestoreClick" Width="40" Height="24" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="最大化">▢</Button>
+                    <Button x:Name="BtnClose" Click="OnCloseClick" Width="40" Height="24" Style="{DynamicResource ToolBarButtonStyle}" ToolTip="閉じる">✕</Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Height="{DynamicResource HeaderHeight}"
+                Background="{DynamicResource HeaderBgBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid x:Name="TaskHeaderGrid">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="ColMark"   Width="36" MinWidth="28"/>
@@ -45,32 +77,32 @@
                         HorizontalAlignment="Center"
                         Padding="0"
                         VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StarFilterGlyph}" Style="{StaticResource ColumnHeaderStyle}" HorizontalAlignment="Center"
+                    <TextBlock Text="{Binding StarFilterGlyph}" Style="{DynamicResource ColumnHeaderStyle}" HorizontalAlignment="Center"
                                Foreground="{Binding StarFilterBrush, Mode=OneWay}"/>
                 </Button>
                 <TextBlock Grid.Column="1" Text="&#12479;&#12473;&#12463;&#21517;"
-                           Style="{StaticResource ColumnHeaderStyle}"/>
+                           Style="{DynamicResource ColumnHeaderStyle}"/>
                 <GridSplitter Grid.Column="2" Width="4" HorizontalAlignment="Stretch"
                               Background="Transparent" Cursor="SizeWE"
                               ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"/>
                 <TextBlock Grid.Column="3" Text="&#29366;&#24907;"
-                           Style="{StaticResource ColumnHeaderStyle}"/>
+                           Style="{DynamicResource ColumnHeaderStyle}"/>
                 <GridSplitter Grid.Column="4" Width="4" HorizontalAlignment="Stretch"
                               Background="Transparent" Cursor="SizeWE"
                               ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"/>
                 <TextBlock Grid.Column="5" Text="ML"
-                           Style="{StaticResource ColumnHeaderStyle}"/>
+                           Style="{DynamicResource ColumnHeaderStyle}"/>
             </Grid>
         </Border>
 
-        <ListBox x:Name="TaskListBox" Grid.Row="1"
+        <ListBox x:Name="TaskListBox" Grid.Row="2"
                  ItemsSource="{Binding TodayItems}"
                  SelectedItem="{Binding Selected, Mode=TwoWay}"
-                 Background="{StaticResource WindowBgBrush}" BorderThickness="0"
+                 Background="{DynamicResource WindowBgBrush}" BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel"
-                 ItemContainerStyle="{StaticResource TaskRowContainerStyle}"
+                 ItemContainerStyle="{DynamicResource TaskRowContainerStyle}"
                  MouseDoubleClick="OnListBoxMouseDoubleClick"
                  PreviewKeyDown="OnTaskListPreviewKeyDown">
 
@@ -124,10 +156,10 @@
                 <DataTemplate DataType="{x:Type vm:TaskRowViewModel}">
                     <Border Background="{Binding RowBackground}"
                             BorderBrush="#15000000" BorderThickness="0,0,0,1"
-                            Height="{StaticResource RowHeight}">
+                            Height="{DynamicResource RowHeight}">
                         <Grid>
                             <!-- 選択色オーバーレイ（ヒットテスト無効にして下の操作を妨げない） -->
-                            <Border Background="{StaticResource RowSelectedBrush}"
+                            <Border Background="{DynamicResource RowSelectedBrush}"
                                     BorderBrush="#FFADD6FF"
                                     BorderThickness="0,1,0,1"
                                     Visibility="{Binding IsSelected, Converter={StaticResource BoolVis}}"
@@ -189,7 +221,7 @@
                                                 CornerRadius="8"
                                                 Width="16" Height="16"
                                                 Visibility="Collapsed">
-                                            <TextBlock Text="&#x2714;"
+                                        <TextBlock Text="&#x2714;"
                                                        Foreground="White"
                                                        FontSize="8"
                                                        FontFamily="Segoe UI, sans-serif"
@@ -213,7 +245,7 @@
                                     </Grid>
                                     <TextBlock x:Name="NameLabel"
                                                Text="{Binding Name}"
-                                               Foreground="{StaticResource WindowFgBrush}"
+                                               Foreground="{DynamicResource WindowFgBrush}"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis"
                                                Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolVis}}"/>
@@ -234,13 +266,15 @@
                                         HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Button Content="&#128221;"
                                         FontSize="11" Padding="1,0" Margin="0,0,1,0"
-                                        BorderThickness="0" Background="Transparent" Cursor="Hand"
+                                        BorderThickness="0" Background="Transparent"
+                                        Foreground="{DynamicResource WindowFgBrush}" Cursor="Hand"
                                         Visibility="{Binding HasMemo, Converter={StaticResource BoolVis}}"
                                         Command="{Binding OpenMemoCommand}"
                                         ToolTip="&#12513;&#12514;&#12434;&#34920;&#31034;"/>
                                 <Button Content="&#128279;"
                                         FontSize="11" Padding="1,0"
-                                        BorderThickness="0" Background="Transparent" Cursor="Hand"
+                                        BorderThickness="0" Background="Transparent"
+                                        Foreground="{DynamicResource WindowFgBrush}" Cursor="Hand"
                                         Visibility="{Binding HasLink, Converter={StaticResource BoolVis}}"
                                         Command="{Binding OpenLinkCommand}"
                                         ToolTip="{Binding Item.Link}"/>
@@ -249,7 +283,7 @@
                         </Grid>
                     </Border>
                     <DataTemplate.Triggers>
-                        <DataTrigger Binding="{Binding Item.Completed}" Value="True">
+                    <DataTrigger Binding="{Binding Item, Converter={StaticResource ItemCompletedConverter}}" Value="True">
                             <Setter TargetName="IconText"   Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="CheckBadge" Property="Visibility" Value="Visible"/>
                         </DataTrigger>
