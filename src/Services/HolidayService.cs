@@ -14,6 +14,13 @@ public class HolidayService
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
+
+    private static readonly HttpClient s_httpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(15),
+        DefaultRequestHeaders = { { "User-Agent", "tottoto/1.0" } },
+    };
+
     // インデックス: 0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土
     private readonly int[] _weekdayLevels = new int[7];
 
@@ -147,10 +154,7 @@ public class HolidayService
 
         try
         {
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("tottoto/1.0");
-
-            var bytes = await client.GetByteArrayAsync(url);
+            var bytes = await s_httpClient.GetByteArrayAsync(url);
             // 内閣府の CSV は Shift_JIS のため、UTF-8 に変換してから解析する
             var shiftJis = Encoding.GetEncoding(932);
             var utf8Bytes = Encoding.Convert(shiftJis, Encoding.UTF8, bytes);

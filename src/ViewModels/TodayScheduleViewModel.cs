@@ -58,7 +58,7 @@ public class TodayScheduleViewModel : ViewModelBase
             return StarFilterState switch
             {
                 1 => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
-                2 => System.Windows.Media.Brushes.Black,
+                2 => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("MarkBlackBrush"),
                 _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SubTextBrush")
             };
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -43,6 +44,16 @@ public class GanttRowElement : FrameworkElement
         set => SetValue(CellsProperty, value);
     }
 
+    private static bool BrushesEqual(Brush? a, Brush? b)
+    {
+        if (ReferenceEquals(a, b)) return true;
+        if (a is null || b is null) return false;
+        if (a is SolidColorBrush sa && b is SolidColorBrush sb)
+            return sa.Color == sb.Color;
+        // Fallback: compare string representations (Brush.ToString includes color for solid brushes)
+        return string.Equals(a.ToString(), b.ToString(), StringComparison.Ordinal);
+    }
+
     public double CellWidth
     {
         get => (double)GetValue(CellWidthProperty);
@@ -70,29 +81,100 @@ public class GanttRowElement : FrameworkElement
     protected override Size MeasureOverride(Size availableSize)
     {
         int count = Cells?.Count ?? 0;
-        return new Size(count * CellWidth, 22);
+        double rowH = 22;
+        try
+        {
+            var val = TryFindResource("RowHeight");
+            if (val is double rh) rowH = rh;
+        }
+        catch { }
+        return new Size(count * CellWidth, rowH);
     }
 
-    private static readonly Brush s_hoverBrush    = new SolidColorBrush(Color.FromArgb(0x1A, 0x00, 0x78, 0xD7));
-    private static readonly Brush s_selectedBrush = new SolidColorBrush(Color.FromArgb(0x7A, 0xAD, 0xD6, 0xFF));
-    private static readonly Pen   s_selectedPen   = new(new SolidColorBrush(Color.FromArgb(0xFF, 0xAD, 0xD6, 0xFF)), 1.0);
-    private static readonly Pen   s_weekPen       = new(new SolidColorBrush(Color.FromArgb(0x33, 0x99, 0x99, 0x99)), 1.0);
-    private static readonly Pen   s_rowPen        = new(new SolidColorBrush(Color.FromArgb(0x15, 0x00, 0x00, 0x00)), 1.0);
-    private static readonly Brush s_todayOverlay  = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x88, 0x88)); // 透明度80% = alpha 51(0x33)
-    private static readonly Brush s_calloutMarker = new SolidColorBrush(Color.FromRgb(0xFF, 0x00, 0x00));
+    private Brush _hoverBrush    = Brushes.Transparent;
+    private Brush _selectedBrush = Brushes.Transparent;
+    private Pen   _selectedPen   = new Pen(Brushes.Transparent, 1.0);
+    private Pen   _weekPen       = new Pen(Brushes.Transparent, 1.0);
+    private Pen   _rowPen        = new Pen(Brushes.Transparent, 1.0);
+    private Brush _todayOverlay  = Brushes.Transparent;
+    private Brush _calloutMarker = Brushes.Red;
 
-    static GanttRowElement()
+    public GanttRowElement()
     {
-        s_hoverBrush.Freeze();
-        s_selectedBrush.Freeze();
-        ((SolidColorBrush)s_selectedPen.Brush).Freeze();
-        s_selectedPen.Freeze();
-        ((SolidColorBrush)s_weekPen.Brush).Freeze();
-        s_weekPen.Freeze();
-        ((SolidColorBrush)s_rowPen.Brush).Freeze();
-        s_rowPen.Freeze();
-        ((SolidColorBrush)s_todayOverlay).Freeze();
-        s_calloutMarker.Freeze();
+        UpdateBrushesFromResources();
+        todochart.Services.ThemeService.ThemeChanged += () => { UpdateBrushesFromResources(); InvalidateMeasure(); InvalidateVisual(); };
+    }
+
+    private void UpdateBrushesFromResources()
+    {
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res is null) return;
+
+            Color accent = res["AccentColor"] is Color ac ? ac : Color.FromRgb(0x00, 0x78, 0xD7);
+            Color sub = res["SubText"] is Color sc ? sc : Color.FromRgb(0x3A, 0x3A, 0x3A);
+
+            // ブラシは可能ならテーマで定義されたブラシを利用する
+            if (res.Contains("AccentBrush") && res["AccentBrush"] is Brush ab)
+            {
+                _hoverBrush = new SolidColorBrush(((SolidColorBrush)ab).Color) { Opacity = 0.1 };
+                _selectedBrush = new SolidColorBrush(((SolidColorBrush)ab).Color) { Opacity = 0.48 };
+                _selectedPen = new Pen(ab, 1.0);
+            }
+            else
+            {
+                _hoverBrush    = new SolidColorBrush(Color.FromArgb(0x1A, accent.R, accent.G, accent.B));
+                _selectedBrush = new SolidColorBrush(Color.FromArgb(0x7A, (byte)Math.Min(accent.R + 0x4D, 255), (byte)Math.Min(accent.G + 0x5E, 255), (byte)Math.Min(accent.B + 0xFF, 255)));
+                _selectedPen   = new Pen(new SolidColorBrush(Color.FromArgb(0xFF, accent.R, accent.G, accent.B)), 1.0);
+            }
+
+            // 週境界線の色: テーマの WeekLine / WeekLineBrush を優先して使用する
+            if (res.Contains("WeekLine") && res["WeekLine"] is Color wl)
+            {
+                _weekPen = new Pen(new SolidColorBrush(wl), 1.0);
+            }
+            else if (res.Contains("WeekLineBrush") && res["WeekLineBrush"] is Brush wlbr)
+            {
+                _weekPen = new Pen(wlbr, 1.0);
+            }
+
+            // 行下線・副線の設定: GridLineBrush があれば優先し、なければ SubTextBrush を利用
+            if (res.Contains("GridLineBrush") && res["GridLineBrush"] is Brush glb)
+            {
+                _rowPen = new Pen(glb, 1.0);
+            }
+            else if (res.Contains("SubTextBrush") && res["SubTextBrush"] is Brush sb)
+            {
+                // SubTextBrush を行下線用に使う
+                _rowPen = new Pen(sb, 1.0);
+                // 未指定の場合のみ weekPen を SubTextBrush にフォールバック
+                if (_weekPen == null || (_weekPen.Brush is SolidColorBrush scb && scb.Color == default))
+                    _weekPen = new Pen(sb, 1.0);
+            }
+            else
+            {
+                // フォールバックカラー
+                _weekPen = _weekPen ?? new Pen(new SolidColorBrush(Color.FromArgb(0x33, sub.R, sub.G, sub.B)), 1.0);
+                _rowPen  = new Pen(new SolidColorBrush(Color.FromArgb(0x15, sub.R, sub.G, sub.B)), 1.0);
+            }
+
+            if (res.Contains("TodayOverlayBrush") && res["TodayOverlayBrush"] is Brush to)
+                _todayOverlay = to;
+            else
+                _todayOverlay  = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0x88, 0x88));
+
+            // 吹き出しマーカー色: AccentBrush を使用する（テーマで変えられるように）
+            if (res.Contains("AccentBrush") && res["AccentBrush"] is Brush calloutB)
+            {
+                _calloutMarker = calloutB;
+            }
+            else if (res.Contains("AccentColor") && res["AccentColor"] is Color accentColor)
+            {
+                _calloutMarker = new SolidColorBrush(accentColor);
+            }
+        }
+        catch { }
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -102,7 +184,15 @@ public class GanttRowElement : FrameworkElement
         var calloutTexts = CalloutTexts;
         double x = 0;
         double cw = CellWidth;
-        double h = ActualHeight > 0 ? ActualHeight : 22;
+        double defaultH = 22;
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null && res.Contains("RowHeight") && res["RowHeight"] is double rh2)
+                defaultH = rh2;
+        }
+        catch { }
+        double h = ActualHeight > 0 ? ActualHeight : defaultH;
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         int hoverCol = HoveredColumnIndex;
         bool isSelected = IsSelected;
@@ -111,34 +201,167 @@ public class GanttRowElement : FrameworkElement
 
         double todayX = -1;
 
-        for (int i = 0; i < Cells.Count; i++)
+
+        // ガントバーの描画: 隣接する同色のセルをまとめて 1 つの角丸矩形で描画します。
+        // これによりセル間の微小な隙間を防ぎ、角丸・高さをテーマリソースで制御できます。
+        double defaultBarHeight = Math.Max(0, h - 4.0);
+        double cornerRadius = 3.0;
+        double horizontalGap = 0.0; // セル間の横マージン (0 にすれば隙間なし)
+        try
+        {
+            var val1 = TryFindResource("GanttProgressBarHeight");
+            if (val1 is double bh) defaultBarHeight = bh;
+            var val2 = TryFindResource("GanttProgressCornerRadius");
+            if (val2 is double cr) cornerRadius = cr;
+            var val3 = TryFindResource("GanttProgressHorizontalGap");
+            if (val3 is double hg) horizontalGap = hg;
+        }
+        catch { }
+
+        // Draw row base (striped background) first so overlays (weekend/holiday) can be drawn above it.
+        double totalW = Cells.Count * cw;
+        if (Cells.Count > 0)
+        {
+            var first = Cells[0];
+            if (first.RowBase is not null)
+                dc.DrawRectangle(first.RowBase, null, new Rect(0, 0, totalW, h));
+        }
+
+        int i = 0;
+        while (i < Cells.Count)
         {
             var c = Cells[i];
             var rect = new Rect(x, 0, cw, h);
 
-            // セル背景（横縞・土日）
-            dc.DrawRectangle(c.Background, null, rect);
-
-            // タスクバー：セルより上下3px・左右2px小さい正方形
-            if (c.BarBrush is not null)
+            // オーバーレイ（週末・祝日の色）は行ベースの縞の上に描画する
+            if (c.OverlayBrush is not null)
             {
-                const double marginX = 0.6;
-                const double marginY = 2.0;
-                var barRect = new Rect(x + marginX, marginY, cw - marginX * 2, h - marginY * 2);
-                dc.DrawRectangle(c.BarBrush, null, barRect);
+                dc.DrawRectangle(c.OverlayBrush, null, rect);
             }
 
-            if (isSelected)
-                dc.DrawRectangle(s_selectedBrush, null, rect);
-            if (i == hoverCol)
-                dc.DrawRectangle(s_hoverBrush, null, rect);
+            if (c.BarBrush is not null)
+            {
+                // 連続する同一色のセルをまとめる
+                int j = i + 1;
+                while (j < Cells.Count && BrushesEqual(Cells[j].BarBrush, c.BarBrush)) j++;
 
-            // 日曜と月曜の間に縦線（月曜セルの左端）
+                double startXAbs = x; // セグメントの先頭セルの x
+                double startX = startXAbs + horizontalGap / 2.0;
+                double segmentWidth = (j - i) * cw - horizontalGap;
+                double barHeight = Math.Min(defaultBarHeight, h);
+                double marginY = Math.Max(0, (h - barHeight) / 2.0);
+
+                // セグメントにまたがるセルのオーバーレイ（週末・祝日）を各セルごとに描画する
+                for (int m = i; m < j; m++)
+                {
+                    var oc = Cells[m];
+                    if (oc.OverlayBrush is not null)
+                    {
+                        double cellX = startXAbs + (m - i) * cw;
+                        dc.DrawRectangle(oc.OverlayBrush, null, new Rect(cellX, 0, cw, h));
+                    }
+ 
+                   // セグメント内の週境界線を進捗バーの前に描画する（縞背景->オーバーレイ->週境界線->進捗バー の順序を確保）
+                    if (oc.Date.DayOfWeek == DayOfWeek.Monday)
+                    {
+                        double cellX = startXAbs + (m - i) * cw;
+                        double lx = cellX + snapOffset;
+                        dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
+                    }
+                }
+
+                // 各日毎に水平ギャップを適用するため、セグメント全体を1つの矩形で描くのではなく
+                // セルごとに内側幅 (cw - horizontalGap) の矩形を描画する。
+                // ただし開始・終了は角丸キャップを描く。
+                bool segStartRounded = Cells[i].IsTaskStart;
+                bool segEndRounded = Cells[j - 1].IsTaskEnd;
+
+                double envelopeWidth = Math.Max(0.0, (j - i) * cw - horizontalGap);
+                double capRadius = Math.Max(0.0, cornerRadius);
+                double maxCap = barHeight / 2.0;
+                if (capRadius > maxCap) capRadius = maxCap;
+                if (capRadius > envelopeWidth / 2.0) capRadius = envelopeWidth / 2.0;
+
+                double innerCellWidth = Math.Max(0.0, cw - horizontalGap);
+                double firstCellInnerX = startXAbs + horizontalGap / 2.0;
+
+                // 各セルごとに矩形を描画してセル間に horizontalGap を確保する
+                for (int m = i; m < j; m++)
+                {
+                    double cellInnerX = startXAbs + (m - i) * cw + horizontalGap / 2.0;
+                    if (innerCellWidth > 0)
+                        dc.DrawRectangle(c.BarBrush, null, new Rect(cellInnerX, marginY, innerCellWidth, barHeight));
+                }
+
+                // 左キャップ（丸める場合）: 最初のセルの内側矩形の左端に合わせて描画
+                if (segStartRounded && capRadius > 0)
+                {
+                    var leftCenter = new Point(firstCellInnerX + capRadius, marginY + barHeight / 2.0);
+                    dc.DrawEllipse(c.BarBrush, null, leftCenter, capRadius, barHeight / 2.0);
+                }
+
+                // 右キャップ（丸める場合）: 最後のセルの内側矩形の右端に合わせて描画
+                if (segEndRounded && capRadius > 0)
+                {
+                    double lastCellInnerX = startXAbs + (j - 1 - i) * cw + horizontalGap / 2.0;
+                    var rightCenter = new Point(lastCellInnerX + innerCellWidth - capRadius, marginY + barHeight / 2.0);
+                    dc.DrawEllipse(c.BarBrush, null, rightCenter, capRadius, barHeight / 2.0);
+                }
+
+                // セグメント内の各セルに対して選択・ホバー・シンボル・Today マーカー・吹き出しを描画
+                for (int k = i; k < j; k++)
+                {
+                    var ck = Cells[k];
+                    double cellX = startXAbs + (k - i) * cw;
+                    var cellRect = new Rect(cellX, 0, cw, h);
+
+                    if (isSelected)
+                        dc.DrawRectangle(_selectedBrush, null, cellRect);
+                    if (k == hoverCol)
+                        dc.DrawRectangle(_hoverBrush, null, cellRect);
+
+                    if (!string.IsNullOrEmpty(ck.Symbol))
+                    {
+                        var ft = new FormattedText(ck.Symbol,
+                            System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                            new Typeface("Segoe UI"), 9, ck.Foreground, dpi);
+                        dc.DrawText(ft, new Point(cellX + (cw - ft.Width) / 2, (h - ft.Height) / 2));
+                    }
+
+                    if (ck.IsToday) todayX = cellX;
+
+                    if (calloutTexts is not null && calloutTexts.ContainsKey(k))
+                    {
+                        const double ts = 5.0;
+                        var geo = new StreamGeometry();
+                        using (var ctx = geo.Open())
+                        {
+                            ctx.BeginFigure(new Point(cellX + cw - ts, 0), isFilled: true, isClosed: true);
+                            ctx.LineTo(new Point(cellX + cw, 0), isStroked: false, isSmoothJoin: false);
+                            ctx.LineTo(new Point(cellX + cw, ts), isStroked: false, isSmoothJoin: false);
+                        }
+                        geo.Freeze();
+                        dc.DrawGeometry(_calloutMarker, null, geo);
+                    }
+                }
+
+                // advance i and x by the merged segment
+                x += (j - i) * cw;
+                i = j;
+                continue; // skip the usual single-step x += cw below
+            }
+
+            // バーが無いセルはそのまま処理（週線・選択・ホバー・シンボル等）
             if (c.Date.DayOfWeek == DayOfWeek.Monday)
             {
                 double lx = x + snapOffset;
-                dc.DrawLine(s_weekPen, new Point(lx, 0), new Point(lx, h));
+                dc.DrawLine(_weekPen, new Point(lx, 0), new Point(lx, h));
             }
+
+            if (isSelected)
+                dc.DrawRectangle(_selectedBrush, null, rect);
+            if (i == hoverCol)
+                dc.DrawRectangle(_hoverBrush, null, rect);
 
             if (!string.IsNullOrEmpty(c.Symbol))
             {
@@ -162,27 +385,28 @@ public class GanttRowElement : FrameworkElement
                     ctx.LineTo(new Point(x + cw, ts), isStroked: false, isSmoothJoin: false);
                 }
                 geo.Freeze();
-                dc.DrawGeometry(s_calloutMarker, null, geo);
+                        dc.DrawGeometry(_calloutMarker, null, geo);
             }
 
             x += cw;
+            i++;
         }
 
-        // 行下端に横線（タスクリストと同色）
-        double totalW = Cells.Count * cw;
+        // 行下端に横線（_rowPen: GridLineBrush またはフォールバック）
+        // totalW はループ前に計算済み
         double ly = h - snapOffset;
-        dc.DrawLine(s_rowPen, new Point(0, ly), new Point(totalW, ly));
+        dc.DrawLine(_rowPen, new Point(0, ly), new Point(totalW, ly));
 
         // 今日列のオーバーレイを最後に重ねる（タスクバーの色を残しつつ薄い赤を載せる）
         if (todayX >= 0)
-            dc.DrawRectangle(s_todayOverlay, null, new Rect(todayX, 0, cw, h));
+            dc.DrawRectangle(_todayOverlay, null, new Rect(todayX, 0, cw, h));
 
         // 選択時に外枠線を描画（上下1px、完全不透明の選択色）
         if (isSelected)
         {
             double selW = Cells.Count * cw;
-            dc.DrawLine(s_selectedPen, new Point(0, snapOffset),     new Point(selW, snapOffset));
-            dc.DrawLine(s_selectedPen, new Point(0, h - snapOffset), new Point(selW, h - snapOffset));
+            dc.DrawLine(_selectedPen, new Point(0, snapOffset),     new Point(selW, snapOffset));
+            dc.DrawLine(_selectedPen, new Point(0, h - snapOffset), new Point(selW, h - snapOffset));
         }
     }
 

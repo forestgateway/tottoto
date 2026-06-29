@@ -53,11 +53,13 @@ public partial class MainWindow
 
     private void OnChartMouseMove(object sender, MouseEventArgs e)
     {
-        if (_chartTaskShiftDragging)
+            if (_chartTaskShiftDragging)
         {
             if (e.LeftButton != MouseButtonState.Pressed)
             {
-                EndChartTaskShift();
+                    // Mouse released outside: commit previewed shift
+                    try { Vm.CommitShiftSelectedPreview(); } catch { }
+                    EndChartTaskShift();
             }
             else
             {
@@ -65,11 +67,12 @@ public partial class MainWindow
                 double deltaX        = e.GetPosition(ChartBodyScroll).X - _chartTaskShiftDragStart.X;
                 int    shiftDays     = (int)(deltaX / dragCellWidth);
                 int    diff          = shiftDays - _chartTaskShiftAppliedDays;
-                if (diff != 0 && _chartTaskShiftItem is not null && Vm.Selected?.Item == _chartTaskShiftItem)
-                {
-                    Vm.ShiftSelectedKeepingDurationBy(diff);
-                    _chartTaskShiftAppliedDays = shiftDays;
-                }
+                    if (diff != 0 && _chartTaskShiftItem is not null && Vm.Selected?.Item == _chartTaskShiftItem)
+                    {
+                        // Apply lightweight preview shift to avoid heavy list/chart rebuild on every mouse move
+                        Vm.ShiftSelectedPreviewBy(diff);
+                        _chartTaskShiftAppliedDays = shiftDays;
+                    }
                 e.Handled = true;
             }
         }
@@ -119,6 +122,8 @@ public partial class MainWindow
     {
         if (_chartTaskShiftDragging)
         {
+            // Commit the previewed shift once when mouse released
+            try { Vm.CommitShiftSelectedPreview(); } catch { }
             EndChartTaskShift();
             e.Handled = true;
         }

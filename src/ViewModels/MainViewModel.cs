@@ -85,7 +85,7 @@ public class MainViewModel : ViewModelBase
             return StarFilterState switch
             {
                 1 => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xD7, 0x00)),
-                2 => System.Windows.Media.Brushes.Black,
+                2 => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("MarkBlackBrush"),
                 _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SubTextBrush")
             };
         }
@@ -265,7 +265,16 @@ public class MainViewModel : ViewModelBase
 
         _chartStart    = DateTime.Today.AddDays(_settings.ChartOffsetFromToday);
         _hideCompleted = _settings.HideCompleted;
+        // 現在のテーマ名を設定ファイルから読み込む
+        _currentTheme = ThemeService.IsValidTheme(_settings.ThemeName) ? _settings.ThemeName : "Light";
         RefreshChartDays();
+
+        // テーマ切替時にチャートセル（行背景・オーバーレイ色）を再計算する
+        ThemeService.ThemeChanged += () => Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            RefreshAllChartCells();
+            OnPropertyChanged(nameof(StarFilterBrush));
+        }));
 
         InitCommands();
 
@@ -498,6 +507,13 @@ public class MainViewModel : ViewModelBase
         {
             if (p is not string name) return;
             CurrentTheme = name;
+            try
+            {
+                ThemeService.ApplyTheme(name);
+                _settings.ThemeName = name;
+                _settings.Save();
+            }
+            catch { }
         });
 
         CopyItemCommand  = new RelayCommand(CopySelected,  () => Selected is not null);
@@ -729,19 +745,28 @@ public class MainViewModel : ViewModelBase
 
     private void DoSave(ScheduleEntry entry, string path)
     {
+        var tmpPath = path + ".tmp";
         try
         {
-            if (File.Exists(path))
-                File.Copy(path, path + "~", overwrite: true);
-
-            _fileService.Save(path, entry.Root, _settings.AutoSave,
+            // まず一時ファイルへ書き込む（書き込み途中で失敗しても元ファイルを壊さない）
+            _fileService.Save(tmpPath, entry.Root, _settings.AutoSave,
                               issueSettings: entry.IssueSettings,
                               issueCache:    entry.IssueCache.Count > 0 ? entry.IssueCache : null);
+
+            // 書き込み成功後にアトミックに置き換える
+            // File.Replace: tmp→本体、旧本体→バックアップ
+            if (File.Exists(path))
+                File.Replace(tmpPath, path, path + "~");
+            else
+                File.Move(tmpPath, path);
+
             entry.IsModified = false;
             StatusText = $"保存: {DateTime.Now:HH:mm:ss}";
         }
         catch (Exception ex)
         {
+            // 一時ファイルが残っていれば削除
+            try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
             MessageBox.Show($"保存に失敗しました。\n{ex.Message}",
                             "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
         }
@@ -1225,6 +1250,49 @@ public class MainViewModel : ViewModelBase
         Selected?.Refresh();
     }
 
+    /// <summary>
+    /// 軽量プレビュー移動: マウスドラッグ中にモデルの開始/終了日を移動して
+    /// 該当行のみ再描画する。UpdateAllStatuses/RefreshFlatList/MarkModified は行わない。
+    /// </summary>
+    public void ShiftSelectedPreviewBy(int deltaDays)
+    {
+        if (deltaDays == 0 || Selected is null) return;
+        var item = Selected.Item;
+        var beginDate = item.BeginDate;
+        var endDate = item.EndDate;
+
+        if (beginDate.HasValue && endDate.HasValue)
+        {
+            item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+        else
+        {
+            if (beginDate.HasValue)
+                item.BeginDate = beginDate.Value.AddDays(deltaDays);
+            if (endDate.HasValue)
+                item.EndDate = endDate.Value.AddDays(deltaDays);
+        }
+
+        // Recompute only this row's chart cells and related UI
+        Selected.RefreshChartCells(_chartStart, CellCount, Today, Holidays, _settings.DateCountLevel);
+        Selected.Refresh();
+    }
+
+    /// <summary>
+    /// ドラッグ操作のコミット: プレビューで更新済みのモデル状態を確定し
+    /// 全体のステータス更新・フラットリスト再構築・変更フラグ設定を行う。
+    /// </summary>
+    public void CommitShiftSelectedPreview()
+    {
+        if (Selected is null) return;
+        var item = Selected.Item;
+        UpdateAllStatuses();
+        RefreshFlatList();
+        MarkModifiedForItem(item);
+        Selected.Refresh();
+    }
+
     private void ShiftDate(int deltaBegin, int deltaEnd)
     {
         if (Selected is null) return;
@@ -1374,8 +1442,12 @@ public class MainViewModel : ViewModelBase
     {
         RefreshChartDays();
         foreach (var row in FlatItems)
+        {
             row.RefreshChartCells(_chartStart, CellCount, Today, Holidays,
                                   _settings.DateCountLevel);
+            // テーマ切替で行背景色などのブラシも更新されるよう再通知する
+            row.Refresh();
+        }
         RefreshAllCalloutColumns();
     }
 
@@ -1579,7 +1651,7 @@ public class MainViewModel : ViewModelBase
 
         // 先頭の非空行を取り出す
         var firstLine = text
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Trim())
             .FirstOrDefault(l => l.Length > 0)
             ?? text.Trim();

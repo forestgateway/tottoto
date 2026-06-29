@@ -167,9 +167,16 @@ public class TaskRowViewModel : ViewModelBase
 
     private static readonly Brush s_markNone  = Brushes.Transparent;
     private static readonly Brush s_markYellow = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00)));
-    private static readonly Brush s_markBlack  = Freeze(new SolidColorBrush(Colors.Black));
 
-    public Brush MarkBrush => MarkLevel == 0 ? s_markNone : (MarkLevel == 1 ? s_markYellow : s_markBlack);
+    // 黒★は背景と反転する青（テーマの MarkBlackBrush）を使用する
+    private static Brush MarkBlackBrush()
+    {
+        if (Application.Current?.Resources is { } res && res.Contains("MarkBlackBrush") && res["MarkBlackBrush"] is Brush b)
+            return b;
+        return Brushes.Black;
+    }
+
+    public Brush MarkBrush => MarkLevel == 0 ? s_markNone : (MarkLevel == 1 ? s_markYellow : MarkBlackBrush());
 
     public ICommand ToggleMarkCommand { get; }
 
@@ -255,17 +262,46 @@ public class TaskRowViewModel : ViewModelBase
 
     // ── ステータス別アイコン・色 ──────────────────────────
     public Brush StatusBrush => StatusToBrush(Item.Status);
-
-    public static Brush StatusToBrush(ItemStatus status) => status switch
+    public static Brush StatusToBrush(ItemStatus status)
     {
-        ItemStatus.Complete => new SolidColorBrush(Color.FromRgb(0xBB, 0x44, 0xBB)),
-        ItemStatus.Wait     => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
-        ItemStatus.Progress => new SolidColorBrush(Color.FromRgb(0x22, 0xBB, 0x22)),
-        ItemStatus.Warning  => new SolidColorBrush(Color.FromRgb(0xFF, 0xAA, 0x00)),
-        ItemStatus.Error    => new SolidColorBrush(Color.FromRgb(0xFF, 0x33, 0x33)),
-        ItemStatus.Over     => new SolidColorBrush(Color.FromRgb(0x99, 0x00, 0x00)),
-        _                   => new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
-    };
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null)
+            {
+                string? key = status switch
+                {
+                    ItemStatus.Complete => "StatusCompleteBrush",
+                    ItemStatus.Wait     => "StatusWaitBrush",
+                    ItemStatus.Progress => "StatusProgressBrush",
+                    ItemStatus.Warning  => "StatusWarningBrush",
+                    ItemStatus.Error    => "StatusErrorBrush",
+                    ItemStatus.Over     => "StatusOverBrush",
+                    _                   => null,
+                };
+
+                if (key != null && res.Contains(key) && res[key] is Brush b)
+                    return b;
+
+                // Color キーも考慮
+                string? colorKey = key?.Replace("Brush", "");
+                if (colorKey != null && res.Contains(colorKey) && res[colorKey] is Color c)
+                    return new SolidColorBrush(c);
+            }
+        }
+        catch { }
+
+        return status switch
+        {
+            ItemStatus.Complete => new SolidColorBrush(Color.FromRgb(0xBB, 0x44, 0xBB)),
+            ItemStatus.Wait     => new SolidColorBrush(Color.FromRgb(0x44, 0x88, 0xFF)),
+            ItemStatus.Progress => new SolidColorBrush(Color.FromRgb(0x22, 0xBB, 0x22)),
+            ItemStatus.Warning  => new SolidColorBrush(Color.FromRgb(0xFF, 0xAA, 0x00)),
+            ItemStatus.Error    => new SolidColorBrush(Color.FromRgb(0xFF, 0x33, 0x33)),
+            ItemStatus.Over     => new SolidColorBrush(Color.FromRgb(0x99, 0x00, 0x00)),
+            _                   => new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
+        };
+    }
 
     public string StatusIcon
     {
@@ -289,10 +325,30 @@ public class TaskRowViewModel : ViewModelBase
     /// <summary>フォルダかつ全タスク完了のとき true。アイコン背景色切り替えに使用。</summary>
     public bool IsCompletedFolder => IsFolder && Item.Status == ItemStatus.Complete;
 
-    private static readonly Brush s_rowEven = Freeze(new SolidColorBrush(Colors.White));
-    private static readonly Brush s_rowOdd  = Freeze(new SolidColorBrush(Color.FromRgb(0xF8, 0xF8, 0xF8)));
+    // 行の背景色はテーマリソースから取得する（動的に変わる可能性があるためキャッシュしない）
+    private static Brush GetEvenRowBrush()
+    {
+        var res = Application.Current?.Resources;
+        if (res != null)
+        {
+            if (res.Contains("RowEvenBrush") && res["RowEvenBrush"] is Brush re) return re;
+            if (res.Contains("WindowBgBrush") && res["WindowBgBrush"] is Brush wb) return wb;
+        }
+        return new SolidColorBrush(Colors.White);
+    }
 
-    public Brush RowBackground => _rowIndex % 2 == 0 ? s_rowEven : s_rowOdd;
+    private static Brush GetOddRowBrush()
+    {
+        var res = Application.Current?.Resources;
+        if (res != null)
+        {
+            if (res.Contains("RowOddBrush") && res["RowOddBrush"] is Brush ro) return ro;
+            if (res.Contains("PanelBgBrush") && res["PanelBgBrush"] is Brush pb) return pb;
+        }
+        return new SolidColorBrush(Color.FromRgb(0xF8, 0xF8, 0xF8));
+    }
+
+    public Brush RowBackground => _rowIndex % 2 == 0 ? GetEvenRowBrush() : GetOddRowBrush();
 
     // ── チャートセル ─────────────────────────────────────
     private IReadOnlyList<ChartCellInfo> _chartCells = Array.Empty<ChartCellInfo>();
@@ -306,7 +362,7 @@ public class TaskRowViewModel : ViewModelBase
                                   int appDateCountLv)
     {
         var cells = new List<ChartCellInfo>(cellCount);
-        var rowBase = _rowIndex % 2 == 0 ? s_rowEven : s_rowOdd;
+        var rowBase = _rowIndex % 2 == 0 ? GetEvenRowBrush() : GetOddRowBrush();
 
         for (int i = 0; i < cellCount; i++)
         {
@@ -315,6 +371,55 @@ public class TaskRowViewModel : ViewModelBase
             var isToday = date.Date == today.Date;
 
             int cellStatus = ComputeCellStatus(date, today, appDateCountLv, hlv, holidays);
+            // Determine overlay (holiday/weekend) brush without replacing the row base.
+            Brush? overlay = null;
+            try
+            {
+                var res = Application.Current?.Resources;
+                if (res != null)
+                {
+                    if (hlv >= 2)
+                    {
+                        if (res.Contains("TaskHoliday2") && res["TaskHoliday2"] is Color tch2)
+                            overlay = new SolidColorBrush(tch2);
+                        else if (res.Contains("TaskHoliday2Brush") && res["TaskHoliday2Brush"] is Brush th2b)
+                            overlay = th2b;
+                        else if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb)
+                            overlay = twb;
+                    }
+                    else if (hlv == 1)
+                    {
+                        if (res.Contains("TaskHoliday1") && res["TaskHoliday1"] is Color tch1)
+                            overlay = new SolidColorBrush(tch1);
+                        else if (res.Contains("TaskHoliday1Brush") && res["TaskHoliday1Brush"] is Brush th1b)
+                            overlay = th1b;
+                        else if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb1)
+                            overlay = twb1;
+                    }
+                    else
+                    {
+                        // Non-holiday but weekend
+                        if ((date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+                            && res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb2)
+                        {
+                            overlay = twb2;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // IsTaskStart/IsTaskEnd は隣接セルの BarBrush を見て決める（開始・終了のみ角丸にするため）
+            bool isStart = false, isEnd = false;
+            if (cellStatus >= 0)
+            {
+                // 前のセルが存在しないかバーが続いていなければ開始
+                if (i == 0 || ComputeCellStatus(chartStart.AddDays(i - 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i - 1)), holidays) < 0)
+                    isStart = true;
+                // 次のセルが存在しないかバーが続いていなければ終了
+                if (i == cellCount - 1 || ComputeCellStatus(chartStart.AddDays(i + 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i + 1)), holidays) < 0)
+                    isEnd = true;
+            }
 
             cells.Add(new ChartCellInfo
             {
@@ -322,9 +427,13 @@ public class TaskRowViewModel : ViewModelBase
                 Status     = (ItemStatus)cellStatus,
                 IsToday    = isToday,
                 HolidayLv  = hlv,
-                Background = CellBackground(cellStatus, hlv, date, rowBase),
+                Background = rowBase,
+                RowBase    = rowBase,
+                OverlayBrush = overlay,
                 Symbol     = CellSymbol(cellStatus, isToday),
                 BarBrush   = cellStatus >= 0 ? BarBrush(cellStatus) : null,
+                IsTaskStart = isStart,
+                IsTaskEnd   = isEnd,
             });
         }
 
@@ -378,7 +487,8 @@ public class TaskRowViewModel : ViewModelBase
     }
 
     // ── セル背景ブラシのキャッシュ ────────────────────────
-    private static readonly Brush s_bgWeekend  = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xFF)));
+    // 既定の週末ブラシ（テーマ未設定時のフォールバック）
+    private static readonly Brush s_bgWeekendFallback  = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xFF)));
 
     // ── バー（小正方形）ブラシのキャッシュ ───────────────
     private static readonly Brush s_barSkip     = Freeze(new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)));
@@ -391,23 +501,91 @@ public class TaskRowViewModel : ViewModelBase
 
     private static Brush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
 
-    private static Brush CellBackground(int cellStatus, int hlv, DateTime date, Brush rowBase)
+    private Brush CellBackground(int cellStatus, int hlv, DateTime date, Brush rowBase)
     {
-        if (hlv >= 1) return s_bgWeekend;
+        var res = Application.Current?.Resources;
+
+        // タスク行用の休日ブラシはテーマ内で TaskHoliday2 / TaskHoliday2Brush / TaskHoliday1 / TaskHoliday1Brush
+        // また土日専用は TaskWeekendBrush を参照する。ヘッダー用のキーとは分離しているため、
+        // ここでは CalendarHoliday* や WeekendBrush を参照しない。
+        if (res != null)
+        {
+            if (hlv >= 2)
+            {
+                if (res.Contains("TaskHoliday2") && res["TaskHoliday2"] is Color tch2)
+                    return new SolidColorBrush(tch2);
+                if (res.Contains("TaskHoliday2Brush") && res["TaskHoliday2Brush"] is Brush th2b)
+                    return th2b;
+                // フォールバック: TaskWeekendBrush
+                if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb)
+                    return twb;
+            }
+
+            if (hlv == 1)
+            {
+                if (res.Contains("TaskHoliday1") && res["TaskHoliday1"] is Color tch1)
+                    return new SolidColorBrush(tch1);
+                if (res.Contains("TaskHoliday1Brush") && res["TaskHoliday1Brush"] is Brush th1b)
+                    return th1b;
+                if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb1)
+                    return twb1;
+            }
+
+            // 祝日扱いでないが土日の場合、タスク行はテーマの TaskWeekendBrush があれば使用する
+            if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+            {
+                if (res.Contains("TaskWeekendBrush") && res["TaskWeekendBrush"] is Brush twb2)
+                    return twb2;
+            }
+        }
+
+        // デフォルトは行背景を使用（従来の動作）
         return rowBase;
     }
 
-    private static Brush? BarBrush(int cellStatus) => ((ItemStatus)cellStatus) switch
+    private static Brush? BarBrush(int cellStatus)
     {
-        ItemStatus.Skip     => s_barSkip,
-        ItemStatus.Complete => s_barComplete,
-        ItemStatus.Wait     => s_barWait,
-        ItemStatus.Progress => s_barProgress,
-        ItemStatus.Warning  => s_barWarning,
-        ItemStatus.Error    => s_barError,
-        ItemStatus.Over     => s_barOver,
-        _                   => null,
-    };
+        // テーマリソースで上書き可能: GanttBar{Status}Brush (例: GanttBarProgressBrush)
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null)
+            {
+                var status = (ItemStatus)cellStatus;
+                string? key = status switch
+                {
+                    ItemStatus.Skip     => "GanttBarSkipBrush",
+                    ItemStatus.Complete => "GanttBarCompleteBrush",
+                    ItemStatus.Wait     => "GanttBarWaitBrush",
+                    ItemStatus.Progress => "GanttBarProgressBrush",
+                    ItemStatus.Warning  => "GanttBarWarningBrush",
+                    ItemStatus.Error    => "GanttBarErrorBrush",
+                    ItemStatus.Over     => "GanttBarOverBrush",
+                    _                   => null,
+                };
+
+                if (key != null && res.Contains(key) && res[key] is Brush b)
+                    return b;
+
+                // 汎用キー
+                if (res.Contains("GanttBarBrush") && res["GanttBarBrush"] is Brush gb)
+                    return gb;
+            }
+        }
+        catch { }
+
+        return ((ItemStatus)cellStatus) switch
+        {
+            ItemStatus.Skip     => s_barSkip,
+            ItemStatus.Complete => s_barComplete,
+            ItemStatus.Wait     => s_barWait,
+            ItemStatus.Progress => s_barProgress,
+            ItemStatus.Warning  => s_barWarning,
+            ItemStatus.Error    => s_barError,
+            ItemStatus.Over     => s_barOver,
+            _                   => null,
+        };
+    }
 
     private static string CellSymbol(int cellStatus, bool isToday)
     {
@@ -469,6 +647,7 @@ public class TaskRowViewModel : ViewModelBase
         OnPropertyChanged(nameof(StatusIcon));
         OnPropertyChanged(nameof(IsCompletedFolder));
         OnPropertyChanged(nameof(RowBackground));
+        OnPropertyChanged(nameof(MarkBrush));
         OnPropertyChanged(nameof(HasMemo));
         OnPropertyChanged(nameof(HasLink));
         OnPropertyChanged(nameof(ExpandGlyph));

@@ -10,12 +10,34 @@ namespace todochart.Controls;
 /// </summary>
 public class TreeLinesElement : FrameworkElement
 {
-    private static readonly Pen LinePen;
+    private Pen _linePen = new Pen(Brushes.Gray, 1.0);
 
-    static TreeLinesElement()
+    public TreeLinesElement()
     {
-        LinePen = new Pen(new SolidColorBrush(Color.FromRgb(0xB0, 0xB0, 0xB0)), 1.0);
-        LinePen.Freeze();
+        UpdatePenFromResources();
+        todochart.Services.ThemeService.ThemeChanged += () => { UpdatePenFromResources(); InvalidateVisual(); };
+    }
+
+    private void UpdatePenFromResources()
+    {
+        try
+        {
+            var res = Application.Current?.Resources;
+            if (res != null)
+            {
+                // 優先: GridLineBrush -> SubTextBrush -> 固定フォールバック
+                if (res.Contains("GridLineBrush") && res["GridLineBrush"] is Brush gb)
+                    _linePen = new Pen(gb, 1.0);
+                else if (res.Contains("SubTextBrush") && res["SubTextBrush"] is Brush sb)
+                    _linePen = new Pen(sb, 1.0);
+                else if (res.Contains("GridLine") && res["GridLine"] is Color gc)
+                    _linePen = new Pen(new SolidColorBrush(gc), 1.0);
+                else
+                    _linePen = new Pen(new SolidColorBrush(Color.FromRgb(0xB0, 0xB0, 0xB0)), 1.0);
+                _linePen.Freeze();
+            }
+        }
+        catch { }
     }
 
     // ── 依存関係プロパティ ──────────────────────────────────
@@ -68,17 +90,17 @@ public class TreeLinesElement : FrameworkElement
             switch (seg.Kind)
             {
                 case TreeLineKind.Vertical:
-                    dc.DrawLine(LinePen, new Point(cx, 0), new Point(cx, h));
+                    dc.DrawLine(_linePen, new Point(cx, 0), new Point(cx, h));
                     break;
 
                 case TreeLineKind.Corner:
-                    dc.DrawLine(LinePen, new Point(cx, 0),   new Point(cx, mid));
-                    dc.DrawLine(LinePen, new Point(cx, mid), new Point(seg.Level * w + w, mid));
+                    dc.DrawLine(_linePen, new Point(cx, 0),   new Point(cx, mid));
+                    dc.DrawLine(_linePen, new Point(cx, mid), new Point(seg.Level * w + w, mid));
                     break;
 
                 case TreeLineKind.Tee:
-                    dc.DrawLine(LinePen, new Point(cx, 0),   new Point(cx, h));
-                    dc.DrawLine(LinePen, new Point(cx, mid), new Point(seg.Level * w + w, mid));
+                    dc.DrawLine(_linePen, new Point(cx, 0),   new Point(cx, h));
+                    dc.DrawLine(_linePen, new Point(cx, mid), new Point(seg.Level * w + w, mid));
                     break;
 
                 case TreeLineKind.None:

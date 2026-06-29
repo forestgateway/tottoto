@@ -199,7 +199,7 @@
                            VerticalAlignment="Center"
                            Margin="0,0,8,0"/>
                 <ToggleButton x:Name="StartupCheckToggle"
-                              Style="{StaticResource SlideToggleStyle}"
+                              Style="{DynamicResource SlideToggleStyle}"
                               IsChecked="{Binding CheckForUpdatesOnStartup, Mode=TwoWay}"
                               Content="{Binding CheckForUpdatesToggleLabel}"
                               VerticalAlignment="Center"/>

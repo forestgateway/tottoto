@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Input;
 using todochart.Models;
 
@@ -62,7 +63,11 @@ public class CalloutViewModel : ViewModelBase
     public bool IsEditing
     {
         get => _isEditing;
-        private set => SetField(ref _isEditing, value);
+        private set
+        {
+            if (SetField(ref _isEditing, value))
+                OnPropertyChanged(nameof(IsVisible));
+        }
     }
 
     private string _editingText = string.Empty;
@@ -182,8 +187,36 @@ public class CalloutViewModel : ViewModelBase
     }
 
     // ── チャート列インデックス（表示位置） ─────────────────────
-    public const double CellWidth          = 22.0;
-    public const double RowHeight          = 24.0;
+    // テーマリソースがあればそちらを優先して使用する
+    public static double CellWidth
+    {
+        get
+        {
+            try
+            {
+                var res = Application.Current?.Resources;
+                if (res != null && res.Contains("CellWidth") && res["CellWidth"] is double cw)
+                    return cw;
+            }
+            catch { }
+            return 22.0;
+        }
+    }
+
+    public static double RowHeight
+    {
+        get
+        {
+            try
+            {
+                var res = Application.Current?.Resources;
+                if (res != null && res.Contains("RowHeight") && res["RowHeight"] is double rh)
+                    return rh;
+            }
+            catch { }
+            return 24.0;
+        }
+    }
     public const double CalloutBubbleWidth = 160.0;
 
     // ── BubbleLine レイアウト定数 ──────────────────────────────
@@ -336,7 +369,20 @@ public class CalloutViewModel : ViewModelBase
     }
 
     public bool IsVisible =>
-        VisibilityMode == CalloutVisibilityMode.AlwaysVisible || _isTaskHovered || _isTaskSelected;
+        VisibilityMode == CalloutVisibilityMode.AlwaysVisible
+        || _isTaskHovered || _isTaskSelected || _isInteracting || _isEditing;
+
+    private bool _isInteracting;
+    /// <summary>吹き出し自身へのホバー・クリック・ドラッグ操作中は表示を維持する（チャートの MouseLeave で消えないようにする）。</summary>
+    public bool IsInteracting
+    {
+        get => _isInteracting;
+        set
+        {
+            if (SetField(ref _isInteracting, value))
+                OnPropertyChanged(nameof(IsVisible));
+        }
+    }
 
     // ── 日付移動（ドラッグ用） ────────────────────────────────
     /// <summary>

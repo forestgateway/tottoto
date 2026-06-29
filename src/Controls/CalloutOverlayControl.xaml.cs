@@ -92,8 +92,26 @@ public partial class CalloutOverlayControl : UserControl
             _dragAppliedDays = 0;
             _isDragging      = false;
             fe.CaptureMouse();
+            // チャートへ伝播させない（行選択・スクロールドラッグでキャプチャを奪われ消える）
+            e.Handled = true;
         }
     }
+
+    /// <summary>吹き出しにマウスが乗ったら表示を維持する（チャートの MouseLeave 対策）。</summary>
+    private void OnCalloutMouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is CalloutViewModel vm)
+            vm.IsInteracting = true;
+    }
+
+    /// <summary>吹き出しから離れたら維持解除（ドラッグ中・実際にはまだ上にある場合は維持）。</summary>
+    private void OnCalloutMouseLeave(object sender, MouseEventArgs e)
+    {
+        if (_dragVm is not null) return; // ドラッグ中は CancelDrag で解除する
+        if (sender is FrameworkElement fe && fe.DataContext is CalloutViewModel vm)
+            vm.IsInteracting = fe.IsMouseOver; // キャプチャ解放等で誤発火しても上にあれば維持
+    }
+
 
     private void OnCalloutMouseMove(object sender, MouseEventArgs e)
     {
@@ -122,11 +140,10 @@ public partial class CalloutOverlayControl : UserControl
 
     private void OnCalloutMouseUp(object sender, MouseButtonEventArgs e)
     {
-        bool wasDragging = _isDragging;
         if (_dragElement is not null)
             CancelDrag(_dragElement);
-        if (wasDragging)
-            e.Handled = true;
+        // 吹き出し上でのクリックはチャートへ伝播させない
+        e.Handled = true;
     }
 
     private void CancelDrag(FrameworkElement? fe)
