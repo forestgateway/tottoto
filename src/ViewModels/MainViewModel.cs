@@ -1321,10 +1321,49 @@ public class MainViewModel : ViewModelBase
             item.EndDate = newEndDate;
         }
 
-        UpdateAllStatuses();
-        RefreshFlatList();
+        // 選択アイテムとその親フォルダのみステータスを更新
+        item.UpdateStatus(Today, Holidays.AlertCount, Holidays);
+        var ancestor = item.Parent;
+        while (ancestor is not null)
+        {
+            ancestor.UpdateStatus(Today, Holidays.AlertCount, Holidays);
+            ancestor = ancestor.Parent;
+        }
+
+        // 選択行と親行のチャートセル・表示のみ更新（全リスト再構築なし）
+        if (_isChartReady)
+            RefreshRowAndAncestors(Selected);
+        else
+            Selected.Refresh();
+
         MarkModifiedForItem(Selected.Item);
-        Selected.Refresh();
+    }
+
+    /// <summary>指定行とその祖先行のチャートセル・プロパティ通知・吹き出し位置を更新する。</summary>
+    private void RefreshRowAndAncestors(TaskRowViewModel row)
+    {
+        row.RefreshChartCells(_chartStart, CellCount, Today, Holidays, _settings.DateCountLevel);
+        row.RefreshCallouts();
+        row.Refresh();
+
+        var parentItem = row.Item.Parent;
+        while (parentItem is not null)
+        {
+            var parentRow = FlatItems.FirstOrDefault(r => r.Item == parentItem);
+            if (parentRow is not null)
+            {
+                parentRow.RefreshChartCells(_chartStart, CellCount, Today, Holidays, _settings.DateCountLevel);
+                parentRow.RefreshCallouts();
+                parentRow.Refresh();
+            }
+            parentItem = parentItem.Parent;
+        }
+
+        // AllCallouts（全行集約コレクション）を再構築して吹き出しオーバーレイに反映
+        AllCallouts.Clear();
+        foreach (var r in FlatItems)
+            foreach (var c in r.Callouts)
+                AllCallouts.Add(c);
     }
 
     // ──── ステータス更新 ───────────────────────────────────────────────────
