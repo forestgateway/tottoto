@@ -86,8 +86,14 @@ public class TaskRowViewModel : ViewModelBase
         ToggleMarkCommand = new RelayCommand(() => MarkLevel = (MarkLevel + 1) % 3);
     }
 
-    // ── プロパティ ├───────────────────────────────────────
+    // ── プロパティ ├───────────────────────────────────────────────────────────
     public bool IsFolder => Item.IsFolder;
+
+    /// <summary>進捗値（0〜100）。ScheduleToDo 以外は常に 0。</summary>
+    public int Progress => Item is ScheduleToDo td ? td.Progress : 0;
+
+    /// <summary>Progress の PropertyChanged を外部から発火させる（進捗コマンド用）。</summary>
+    public void NotifyProgressChanged() => OnPropertyChanged(nameof(Progress));
 
     public string Name
     {

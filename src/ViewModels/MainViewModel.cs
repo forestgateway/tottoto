@@ -433,6 +433,7 @@ public class MainViewModel : ViewModelBase
                 var entry = FindEntryForItem(todo);
                 if (entry is not null) entry.IsModified = true;
                 OnPropertyChanged(nameof(ContextProgressValue));
+                Selected?.NotifyProgressChanged();
             },
             _ => Selected?.Item is ScheduleToDo);
 
@@ -455,6 +456,7 @@ public class MainViewModel : ViewModelBase
                 var entry = FindEntryForItem(td);
                 if (entry is not null) entry.IsModified = true;
                 OnPropertyChanged(nameof(ContextProgressValue));
+                Selected?.NotifyProgressChanged();
             }
         }, () => Selected?.Item is ScheduleToDo);
 
@@ -466,6 +468,7 @@ public class MainViewModel : ViewModelBase
                 var entry = FindEntryForItem(td);
                 if (entry is not null) entry.IsModified = true;
                 OnPropertyChanged(nameof(ContextProgressValue));
+                Selected?.NotifyProgressChanged();
             }
         }, () => Selected?.Item is ScheduleToDo);
 

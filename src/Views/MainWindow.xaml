@@ -701,6 +701,7 @@
                                                               CellWidth="{DynamicResource CellWidth}"
                                                               Height="{DynamicResource RowHeight}"
                                                               IsSelected="{Binding IsSelected}"
+                                                              Progress="{Binding Progress, Mode=OneWay}"
                                                               CalloutTexts="{Binding CalloutTexts}"
                                                               HoveredColumnIndex="{Binding DataContext.HoveredColumnIndex, ElementName=ChartRowsControl}"/>
                                         </Grid>
