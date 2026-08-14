@@ -60,6 +60,8 @@
     <sys:Double x:Key="GanttProgressCornerRadius">1</sys:Double>
     <sys:Double x:Key="GanttProgressHorizontalGap">0</sys:Double>
     
+    <!-- 経過日進捗バーの色（ダークテーマではシアン系アクセント） -->
+    <SolidColorBrush x:Key="GanttElapsedBrush" Color="#BF00C8FF" />
     <!-- ガントバーの既定色（テーマで一括変更したい場合に利用） -->
     <SolidColorBrush x:Key="GanttBarBrush" Color="#5F838383" />
     <!-- ステータス別の上書きも可能 -->
