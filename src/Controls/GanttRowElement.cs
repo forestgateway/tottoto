@@ -109,6 +109,7 @@ public class GanttRowElement : FrameworkElement
     private Pen   _rowPen        = new Pen(Brushes.Transparent, 1.0);
     private Brush _todayOverlay  = Brushes.Transparent;
     private Brush _calloutMarker = Brushes.Red;
+
     /// <summary>経過日進捗バーの色（ガントバー下部の帯）</summary>
     private Brush _elapsedBrush  = Brushes.White;
 
@@ -120,6 +121,7 @@ public class GanttRowElement : FrameworkElement
 
     private void UpdateBrushesFromResources()
     {
+
         try
         {
             var res = Application.Current?.Resources;
