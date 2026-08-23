@@ -38,6 +38,11 @@ public class GanttRowElement : FrameworkElement
             typeof(IReadOnlyDictionary<int, string>), typeof(GanttRowElement),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>進捗率（0〜100）。アイテムの Progress プロパティにバインドし、変更時に自動再描画される。</summary>
+    public static readonly DependencyProperty ProgressProperty =
+        DependencyProperty.Register(nameof(Progress), typeof(int), typeof(GanttRowElement),
+            new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public IReadOnlyList<ChartCellInfo>? Cells
     {
         get => (IReadOnlyList<ChartCellInfo>?)GetValue(CellsProperty);
@@ -78,6 +83,12 @@ public class GanttRowElement : FrameworkElement
         set => SetValue(CalloutTextsProperty, value);
     }
 
+    public int Progress
+    {
+        get => (int)GetValue(ProgressProperty);
+        set => SetValue(ProgressProperty, value);
+    }
+
     protected override Size MeasureOverride(Size availableSize)
     {
         int count = Cells?.Count ?? 0;
@@ -99,6 +110,9 @@ public class GanttRowElement : FrameworkElement
     private Brush _todayOverlay  = Brushes.Transparent;
     private Brush _calloutMarker = Brushes.Red;
 
+    /// <summary>経過日進捗バーの色（ガントバー下部の帯）</summary>
+    private Brush _elapsedBrush  = Brushes.White;
+
     public GanttRowElement()
     {
         UpdateBrushesFromResources();
@@ -107,6 +121,7 @@ public class GanttRowElement : FrameworkElement
 
     private void UpdateBrushesFromResources()
     {
+
         try
         {
             var res = Application.Current?.Resources;
@@ -172,6 +187,20 @@ public class GanttRowElement : FrameworkElement
             else if (res.Contains("AccentColor") && res["AccentColor"] is Color accentColor)
             {
                 _calloutMarker = new SolidColorBrush(accentColor);
+            }
+
+            // 経過日進捗バーの色: GanttElapsedBrush > AccentBrush(opacity 0.75) > 白半透明
+            if (res.Contains("GanttElapsedBrush") && res["GanttElapsedBrush"] is Brush elb)
+            {
+                _elapsedBrush = elb;
+            }
+            else if (res.Contains("AccentBrush") && res["AccentBrush"] is Brush abb)
+            {
+                _elapsedBrush = new SolidColorBrush(((SolidColorBrush)abb).Color) { Opacity = 0.75 };
+            }
+            else
+            {
+                _elapsedBrush = new SolidColorBrush(Color.FromArgb(0xBF, 0xFF, 0xFF, 0xFF));
             }
         }
         catch { }
@@ -390,6 +419,30 @@ public class GanttRowElement : FrameworkElement
 
             x += cw;
             i++;
+        }
+
+        // 進捗バーの描画（タスクの Progress プロパティ 0〜100% をガントバー幅に対する割合で表示）
+        {
+            int progress = Progress; // DP から取得（PropertyChanged → AffectsRender で自動更新）
+            if (progress > 0)
+            {
+                int tBarStart = -1, tBarEnd = -1;
+                for (int m = 0; m < Cells.Count; m++)
+                {
+                    if (Cells[m].IsTaskStart && tBarStart < 0) tBarStart = m;
+                    if (Cells[m].IsTaskEnd)                    tBarEnd   = m;
+                }
+                if (tBarStart >= 0 && tBarEnd >= tBarStart)
+                {
+                    double barStartX = tBarStart * cw + horizontalGap / 2.0;
+                    double barTotalW = Math.Max(0, (tBarEnd - tBarStart + 1) * cw - horizontalGap);
+                    double progressW = barTotalW * Math.Clamp(progress / 100.0, 0.0, 1.0);
+                    const double progressH = 3.0;
+                    double progressY = h - progressH - 1.0; // 行下線の直上
+                    dc.DrawRectangle(_elapsedBrush, null,
+                        new Rect(barStartX, progressY, progressW, progressH));
+                }
+            }
         }
 
         // 行下端に横線（_rowPen: GridLineBrush またはフォールバック）
