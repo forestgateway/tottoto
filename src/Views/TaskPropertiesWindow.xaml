@@ -134,8 +134,9 @@
                         </Grid>
 
                         <!-- 繰り返し予定 -->
-                        <GroupBox Header="繰り返し予定" Foreground="#FF3B3B3B"
-                                  BorderBrush="#FFC8C8C8" Margin="0,0,0,8"
+                        <Expander Header="繰り返し予定" Foreground="#FF3B3B3B"
+                                  BorderBrush="#FFC8C8C8" BorderThickness="1" Margin="0,0,0,8"
+                                  IsExpanded="{Binding IsRecurrenceExpanded}"
                                   Visibility="{Binding IsNotFolder, Converter={StaticResource BoolVis}}">
                             <StackPanel Margin="6">
                                 <CheckBox IsChecked="{Binding HasRecurrence}"
@@ -195,7 +196,7 @@
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                        </GroupBox>
+                        </Expander>
 
                         <!-- 日数カウント方法 -->
                         <GroupBox Header="日数カウント" Foreground="#FF3B3B3B"

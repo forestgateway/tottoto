@@ -34,7 +34,8 @@ public class TaskPropertiesViewModel : ViewModelBase
             EndDate      = todo.EndDate ?? DateTime.Today.AddDays(7);
 
             var rule = todo.Recurrence;
-            HasRecurrence = rule is not null;
+            HasRecurrence        = rule is not null;
+            IsRecurrenceExpanded = rule is not null;
             if (rule is not null)
             {
                 RecurrenceFrequency        = rule.Frequency;
@@ -219,6 +220,14 @@ public class TaskPropertiesViewModel : ViewModelBase
     {
         get => _hasRecurrence;
         set => SetField(ref _hasRecurrence, value);
+    }
+
+    private bool _isRecurrenceExpanded;
+    /// <summary>「繰り返し予定」GroupBox の展開状態。既存の繰り返し設定がある場合のみ既定で展開する。</summary>
+    public bool IsRecurrenceExpanded
+    {
+        get => _isRecurrenceExpanded;
+        set => SetField(ref _isRecurrenceExpanded, value);
     }
 
     private RecurrenceFrequency _recurrenceFrequency = RecurrenceFrequency.Weekly;
