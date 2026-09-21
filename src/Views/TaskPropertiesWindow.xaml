@@ -102,29 +102,101 @@
                                       IsEnabled="{Binding IsNotFolder}"/>
                         </StackPanel>
 
-                        <!-- 開始日 -->
-                        <GroupBox Header="開始日" Foreground="#FF3B3B3B"
-                                  BorderBrush="#FFC8C8C8" Margin="0,0,0,8">
-                            <StackPanel Margin="6">
-                                <CheckBox IsChecked="{Binding HasBeginDate}"
-                                          Content="開始日を設定する"/>
-                                <DatePicker SelectedDate="{Binding BeginDate}"
-                                            IsEnabled="{Binding BeginDateEnabled}"
-                                            Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </GroupBox>
+                        <!-- 開始日・終了日（横並び） -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                        <!-- 終了日 -->
-                        <GroupBox Header="終了日" Foreground="#FF3B3B3B"
-                                  BorderBrush="#FFC8C8C8" Margin="0,0,0,8">
+                            <GroupBox Grid.Column="0" Header="開始日" Foreground="#FF3B3B3B"
+                                      BorderBrush="#FFC8C8C8">
+                                <StackPanel Margin="6">
+                                    <CheckBox IsChecked="{Binding HasBeginDate}"
+                                              Content="開始日を設定する"/>
+                                    <DatePicker SelectedDate="{Binding BeginDate}"
+                                                IsEnabled="{Binding BeginDateEnabled}"
+                                                Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Grid.Column="2" Header="終了日" Foreground="#FF3B3B3B"
+                                      BorderBrush="#FFC8C8C8">
+                                <StackPanel Margin="6">
+                                    <CheckBox IsChecked="{Binding HasEndDate}"
+                                              Content="終了日を設定する"/>
+                                    <DatePicker SelectedDate="{Binding EndDate}"
+                                                IsEnabled="{Binding EndDateEnabled}"
+                                                Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </GroupBox>
+                        </Grid>
+
+                        <!-- 繰り返し予定 -->
+                        <Expander Header="繰り返し予定" Foreground="#FF3B3B3B"
+                                  BorderBrush="#FFC8C8C8" BorderThickness="1" Margin="0,0,0,8"
+                                  IsExpanded="{Binding IsRecurrenceExpanded}"
+                                  Visibility="{Binding IsNotFolder, Converter={StaticResource BoolVis}}">
                             <StackPanel Margin="6">
-                                <CheckBox IsChecked="{Binding HasEndDate}"
-                                          Content="終了日を設定する"/>
-                                <DatePicker SelectedDate="{Binding EndDate}"
-                                            IsEnabled="{Binding EndDateEnabled}"
-                                            Margin="0,4,0,0"/>
+                                <CheckBox IsChecked="{Binding HasRecurrence}"
+                                          Content="繰り返しを設定する"/>
+
+                                <StackPanel Margin="0,6,0,0"
+                                            IsEnabled="{Binding HasRecurrence}">
+                                    <!-- 頻度・間隔 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <TextBlock Text="頻度:" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding RecurrenceFrequencyOptions}"
+                                                  SelectedItem="{Binding RecurrenceFrequency}"
+                                                  Width="100" Margin="4,0,0,0"/>
+                                        <TextBlock Text="間隔:" Margin="12,0,4,0" VerticalAlignment="Center"/>
+                                        <TextBox Text="{Binding RecurrenceInterval, UpdateSourceTrigger=PropertyChanged}"
+                                                 Width="40"/>
+                                        <TextBlock Text="ごと" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- 毎週: 曜日選択 -->
+                                    <ItemsControl ItemsSource="{Binding RecurrenceDayOptions}"
+                                                  Visibility="{Binding IsWeekly, Converter={StaticResource BoolVis}}"
+                                                  Margin="0,0,0,6">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Label}"
+                                                          IsChecked="{Binding IsSelected}"
+                                                          Margin="0,0,8,0"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- 毎月: 日付指定 / 末日 -->
+                                    <StackPanel Orientation="Horizontal"
+                                                Visibility="{Binding IsMonthly, Converter={StaticResource BoolVis}}"
+                                                Margin="0,0,0,6">
+                                        <TextBlock Text="毎月" VerticalAlignment="Center"/>
+                                        <TextBox Text="{Binding RecurrenceMonthDay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Width="36" Margin="4,0,0,0"/>
+                                        <TextBlock Text="日" Margin="4,0,12,0" VerticalAlignment="Center"/>
+                                        <CheckBox Content="月末日"
+                                                  IsChecked="{Binding RecurrenceUseLastDayOfMonth}"
+                                                  VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- 休日の扱い -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <TextBlock Text="休日と重なる場合:" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding RecurrenceHolidayShiftOptions}"
+                                                  SelectedItem="{Binding RecurrenceHolidayShift}"
+                                                  Width="140" Margin="4,0,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
-                        </GroupBox>
+                        </Expander>
 
                         <!-- 日数カウント方法 -->
                         <GroupBox Header="日数カウント" Foreground="#FF3B3B3B"
