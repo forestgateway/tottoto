@@ -68,6 +68,16 @@ public class ScheduleFileService
             dto.Completed = todo.Completed ? true : null;       // false はデフォルトなので省略
             dto.IsWait    = todo.IsWait    ? true : null;       // false はデフォルトなので省略
             dto.Progress  = todo.Progress  != 0  ? todo.Progress : (int?)null; // 0はデフォルトなので省略
+            if (todo.Recurrence is { } rule)
+                dto.Recurrence = new RecurrenceDto
+                {
+                    Frequency         = rule.Frequency.ToString(),
+                    Interval          = rule.Interval,
+                    DaysOfWeek        = rule.DaysOfWeek.Count > 0 ? rule.DaysOfWeek.Select(d => (int)d).ToList() : null,
+                    MonthDay          = rule.MonthDay,
+                    UseLastDayOfMonth = rule.UseLastDayOfMonth ? true : null,
+                    HolidayShift      = rule.HolidayShift.ToString(),
+                };
             if (todo.Callouts.Count > 0)
                 dto.Callouts = todo.Callouts.Select(c => new CalloutDto
                 {
@@ -154,6 +164,22 @@ public class ScheduleFileService
                     IsWait    = dto.IsWait    ?? false,
                     Progress  = dto.Progress  ?? 0,
                 };
+                if (dto.Recurrence is { } rdto)
+                {
+                    var rule = new RecurrenceRule
+                    {
+                        Frequency = Enum.TryParse<RecurrenceFrequency>(rdto.Frequency, out var freq)
+                                    ? freq : RecurrenceFrequency.Weekly,
+                        Interval  = rdto.Interval ?? 1,
+                        MonthDay  = rdto.MonthDay,
+                        UseLastDayOfMonth = rdto.UseLastDayOfMonth ?? false,
+                        HolidayShift = Enum.TryParse<RecurrenceHolidayShift>(rdto.HolidayShift, out var shift)
+                                    ? shift : RecurrenceHolidayShift.None,
+                    };
+                    if (rdto.DaysOfWeek is { Count: > 0 })
+                        rule.DaysOfWeek.AddRange(rdto.DaysOfWeek.Select(d => (DayOfWeek)d));
+                    ((ScheduleToDo)item).Recurrence = rule;
+                }
             }
 
             item.Name           = dto.Name ?? string.Empty;
@@ -267,11 +293,35 @@ public class ScheduleFileService
         [JsonPropertyName("progress")]
         public int? Progress { get; set; }
 
+        [JsonPropertyName("recurrence")]
+        public RecurrenceDto? Recurrence { get; set; }
+
         [JsonPropertyName("children")]
         public List<ItemDto>? Children { get; set; }
 
         [JsonPropertyName("callouts")]
         public List<CalloutDto>? Callouts { get; set; }
+    }
+
+    private class RecurrenceDto
+    {
+        [JsonPropertyName("frequency")]
+        public string? Frequency { get; set; }
+
+        [JsonPropertyName("interval")]
+        public int? Interval { get; set; }
+
+        [JsonPropertyName("daysOfWeek")]
+        public List<int>? DaysOfWeek { get; set; }
+
+        [JsonPropertyName("monthDay")]
+        public int? MonthDay { get; set; }
+
+        [JsonPropertyName("useLastDayOfMonth")]
+        public bool? UseLastDayOfMonth { get; set; }
+
+        [JsonPropertyName("holidayShift")]
+        public string? HolidayShift { get; set; }
     }
 
     private class CalloutDto

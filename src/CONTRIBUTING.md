@@ -59,6 +59,9 @@ src/
 | `IssueTrackingSettings` | `Models/IssueTrackingSettings.cs` | Issue Tracking 連携の設定値（URL・トークン等） |
 | `HolidayData` | `Models/HolidayData.cs` | 休日設定で使用する個別休日データ（Date/Name/Level）の表示・編集用レコード |
 | `HolidayYearOption` | `Models/HolidayYearOption.cs` | 祝日反映対象の西暦とチェック状態を保持する選択オプション |
+| `RecurrenceRule` | `Models/RecurrenceRule.cs` | 繰り返し予定の設定（頻度・間隔・曜日・月内日付・休日重複時の挙動）を保持。`ScheduleToDo` が任意で保持する |
+| `RecurrenceFrequency` | `Models/RecurrenceFrequency.cs` | 繰り返しの頻度を表す enum（Daily / Weekly / Monthly） |
+| `RecurrenceHolidayShift` | `Models/RecurrenceHolidayShift.cs` | 繰り返しの各回が休日と重なった場合の挙動を表す enum（None / Before / After） |
 
 ### ViewModels
 
@@ -70,7 +73,7 @@ src/
 | `ScheduleEntry` | `ViewModels/ScheduleEntry.cs` | 1 つのスケジュールファイルに対応する ViewModel。ルートフォルダを保持 |
 | `TaskRowViewModel` | `ViewModels/TaskRowViewModel.cs` | ガントチャート 1 行分の表示 ViewModel。ツリー罫線情報も持つ |
 | `ChartCellInfo` | `ViewModels/ChartCellInfo.cs` | ガントチャート 1 日分のセル情報（表示専用 `sealed record`） |
-| `TaskPropertiesViewModel` | `ViewModels/TaskPropertiesViewModel.cs` | タスク詳細編集ダイアログの ViewModel |
+| `TaskPropertiesViewModel` | `ViewModels/TaskPropertiesViewModel.cs` | タスク詳細編集ダイアログの ViewModel。繰り返し予定の設定も担う |
 | `TodayScheduleViewModel` | `ViewModels/TodayScheduleViewModel.cs` | 今日のスケジュール表示ウィンドウの ViewModel |
 | `IssueTrackingSettingsViewModel` | `ViewModels/IssueTrackingSettingsViewModel.cs` | Issue Tracking 設定ダイアログの ViewModel |
 | `ArchiveListViewModel` | `ViewModels/ArchiveListViewModel.cs` | アーカイブ一覧ウィンドウの ViewModel |
@@ -78,6 +81,7 @@ src/
 | `HolidayYearSelectionViewModel` | `ViewModels/HolidayYearSelectionViewModel.cs` | 祝日反映対象の年チェックリストを管理する ViewModel |
 | `CalloutViewModel` | `ViewModels/CalloutViewModel.cs` | 吹き出し注釈の表示状態・位置計算を扱う ViewModel |
 | `UpdateCheckViewModel` | `ViewModels/UpdateCheckViewModel.cs` | バージョン更新確認ダイアログの ViewModel |
+| `RecurrenceDayOption` | `ViewModels/RecurrenceDayOption.cs` | 繰り返し設定の曜日選択チェックボックス 1 つ分の表示用 ViewModel |
 
 ### Views
 
@@ -134,6 +138,21 @@ src/
 | ファイル | 役割 |
 |---|---|
 | `Themes/BaseTheme.xaml` | アプリ共通のスタイル・ブラシ・テンプレート定義 |
+
+---
+
+## 繰り返し予定機能
+
+- タスクプロパティの「日程」タブに繰り返し設定 UI を持つ（開始日・終了日は横並び配置）。
+- 繰り返し設定は `ScheduleToDo.Recurrence`（`RecurrenceRule?`）として保持し、JSON では `recurrence` ノードとして永続化する（`ScheduleFileService`）。
+- 終了条件は専用項目を設けず、既存の「終了日」を終了条件として流用する。
+- **1タスク完結型**：タスクを複数生成せず、1つの `ScheduleToDo` のまま繰り返し予定を表現する。
+  - ガントチャート上は飛び石表示（`TaskRowViewModel.RefreshChartCells` が `RecurrenceRule.GetOccurrencesInRange` で予定日集合を求め、該当日のみバーを描画）。
+  - セル色分け: 過去の予定日=過去色（灰色）、直近サイクル（次回予定日）=現在のステータス色、未来の予定日=待機色。
+  - ステータス計算（`ScheduleToDo.ComputeRecurrenceStatus`）は `RecurrenceRule.GetNextOccurrence` で求めた次回予定日を基準に、当日なら残1日、当日を過ぎれば次回予定日までのカウントで Warning/Progress を判定する（過ぎた回は不問で自動的に次回にスライドする＝パターン①）。
+  - タスク一覧の「残N日」表示（`TaskRowViewModel.DaysText`）も同様に次回予定日を基準に計算する。
+  - 繰り返し起点（anchor）は開始日が未設定の場合、今日の日付とする。
+  - 繰り返し設定されたタスクはガントチャート上の Shift+ドラッグによる期間移動を無効化する。
 
 ---
 

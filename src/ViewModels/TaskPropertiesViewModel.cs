@@ -32,6 +32,24 @@ public class TaskPropertiesViewModel : ViewModelBase
             BeginDate    = todo.BeginDate ?? DateTime.Today;
             HasEndDate   = todo.EndDate.HasValue;
             EndDate      = todo.EndDate ?? DateTime.Today.AddDays(7);
+
+            var rule = todo.Recurrence;
+            HasRecurrence = rule is not null;
+            if (rule is not null)
+            {
+                RecurrenceFrequency        = rule.Frequency;
+                RecurrenceInterval         = rule.Interval;
+                RecurrenceMonthDay         = rule.MonthDay ?? BeginDate.Day;
+                RecurrenceUseLastDayOfMonth = rule.UseLastDayOfMonth;
+                RecurrenceHolidayShift     = rule.HolidayShift;
+                foreach (var opt in RecurrenceDayOptions)
+                    opt.IsSelected = rule.DaysOfWeek.Contains(opt.Day);
+            }
+            else
+            {
+                foreach (var opt in RecurrenceDayOptions)
+                    opt.IsSelected = opt.Day == BeginDate.DayOfWeek;
+            }
         }
     }
 
@@ -178,6 +196,90 @@ public class TaskPropertiesViewModel : ViewModelBase
         return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
     }
 
+    // ── 繰り返し予定 ───────────────────────────────────────
+    public IReadOnlyList<RecurrenceFrequency> RecurrenceFrequencyOptions { get; } =
+        Enum.GetValues<RecurrenceFrequency>();
+
+    public IReadOnlyList<RecurrenceHolidayShift> RecurrenceHolidayShiftOptions { get; } =
+        Enum.GetValues<RecurrenceHolidayShift>();
+
+    public List<RecurrenceDayOption> RecurrenceDayOptions { get; } = new()
+    {
+        new(DayOfWeek.Monday,    "月"),
+        new(DayOfWeek.Tuesday,   "火"),
+        new(DayOfWeek.Wednesday, "水"),
+        new(DayOfWeek.Thursday,  "木"),
+        new(DayOfWeek.Friday,    "金"),
+        new(DayOfWeek.Saturday,  "土"),
+        new(DayOfWeek.Sunday,    "日"),
+    };
+
+    private bool _hasRecurrence;
+    public bool HasRecurrence
+    {
+        get => _hasRecurrence;
+        set => SetField(ref _hasRecurrence, value);
+    }
+
+    private RecurrenceFrequency _recurrenceFrequency = RecurrenceFrequency.Weekly;
+    public RecurrenceFrequency RecurrenceFrequency
+    {
+        get => _recurrenceFrequency;
+        set
+        {
+            if (SetField(ref _recurrenceFrequency, value))
+            {
+                OnPropertyChanged(nameof(IsWeekly));
+                OnPropertyChanged(nameof(IsMonthly));
+            }
+        }
+    }
+
+    public bool IsWeekly  => RecurrenceFrequency == RecurrenceFrequency.Weekly;
+    public bool IsMonthly => RecurrenceFrequency == RecurrenceFrequency.Monthly;
+
+    private int _recurrenceInterval = 1;
+    public int RecurrenceInterval
+    {
+        get => _recurrenceInterval;
+        set => SetField(ref _recurrenceInterval, value < 1 ? 1 : value);
+    }
+
+    private int _recurrenceMonthDay = 1;
+    public int RecurrenceMonthDay
+    {
+        get => _recurrenceMonthDay;
+        set => SetField(ref _recurrenceMonthDay, value);
+    }
+
+    private bool _recurrenceUseLastDayOfMonth;
+    public bool RecurrenceUseLastDayOfMonth
+    {
+        get => _recurrenceUseLastDayOfMonth;
+        set => SetField(ref _recurrenceUseLastDayOfMonth, value);
+    }
+
+    private RecurrenceHolidayShift _recurrenceHolidayShift = RecurrenceHolidayShift.None;
+    public RecurrenceHolidayShift RecurrenceHolidayShift
+    {
+        get => _recurrenceHolidayShift;
+        set => SetField(ref _recurrenceHolidayShift, value);
+    }
+
+    private RecurrenceRule BuildRecurrenceRule()
+    {
+        var rule = new RecurrenceRule
+        {
+            Frequency         = RecurrenceFrequency,
+            Interval          = RecurrenceInterval,
+            MonthDay          = RecurrenceMonthDay,
+            UseLastDayOfMonth = RecurrenceUseLastDayOfMonth,
+            HolidayShift      = RecurrenceHolidayShift,
+        };
+        rule.DaysOfWeek.AddRange(RecurrenceDayOptions.Where(o => o.IsSelected).Select(o => o.Day));
+        return rule;
+    }
+
     // ── 確定 ─────────────────────────────────────────────
     public void Apply()
     {
@@ -193,6 +295,7 @@ public class TaskPropertiesViewModel : ViewModelBase
             todo.Progress  = Progress;
             todo.BeginDate = HasBeginDate ? BeginDate : null;
             todo.EndDate   = HasEndDate   ? EndDate   : null;
+            todo.Recurrence = HasRecurrence ? BuildRecurrenceRule() : null;
         }
     }
 }
