@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -254,8 +255,20 @@ public class TaskRowViewModel : ViewModelBase
                 return "WAIT";
             }
             if (Item.Status == ItemStatus.Error)    return "遅延";
-            if (!Item.EndDate.HasValue)             return "期限なし";
+
             var today = DateTime.Today;
+
+            if (Item is ScheduleToDo todo && todo.Recurrence is not null)
+            {
+                var anchor = todo.BeginDate ?? today;
+                var next = todo.Recurrence.GetNextOccurrence(anchor, today, _main.Holidays, todo.EndDate);
+                if (next is null) return "期限なし";
+                int rdays = Item.CountWorkingDays(today, next.Value, _main.Holidays);
+                if (rdays < 1) rdays = 1;
+                return $"残{rdays}日";
+            }
+
+            if (!Item.EndDate.HasValue)             return "期限なし";
             var from  = Item.BeginDate.HasValue && today < Item.BeginDate.Value
                         ? Item.BeginDate.Value : today;
             int days  = Item.CountWorkingDays(from, Item.EndDate.Value, _main.Holidays);
@@ -370,6 +383,20 @@ public class TaskRowViewModel : ViewModelBase
         var cells = new List<ChartCellInfo>(cellCount);
         var rowBase = _rowIndex % 2 == 0 ? GetEvenRowBrush() : GetOddRowBrush();
 
+        // 繰り返し予定タスクの場合は飛び石表示用の予定日集合と直近予定日を事前計算する。
+        HashSet<DateTime>? recurrenceDates = null;
+        DateTime? recurrenceNextDate = null;
+        if (Item is ScheduleToDo recurTodo && recurTodo.Recurrence is not null)
+        {
+            var anchor = recurTodo.BeginDate ?? today;
+            var rangeStart = chartStart;
+            var rangeEnd   = chartStart.AddDays(cellCount - 1);
+            recurrenceDates = new HashSet<DateTime>(
+                recurTodo.Recurrence.GetOccurrencesInRange(anchor, rangeStart, rangeEnd, holidays)
+                    .Select(d => d.Date));
+            recurrenceNextDate = recurTodo.Recurrence.GetNextOccurrence(anchor, today, holidays, recurTodo.EndDate)?.Date;
+        }
+
         for (int i = 0; i < cellCount; i++)
         {
             var date    = chartStart.AddDays(i);
@@ -415,16 +442,31 @@ public class TaskRowViewModel : ViewModelBase
             }
             catch { }
 
-            // IsTaskStart/IsTaskEnd は隣接セルの BarBrush を見て決める（開始・終了のみ角丸にするため）
-            bool isStart = false, isEnd = false;
-            if (cellStatus >= 0)
+            bool isStart, isEnd;
+            Brush? barBrush;
+
+            if (recurrenceDates is not null)
             {
-                // 前のセルが存在しないかバーが続いていなければ開始
-                if (i == 0 || ComputeCellStatus(chartStart.AddDays(i - 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i - 1)), holidays) < 0)
-                    isStart = true;
-                // 次のセルが存在しないかバーが続いていなければ終了
-                if (i == cellCount - 1 || ComputeCellStatus(chartStart.AddDays(i + 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i + 1)), holidays) < 0)
-                    isEnd = true;
+                // 飛び石表示: 予定日に該当するセルのみ着色し、各セルは独立したセグメントとして開始/終了とする。
+                bool isOccurrence = cellStatus >= 0 && recurrenceDates.Contains(date.Date);
+                isStart = isOccurrence;
+                isEnd   = isOccurrence;
+                barBrush = isOccurrence ? RecurrenceCellBrush(date, today, recurrenceNextDate, cellStatus) : null;
+            }
+            else
+            {
+                // IsTaskStart/IsTaskEnd は隣接セルの BarBrush を見て決める（開始・終了のみ角丸にするため）
+                isStart = false; isEnd = false;
+                if (cellStatus >= 0)
+                {
+                    // 前のセルが存在しないかバーが続いていなければ開始
+                    if (i == 0 || ComputeCellStatus(chartStart.AddDays(i - 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i - 1)), holidays) < 0)
+                        isStart = true;
+                    // 次のセルが存在しないかバーが続いていなければ終了
+                    if (i == cellCount - 1 || ComputeCellStatus(chartStart.AddDays(i + 1), today, appDateCountLv, holidays.GetLevel(chartStart.AddDays(i + 1)), holidays) < 0)
+                        isEnd = true;
+                }
+                barBrush = cellStatus >= 0 ? BarBrush(cellStatus) : null;
             }
 
             cells.Add(new ChartCellInfo
@@ -437,7 +479,7 @@ public class TaskRowViewModel : ViewModelBase
                 RowBase    = rowBase,
                 OverlayBrush = overlay,
                 Symbol     = CellSymbol(cellStatus, isToday),
-                BarBrush   = cellStatus >= 0 ? BarBrush(cellStatus) : null,
+                BarBrush   = barBrush,
                 IsTaskStart = isStart,
                 IsTaskEnd   = isEnd,
             });
@@ -603,6 +645,23 @@ public class TaskRowViewModel : ViewModelBase
             ItemStatus.Over     => "■",
             _ => string.Empty,
         };
+    }
+
+    private static readonly Brush s_barRecurrencePast = Freeze(new SolidColorBrush(Color.FromRgb(0xB0, 0xB0, 0xB0)));
+
+    /// <summary>
+    /// 繰り返し予定の飛び石セルの色を決定する。
+    /// 過去の予定日=過去色（灰色）、直近サイクル（次回予定日）=現在のステータス色、未来の予定日=待機色。
+    /// </summary>
+    private static Brush? RecurrenceCellBrush(DateTime date, DateTime today, DateTime? nextDate, int cellStatus)
+    {
+        if (nextDate.HasValue && date.Date == nextDate.Value.Date)
+            return BarBrush(cellStatus);
+
+        if (date.Date < (nextDate ?? today).Date)
+            return s_barRecurrencePast;
+
+        return s_barWait;
     }
 
     // ── コマンド ─────────────────────────────────────────

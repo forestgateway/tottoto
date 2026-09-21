@@ -29,7 +29,8 @@ public partial class MainWindow
         var row = GetChartRowViewModelAt(pos);
 
         if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 &&
-            row?.Item is todochart.Models.ScheduleToDo &&
+            row?.Item is todochart.Models.ScheduleToDo todoItem &&
+            todoItem.Recurrence is null &&
             IsOnTaskPeriodCell(row, pos))
         {
             Vm.Selected = row;
